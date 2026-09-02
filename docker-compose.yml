@@ -1,0 +1,19 @@
+services:
+  tamiya-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tamiya-digital-racing
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/app/data/tamiya.sqlite
+    volumes:
+      - tamiya_data:/app/data
+
+volumes:
+  tamiya_data:
+    driver: local

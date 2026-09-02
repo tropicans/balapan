@@ -1,0 +1,27 @@
+{
+  "name": "tamiya-digital-racing-system",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tamiya Digital Racing System (Cyberpunk / Neo-Racing UI)",
+  "main": "server/index.js",
+  "scripts": {
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "npm --prefix client run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:client",
+    "start": "node server/index.js",
+    "test": "node server/tests/race-flow.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "sql.js": "^1.14.2",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
