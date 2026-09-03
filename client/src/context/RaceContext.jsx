@@ -394,11 +394,11 @@ export function RaceProvider({ children }) {
     return await res.json();
   };
 
-  const apiAdvanceBracket = async (matchId, winnerId) => {
+  const apiAdvanceBracket = async (matchId, winnerId, options = {}) => {
     const res = await fetch('/api/bracket/advance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matchId, winnerId })
+      body: JSON.stringify({ matchId, winnerId, ...options })
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Gagal menentukan pemenang bracket');
