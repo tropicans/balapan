@@ -46,6 +46,12 @@ Plans:
   2. Setiap kartu heat menampilkan 3 pembalap lengkap dengan warna jalur yang kontras.
   3. Pencarian heat bekerja responsif dan 100+ heat dapat dijelajahi tanpa lag atau layout pecah.
   4. Navbar menampilkan label "Babak Eliminasi" secara konsisten.
+- **Plans**: 0/1 plans executed
+
+Plans:
+
+- [ ] 06-01-PLAN.md
+- [ ] 06-01: Multi-round scalable elimination dashboard UI & 3-lane bracket cards
 
 ---
 
