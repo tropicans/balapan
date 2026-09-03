@@ -246,5 +246,25 @@
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
+
+  /* Jumbo Floor Marker (1 Page A4 per Lane) */
+  .print-floor-page {
+    height: 97vh !important;
+    max-height: 270mm !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    margin: 0 0 10mm 0 !important;
+    padding: 10mm !important;
+  }
+
+  .print-floor-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    margin-bottom: 0 !important;
+  }
 }
 
