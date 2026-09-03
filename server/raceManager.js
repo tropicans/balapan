@@ -605,32 +605,54 @@ export class RaceManager {
     };
   }
 
-  // Auto-progress winner into Round 2 bracket match slot
-  static placeIntoBracket(userId) {
-    // Check if user is already in bracket
-    const alreadyInBracket = db.prepare(`
+  // Seed racer into Round 2 (Elimination Stage) 3-lane bracket
+  static seedIntoBracket(userId) {
+    if (!userId) return;
+
+    // Check if user is already seeded in Round 2
+    const alreadyInRound2 = db.prepare(`
       SELECT id FROM bracket_matches 
-      WHERE user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?
+      WHERE round_number = 2 AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
     `).get(userId, userId, userId);
 
-    if (alreadyInBracket) return;
+    if (alreadyInRound2) return;
 
-    // Find first open slot in Round 1 matches
-    const matches = db.prepare(`
+    // Find heat in Round 2 with open slot (Jalur A, B, or C) ordered by match_number ASC
+    const openHeats = db.prepare(`
       SELECT * FROM bracket_matches 
-      WHERE round_number = 1 
+      WHERE round_number = 2 AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
       ORDER BY match_number ASC
     `).all();
 
-    for (const m of matches) {
+    for (const m of openHeats) {
       if (!m.user_id_1) {
         db.prepare('UPDATE bracket_matches SET user_id_1 = ? WHERE id = ?').run(userId, m.id);
-        return;
+        return { success: true, matchId: m.id, lane: 'A', slot: 'user_id_1' };
       } else if (!m.user_id_2) {
         db.prepare('UPDATE bracket_matches SET user_id_2 = ? WHERE id = ?').run(userId, m.id);
-        return;
+        return { success: true, matchId: m.id, lane: 'B', slot: 'user_id_2' };
+      } else if (!m.user_id_3) {
+        db.prepare('UPDATE bracket_matches SET user_id_3 = ? WHERE id = ?').run(userId, m.id);
+        return { success: true, matchId: m.id, lane: 'C', slot: 'user_id_3' };
       }
     }
+
+    // No open slot in existing Round 2 heats -> create new heat dynamically
+    const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
+    const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
+    const newHeatId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO bracket_matches (id, match_number, round_number, user_id_1, status)
+      VALUES (?, ?, 2, ?, 'pending')
+    `).run(newHeatId, nextMatchNumber, userId);
+
+    return { success: true, matchId: newHeatId, lane: 'A', slot: 'user_id_1', createdNewHeat: true };
+  }
+
+  // Alias for backward compatibility with existing scrutineer handlers
+  static placeIntoBracket(userId) {
+    return this.seedIntoBracket(userId);
   }
 
   // RD advances bracket match winner
