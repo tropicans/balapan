@@ -11,10 +11,10 @@ Mengembangkan modul turnamen eliminasi berjenjang (Babak 2, Babak 3, dst.) denga
 - [x] **ELIM-03**: Auto-Advance Engine secara otomatis mempromosikan 1 pemenang dari tiap heat di Babak $R$ ke slot kosong di Babak $R+1$ hingga mencapai Grand Final (3 mobil).
 
 ### 2. Scalable Multi-Round Dashboard & UI Experience
-- [ ] **ELIM-04**: Antarmuka dasbor eliminasi (`BracketDashboard.jsx`) mengadopsi navigasi berjenjang (*Round Selector Tabs*: Babak 2, Babak 3, Babak 4, Grand Final) dengan label jumlah heat aktif.
-- [ ] **ELIM-05**: Setiap kartu pertandingan menampilkan 3 baris pembalap ber-aksen warna jalur resmi (Line A Merah/Pink, Line B Cyan/Biru, Line C Hijau) dengan tombol "MENANG" dan ikon mahkota juara.
-- [ ] **ELIM-06**: Terdapat filter pencarian cepat (berdasarkan nomor heat atau nama/tim pembalap) serta pagination/virtual grouping agar 100+ heat dapat dijelajahi dengan lancar tanpa lag.
-- [ ] **ELIM-07**: Navigasi utama Navbar memperbarui tab dari *"Bracket Babak 2"* menjadi *"Babak Eliminasi"*.
+- [x] **ELIM-04**: Antarmuka dasbor eliminasi (`BracketDashboard.jsx`) mengadopsi navigasi berjenjang (*Round Selector Tabs*: Babak 2, Babak 3, Babak 4, Grand Final) dengan label jumlah heat aktif.
+- [x] **ELIM-05**: Setiap kartu pertandingan menampilkan 3 baris pembalap ber-aksen warna jalur resmi (Line A Merah/Pink, Line B Cyan/Biru, Line C Hijau) dengan tombol "MENANG" dan ikon mahkota juara.
+- [x] **ELIM-06**: Terdapat filter pencarian cepat (berdasarkan nomor heat atau nama/tim pembalap) serta pagination/virtual grouping agar 100+ heat dapat dijelajahi dengan lancar tanpa lag.
+- [x] **ELIM-07**: Navigasi utama Navbar memperbarui tab dari *"Bracket Babak 2"* menjadi *"Babak Eliminasi"*.
 
 ## Future Requirements (Out of Scope for v1.2)
 - Integrasi bagan double-elimination (repechage / loser bracket).
@@ -27,7 +27,7 @@ Mengembangkan modul turnamen eliminasi berjenjang (Babak 2, Babak 3, dst.) denga
 | ELIM-01 | Phase 5 | Complete |
 | ELIM-02 | Phase 5 | Complete |
 | ELIM-03 | Phase 5 | Complete |
-| ELIM-04 | Phase 6 | Pending |
-| ELIM-05 | Phase 6 | Pending |
-| ELIM-06 | Phase 6 | Pending |
-| ELIM-07 | Phase 6 | Pending |
+| ELIM-04 | Phase 6 | Complete |
+| ELIM-05 | Phase 6 | Complete |
+| ELIM-06 | Phase 6 | Complete |
+| ELIM-07 | Phase 6 | Complete |

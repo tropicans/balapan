@@ -50,7 +50,7 @@ Plans:
 
 Plans:
 
-- [ ] 06-01-PLAN.md
+- [x] 06-01-PLAN.md
 - [ ] 06-01: Multi-round scalable elimination dashboard UI & 3-lane bracket cards
 
 ---
