@@ -85,13 +85,61 @@ async function runTests() {
   assert.ok(bracketCheck, 'Andi should be auto-placed into Round 2 Elimination Bracket!');
   console.log(`✓ [8/9] Scrutineer passed Andi -> New BTO Record & Auto-placed into Bracket Match #${bracketCheck.match_number}`);
 
-  // 8. Cashier Top-Up & Guest Racer
+  // 8. Test "SEMUA CO / DNF (No Winner)" on Race #2
+  // Active race should now be Race #2 (Doni was in Lane A)
+  const activeRace2 = RaceManager.getActiveRace();
+  assert.strictEqual(activeRace2.race_number, 2, 'Active race should be Race #2');
+  
+  // Register Budi in Lane B of Race 2
+  RaceManager.registerLane(budi.id, 'B');
+  RaceManager.setReady(doni.id, activeRace2.id);
+  RaceManager.setReady(budi.id, activeRace2.id);
+  
+  const doniCouponBefore = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(doni.id).balance;
+  RaceManager.lockRace(activeRace2.id);
+  const doniCouponAfter = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(doni.id).balance;
+  assert.strictEqual(doniCouponAfter, doniCouponBefore - 1, 'Coupon deducted on lock');
+  
+  // Declare All CO
+  const allCoRes = RaceManager.declareAllCO(activeRace2.id);
+  assert.strictEqual(allCoRes.status, 'completed');
+  const finishedRace2 = db.prepare('SELECT * FROM races WHERE id = ?').get(activeRace2.id);
+  assert.strictEqual(finishedRace2.status, 'completed');
+  assert.strictEqual(finishedRace2.winner_id, null, 'Winner must be null on All CO');
+  const doniCouponPostCO = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(doni.id).balance;
+  assert.strictEqual(doniCouponPostCO, doniCouponAfter, 'Coupons remain deducted (not refunded) on All CO');
+  console.log(`✓ [9/11] "SEMUA CO / DNF" verified on Race #2 (Race completed, winner=null, coupons retained)`);
+
+  // 9. Test "DEKLARASI RE-RACE" on Race #3
+  const activeRace3 = RaceManager.getActiveRace();
+  assert.strictEqual(activeRace3.race_number, 3, 'Active race should now be Race #3');
+  RaceManager.registerLane(andi.id, 'A');
+  RaceManager.registerLane(budi.id, 'B');
+  RaceManager.setReady(andi.id, activeRace3.id);
+  RaceManager.setReady(budi.id, activeRace3.id);
+  
+  const andiBalBeforeRerace = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(andi.id).balance;
+  RaceManager.lockRace(activeRace3.id);
+  const andiBalLocked = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(andi.id).balance;
+  assert.strictEqual(andiBalLocked, andiBalBeforeRerace - 1);
+
+  // Now declare Re-Race on Lane A
+  const reRaceRes = RaceManager.declareReRace(activeRace3.id, ['A']);
+  assert.strictEqual(reRaceRes.status, 'pre-start');
+  assert.deepStrictEqual(reRaceRes.reRaceLanes, ['A']);
+  const regA_Rerace = db.prepare('SELECT * FROM race_registrations WHERE race_id = ? AND lane = ?').get(activeRace3.id, 'A');
+  assert.strictEqual(regA_Rerace.status, 'ready', 'Lane A status should be reset to ready for re-race');
+  const andiBalAfterRerace = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(andi.id).balance;
+  assert.strictEqual(andiBalAfterRerace, andiBalLocked, 'NO additional coupons deducted for re-race (Free Permit)');
+  console.log(`✓ [10/11] "DEKLARASI RE-RACE" verified on Race #3 (Lane A reset to ready, zero coupon debit)`);
+
+  // 10. Cashier Top-Up & Guest Racer
   const topUpRes = RaceManager.topUpCoupons(andi.id, 50);
-  assert.strictEqual(topUpRes.newBalance, andiCouponAfter + 50);
+  assert.strictEqual(topUpRes.newBalance, andiBalAfterRerace + 50);
 
   const guestRes = RaceManager.registerGuest('Racer Junior', 'JUNIOR', 20);
   assert.strictEqual(guestRes.user.balance, 20);
-  console.log(`✓ [9/9] Cashier +50 topup verified (${topUpRes.newBalance}) & Guest Racer created (${guestRes.user.name})`);
+  console.log(`✓ [11/11] Cashier +50 topup verified (${topUpRes.newBalance}) & Guest Racer created (${guestRes.user.name})`);
 
   console.log('\n======================================================');
   console.log('🏁 ALL TEST SUITES PASSED PERFECTLY! ZERO ERRORS!');

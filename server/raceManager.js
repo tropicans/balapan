@@ -384,6 +384,95 @@ export class RaceManager {
     };
   }
 
+  // RD declares "SEMUA CO / DNF (No Winner)"
+  static declareAllCO(raceId = null) {
+    const race = raceId ? db.prepare('SELECT * FROM races WHERE id = ?').get(raceId) : this.getActiveRace();
+    if (!race) throw new Error('Balapan tidak ditemukan');
+    if (race.status !== 'pre-start' && race.status !== 'locked') {
+      throw new Error(`Balapan harus berstatus 'pre-start' atau 'locked' untuk deklarasi CO/DNF (saat ini: ${race.status})`);
+    }
+
+    const regs = db.prepare('SELECT * FROM race_registrations WHERE race_id = ?').all(race.id);
+    if (regs.length === 0) throw new Error('Tidak ada pembalap di balapan ini');
+
+    const updateTx = db.transaction(() => {
+      // Mark race as completed with winner_id = NULL
+      db.prepare(`
+        UPDATE races 
+        SET status = 'completed', winner_id = NULL 
+        WHERE id = ?
+      `).run(race.id);
+
+      // Mark all registrations as dnf_co, clear finish_time and scrutineer_status
+      db.prepare(`
+        UPDATE race_registrations 
+        SET status = 'dnf_co', finish_time = NULL, scrutineer_status = NULL 
+        WHERE race_id = ?
+      `).run(race.id);
+    });
+
+    updateTx();
+
+    return {
+      success: true,
+      raceNumber: race.race_number,
+      status: 'completed',
+      message: `Semua mobil di Heat #${race.race_number} dinyatakan Course Out / DNF. Heat ditutup tanpa pemenang. Kupon kualifikasi tetap terpotong.`
+    };
+  }
+
+  // RD declares "DEKLARASI RE-RACE"
+  static declareReRace(raceId = null, lanes = []) {
+    const race = raceId ? db.prepare('SELECT * FROM races WHERE id = ?').get(raceId) : this.getActiveRace();
+    if (!race) throw new Error('Balapan tidak ditemukan');
+    if (race.status !== 'pre-start' && race.status !== 'locked') {
+      throw new Error(`Balapan harus berstatus 'pre-start' atau 'locked' untuk balap ulang (saat ini: ${race.status})`);
+    }
+
+    if (!Array.isArray(lanes) || lanes.length === 0) {
+      throw new Error('Pilih minimal 1 jalur untuk balap ulang (Re-Race)');
+    }
+
+    const upperLanes = lanes.map(l => String(l).toUpperCase());
+
+    const regs = db.prepare('SELECT * FROM race_registrations WHERE race_id = ?').all(race.id);
+    const validLanesInRace = regs.filter(r => upperLanes.includes(r.lane));
+
+    if (validLanesInRace.length === 0) {
+      throw new Error('Tidak ada peserta pada jalur yang dipilih untuk balap ulang');
+    }
+
+    const updateTx = db.transaction(() => {
+      // Reset selected lanes to ready, clear finish_time and scrutineer_status
+      const resetStmt = db.prepare(`
+        UPDATE race_registrations 
+        SET status = 'ready', finish_time = NULL, scrutineer_status = NULL 
+        WHERE race_id = ? AND lane = ?
+      `);
+
+      for (const reg of validLanesInRace) {
+        resetStmt.run(race.id, reg.lane);
+      }
+
+      // Reset race status back to pre-start (locked for ready to release, without re-deducting coupons)
+      db.prepare(`
+        UPDATE races 
+        SET status = 'pre-start', winner_id = NULL 
+        WHERE id = ?
+      `).run(race.id);
+    });
+
+    updateTx();
+
+    return {
+      success: true,
+      raceNumber: race.race_number,
+      reRaceLanes: validLanesInRace.map(r => r.lane),
+      status: 'pre-start',
+      message: `Balap ulang (Re-Race) aktif untuk Heat #${race.race_number} pada Jalur [${validLanesInRace.map(r => r.lane).join(', ')}]. Bebas kupon baru & tanpa scan ulang.`
+    };
+  }
+
   // Scrutineer Desk: "LOLOS" or "DISKUALIFIKASI"
   static handleScrutineerAction(registrationId, action) {
     const reg = db.prepare(`

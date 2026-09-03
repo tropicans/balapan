@@ -157,6 +157,20 @@ export function RaceProvider({ children }) {
       } catch (e) {}
     });
 
+    socketInstance.on('RACE_ALL_CO', (data) => {
+      sound.playErrorSound();
+      hapticError();
+      setBannerAlert({ type: 'error', message: data.message || 'SEMUA MOBIL CO / DNF - TIDAK ADA PEMENANG' });
+      setTimeout(() => setBannerAlert(null), 6000);
+    });
+
+    socketInstance.on('RACE_RERACE_DECLARED', (data) => {
+      sound.playSiren();
+      hapticLock();
+      setBannerAlert({ type: 'rerace', message: data.message || `BALAP ULANG (RE-RACE) JALUR [${data.reRaceLanes?.join(', ')}]` });
+      setTimeout(() => setBannerAlert(null), 7000);
+    });
+
     setSocket(socketInstance);
 
     return () => {
@@ -269,6 +283,40 @@ export function RaceProvider({ children }) {
     return data;
   };
 
+  const apiDeclareAllCO = async (raceId) => {
+    try {
+      const res = await fetch('/api/race/all-co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raceId })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal deklarasi Semua CO/DNF');
+      sound.playErrorSound();
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      throw err;
+    }
+  };
+
+  const apiDeclareReRace = async (raceId, lanes) => {
+    try {
+      const res = await fetch('/api/race/re-race', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raceId, lanes })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal deklarasi Re-Race');
+      sound.playReadySound();
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      throw err;
+    }
+  };
+
   const apiScrutineerAction = async (registrationId, action) => {
     const res = await fetch('/api/race/scrutineer', {
       method: 'POST',
@@ -359,6 +407,8 @@ export function RaceProvider({ children }) {
         apiLockRace,
         apiStartRace,
         apiSubmitFinish,
+        apiDeclareAllCO,
+        apiDeclareReRace,
         apiScrutineerAction,
         apiAdminOverride,
         apiTopUp,

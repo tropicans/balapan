@@ -6,7 +6,7 @@ Milestone v1.0 berfokus pada penyelesaian sisa gap fungsional agar sistem mencap
 
 ## Phases
 
-- [ ] **Phase 1: Race Exceptions & Recovery** - Penanganan kondisi Semua Crash/CO (No Winner) dan Alur Deklarasi Re-Race (Permit Gratis, Zero Rescan).
+- [x] **Phase 1: Race Exceptions & Recovery** - Penanganan kondisi Semua Crash/CO (No Winner) dan Alur Deklarasi Re-Race (Permit Gratis, Zero Rescan).
 - [ ] **Phase 2: Scrutineer Desk Alerts & Emergency Override** - Indikator berkedip Active Alert Lapis 2 dan Tombol Ambil Alih Hasil (Override) Lapis 3 di tablet juri.
 
 ## Phase Details
@@ -23,7 +23,7 @@ Milestone v1.0 berfokus pada penyelesaian sisa gap fungsional agar sistem mencap
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: Implementasi backend endpoint dan UI Dasbor RD untuk Semua CO/DNF dan Deklarasi Re-Race
+- [x] 01-01: Implementasi backend endpoint dan UI Dasbor RD untuk Semua CO/DNF dan Deklarasi Re-Race
 
 ### Phase 2: Scrutineer Desk Alerts & Emergency Override
 **Goal**: Meja pemeriksaan fisik (Scrutineering) memiliki sistem peringatan aktif dan kemampuan darurat mengambil alih hasil perlombaan jika terjadi kendala komunikasi dengan Race Director.
@@ -42,7 +42,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Race Exceptions & Recovery | 0/1 | Not started | - |
+| 1. Race Exceptions & Recovery | 1/1 | Complete | 2026-09-03 |
 | 2. Scrutineer Desk Alerts & Emergency Override | 0/1 | Not started | - |
 
 ---

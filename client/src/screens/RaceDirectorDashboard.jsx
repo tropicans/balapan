@@ -25,6 +25,8 @@ export function RaceDirectorDashboard() {
     apiLockRace,
     apiStartRace,
     apiSubmitFinish,
+    apiDeclareAllCO,
+    apiDeclareReRace,
     apiAdminOverride,
     apiStartCountdown,
     apiResetCountdown,
@@ -37,6 +39,10 @@ export function RaceDirectorDashboard() {
 
   // Finish times input state
   const [finishTimes, setFinishTimes] = useState({ A: '', B: '', C: '' });
+
+  // Re-Race Modal State
+  const [reRaceModalOpen, setReRaceModalOpen] = useState(false);
+  const [selectedReRaceLanes, setSelectedReRaceLanes] = useState({ A: true, B: true, C: true });
 
   // Admin Override Modal
   const [overrideLane, setOverrideLane] = useState(null); // 'A', 'B', or 'C'
@@ -99,6 +105,53 @@ export function RaceDirectorDashboard() {
     try {
       await apiStartRace(activeRaceId);
       setSuccessMsg(`Race #${activeRaceNum} BALAPAN BERLANGSUNG!`);
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Declare All CO / DNF (No Winner)
+  const handleDeclareAllCO = async () => {
+    if (!window.confirm(`Yakin menyatakan SEMUA MOBIL CO / DNF untuk Heat #${activeRaceNum}? Heat akan ditutup tanpa pemenang dan kupon kualifikasi peserta tetap terpotong.`)) {
+      return;
+    }
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await apiDeclareAllCO(activeRaceId);
+      setSuccessMsg(res.message || `Heat #${activeRaceNum} ditutup (Semua CO/DNF).`);
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open Re-Race Modal
+  const openReRaceModal = () => {
+    const initial = {};
+    registrations.forEach(r => {
+      initial[r.lane] = true;
+    });
+    setSelectedReRaceLanes(initial);
+    setReRaceModalOpen(true);
+  };
+
+  // Confirm Re-Race
+  const handleConfirmReRace = async () => {
+    const lanesToRerun = Object.keys(selectedReRaceLanes).filter(l => selectedReRaceLanes[l]);
+    if (lanesToRerun.length === 0) {
+      setErrorMsg('Pilih minimal 1 jalur untuk balap ulang.');
+      return;
+    }
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await apiDeclareReRace(activeRaceId, lanesToRerun);
+      setSuccessMsg(res.message || `Balap ulang aktif untuk Jalur [${lanesToRerun.join(', ')}].`);
+      setReRaceModalOpen(false);
     } catch (err) {
       setErrorMsg(err.message);
     } finally {
@@ -313,13 +366,38 @@ export function RaceDirectorDashboard() {
             )}
 
             {raceStatus === 'locked' && (
-              <div className="p-4 bg-red-950/40 border border-red-500 clip-cyber text-center">
-                <div className="text-lg font-orbitron font-black text-red-400 animate-pulse">
-                  MOBIL SEDANG DI LINTASAN...
+              <div className="space-y-3">
+                <div className="p-4 bg-red-950/40 border border-red-500 clip-cyber text-center">
+                  <div className="text-lg font-orbitron font-black text-red-400 animate-pulse">
+                    MOBIL SEDANG DI LINTASAN...
+                  </div>
+                  <p className="text-xs text-cyberSilver/70 font-mono mt-1">
+                    Baca waktu di display stopwatch fisik track, lalu masukkan di panel input finish bawah.
+                  </p>
                 </div>
-                <p className="text-xs text-cyberSilver/70 font-mono mt-1">
-                  Baca waktu di display stopwatch fisik track, lalu masukkan di panel input finish bawah.
-                </p>
+
+                {/* Emergency Exception Action Buttons */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDeclareAllCO}
+                    disabled={loading}
+                    className="py-3 px-4 bg-red-600/90 hover:bg-red-600 text-white font-orbitron font-black text-xs uppercase clip-cyber shadow-[0_0_15px_rgba(239,68,68,0.5)] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <Square className="w-4 h-4 text-white" />
+                    <span>SEMUA CO / DNF (NO WINNER)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={openReRaceModal}
+                    disabled={loading}
+                    className="py-3 px-4 bg-neonAmber/90 hover:bg-neonAmber text-black font-orbitron font-black text-xs uppercase clip-cyber shadow-glowAmber flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <RotateCcw className="w-4 h-4 text-black" />
+                    <span>DEKLARASI RE-RACE</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -458,6 +536,99 @@ export function RaceDirectorDashboard() {
                   <span className="text-neonAmber font-bold">{u.coupon_balance} Kupon</span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Re-Race Declaration Modal */}
+      {reRaceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="max-w-md w-full bg-obsidian border-2 border-neonAmber p-6 clip-cyber shadow-glowAmber space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-neonAmber" />
+                <h3 className="font-orbitron font-black text-white text-base">
+                  DEKLARASI RE-RACE // HEAT #{activeRaceNum}
+                </h3>
+              </div>
+              <button
+                onClick={() => setReRaceModalOpen(false)}
+                className="text-cyberSilver/60 hover:text-white font-mono"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 bg-neonAmber/10 border border-neonAmber/50 clip-cyber text-xs font-mono text-neonAmber space-y-1">
+              <p className="font-bold">⚡ FREE RE-RUN PERMIT (BEBAS KUPON & TANPA SCAN ULANG)</p>
+              <p className="text-cyberSilver/80 text-[11px]">
+                Pilih jalur yang berhak melakukan balap ulang. Status jalur terpilih akan di-reset menjadi SIAP tanpa memotong kupon tambahan.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-orbitron text-cyberSilver/80 uppercase">
+                Pilih Jalur yang Balap Ulang:
+              </div>
+              {['A', 'B', 'C'].map(laneLetter => {
+                const reg = registrations.find(r => r.lane === laneLetter);
+                if (!reg) return null;
+                const isChecked = !!selectedReRaceLanes[laneLetter];
+
+                return (
+                  <label
+                    key={laneLetter}
+                    className={clsx(
+                      "p-3 border clip-cyber flex items-center justify-between cursor-pointer transition-all",
+                      isChecked 
+                        ? "bg-black/80 border-neonAmber text-white shadow-[0_0_10px_rgba(255,170,0,0.3)]" 
+                        : "bg-black/40 border-gray-800 text-cyberSilver/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => setSelectedReRaceLanes({
+                          ...selectedReRaceLanes,
+                          [laneLetter]: e.target.checked
+                        })}
+                        className="w-4 h-4 accent-neonAmber cursor-pointer"
+                      />
+                      <div>
+                        <span className="font-orbitron font-bold text-sm text-neonCyan mr-2">
+                          JALUR {laneLetter}:
+                        </span>
+                        <span className="font-orbitron font-bold text-white text-sm">
+                          {reg.user_name}
+                        </span>
+                        <span className="text-xs font-mono text-neonPink ml-1.5">
+                          [{reg.team_name || 'NO TAG'}]
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setReRaceModalOpen(false)}
+                className="flex-1 py-3 bg-black/60 hover:bg-black/90 border border-gray-700 text-cyberSilver font-orbitron font-bold text-xs uppercase clip-cyber"
+              >
+                BATAL
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReRace}
+                disabled={loading}
+                className="flex-1 py-3 bg-neonAmber hover:bg-neonAmber/90 text-black font-orbitron font-black text-xs uppercase clip-cyber shadow-glowAmber"
+              >
+                MULAI BALAP ULANG
+              </button>
             </div>
           </div>
         </div>

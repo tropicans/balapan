@@ -336,11 +336,26 @@ export function ParticipantDashboard() {
               LINE {myActiveReg.lane}
             </div>
             <div className="text-xs font-mono text-cyberSilver">
-              STATUS: <span className={clsx("font-bold uppercase", isReady ? "text-neonGreen" : "text-neonAmber")}>
-                {myActiveReg.status}
+              STATUS: <span className={clsx("font-bold uppercase", 
+                myActiveReg.status === 'dnf_co' ? "text-red-400" :
+                isReady ? "text-neonGreen" : "text-neonAmber"
+              )}>
+                {myActiveReg.status === 'dnf_co' ? 'DNF / COURSE OUT' : myActiveReg.status}
               </span>
             </div>
           </div>
+
+          {/* DNF / CO Status Card */}
+          {myActiveReg.status === 'dnf_co' && (
+            <div className="p-4 bg-red-950/40 border border-red-500 clip-cyber text-center space-y-1 animate-pulse">
+              <div className="text-sm font-orbitron font-black text-red-400">
+                COURSE OUT / DNF (NO WINNER)
+              </div>
+              <p className="text-xs text-cyberSilver/70 font-mono">
+                Semua mobil keluar lintasan. Kupon kualifikasi terpakai. Silakan mendaftar ke antrean heat berikutnya.
+              </p>
+            </div>
+          )}
 
           {/* Scrutineering / Finish Time Status */}
           {myFinishTime && (

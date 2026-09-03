@@ -8,12 +8,12 @@
 
 ### Race Exceptions & Recovery (EXCP)
 
-- [ ] **EXCP-01**: Race Director dapat mengklik tombol "SEMUA CO / DNF (No Winner)" pada Dasbor Kontrol saat semua mobil keluar lintasan / patah part.
+- [x] **EXCP-01**: Race Director dapat mengklik tombol "SEMUA CO / DNF (No Winner)" pada Dasbor Kontrol saat semua mobil keluar lintasan / patah part.
   - Balapan ditutup dengan status `completed` dan `winner_id` kosong.
   - Registrasi pembalap ditandai sebagai `DNF` / `CO`.
   - Kupon kualifikasi peserta tetap hangus terpotong sesuai regulasi turnamen.
   - Tampilan TV Sirkuit dan HP peserta memperbarui status bahwa heat berakhir tanpa pemenang.
-- [ ] **EXCP-02**: Race Director dapat mendeklarasikan "DEKLARASI RE-RACE" dengan modal pilihan checklist jalur (`[ ] Jalur A`, `[ ] Jalur B`, `[ ] Jalur C`).
+- [x] **EXCP-02**: Race Director dapat mendeklarasikan "DEKLARASI RE-RACE" dengan modal pilihan checklist jalur (`[ ] Jalur A`, `[ ] Jalur B`, `[ ] Jalur C`).
   - Sistem menandai status jalur terpilih sebagai *Re-Race Free Permit*.
   - Kupon peserta tidak didebit ulang.
   - Peserta tidak perlu memindai QR ulang dengan HP.
@@ -28,8 +28,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXCP-01 | Phase 1 | Pending |
-| EXCP-02 | Phase 1 | Pending |
+| EXCP-01 | Phase 1 | Complete |
+| EXCP-02 | Phase 1 | Complete |
 | SCRUT-01 | Phase 2 | Pending |
 | SCRUT-02 | Phase 2 | Pending |
 

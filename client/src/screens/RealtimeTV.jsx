@@ -41,8 +41,14 @@ export function RealtimeTV() {
     statusText = "BALAPAN BERLANGSUNG";
     statusStyle = "bg-red-500/20 text-red-500 border-red-500 animate-pulse-fast shadow-[0_0_20px_rgba(239,68,68,0.7)]";
   } else if (raceStatus === 'completed') {
-    statusText = "VERIFIKASI MEJA SCRUTINEER";
-    statusStyle = "bg-neonCyan/20 text-neonCyan border-neonCyan shadow-glowCyan";
+    const isAllCO = !activeRace?.winner_id && registrations.some(r => r.status === 'dnf_co');
+    if (isAllCO) {
+      statusText = "SEMUA CO / DNF (NO WINNER)";
+      statusStyle = "bg-red-950/80 text-red-400 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.7)]";
+    } else {
+      statusText = "VERIFIKASI MEJA SCRUTINEER";
+      statusStyle = "bg-neonCyan/20 text-neonCyan border-neonCyan shadow-glowCyan";
+    }
   }
 
   // Construct Marquee text for upcoming heats
@@ -95,6 +101,21 @@ export function RealtimeTV() {
         </div>
       </div>
 
+      {/* Emergency Broadcast Alert (Re-Race / All CO / Record) */}
+      {bannerAlert && (
+        <div className={clsx(
+          "my-3 p-3.5 border-2 clip-cyber flex items-center justify-center gap-3 text-center transition-all animate-pulse",
+          bannerAlert.type === 'rerace' && "bg-neonAmber/20 border-neonAmber text-neonAmber shadow-glowAmber",
+          bannerAlert.type === 'error' && "bg-red-950/90 border-red-500 text-red-400 shadow-[0_0_25px_rgba(239,68,68,0.8)]",
+          bannerAlert.type !== 'rerace' && bannerAlert.type !== 'error' && "bg-neonCyan/20 border-neonCyan text-neonCyan shadow-glowCyan"
+        )}>
+          <Zap className="w-6 h-6 shrink-0 animate-bounce" />
+          <span className="font-orbitron font-black text-base md:text-xl tracking-wider uppercase">
+            {bannerAlert.message}
+          </span>
+        </div>
+      )}
+
       {/* 2. Main 16:9 Screen Body */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-6 flex-1">
         {/* Main Left Column (60% width = 7/12 cols): Lines A, B, C Giant Status Cards */}
@@ -130,10 +151,11 @@ export function RealtimeTV() {
                 <span className={clsx(
                   "px-4 py-1.5 text-xs md:text-sm font-orbitron font-black uppercase clip-cyber",
                   !laneA && "bg-gray-800/80 text-gray-500",
-                  laneA && laneA.status !== 'ready' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
+                  laneA && laneA.status === 'dnf_co' && "bg-red-950/80 text-red-400 border border-red-500",
+                  laneA && laneA.status !== 'ready' && laneA.status !== 'dnf_co' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
                   laneA && laneA.status === 'ready' && "bg-neonGreen/20 text-neonGreen border border-neonGreen animate-pulse shadow-glowGreen"
                 )}>
-                  {!laneA ? 'EMPTY' : laneA.status === 'ready' ? 'READY' : 'PENDING'}
+                  {!laneA ? 'EMPTY' : laneA.status === 'dnf_co' ? 'DNF / CO' : laneA.status === 'ready' ? 'READY' : 'PENDING'}
                 </span>
               )}
             </div>
@@ -170,10 +192,11 @@ export function RealtimeTV() {
                 <span className={clsx(
                   "px-4 py-1.5 text-xs md:text-sm font-orbitron font-black uppercase clip-cyber",
                   !laneB && "bg-gray-800/80 text-gray-500",
-                  laneB && laneB.status !== 'ready' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
+                  laneB && laneB.status === 'dnf_co' && "bg-red-950/80 text-red-400 border border-red-500",
+                  laneB && laneB.status !== 'ready' && laneB.status !== 'dnf_co' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
                   laneB && laneB.status === 'ready' && "bg-neonGreen/20 text-neonGreen border border-neonGreen animate-pulse shadow-glowGreen"
                 )}>
-                  {!laneB ? 'EMPTY' : laneB.status === 'ready' ? 'READY' : 'PENDING'}
+                  {!laneB ? 'EMPTY' : laneB.status === 'dnf_co' ? 'DNF / CO' : laneB.status === 'ready' ? 'READY' : 'PENDING'}
                 </span>
               )}
             </div>
@@ -210,10 +233,11 @@ export function RealtimeTV() {
                 <span className={clsx(
                   "px-4 py-1.5 text-xs md:text-sm font-orbitron font-black uppercase clip-cyber",
                   !laneC && "bg-gray-800/80 text-gray-500",
-                  laneC && laneC.status !== 'ready' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
+                  laneC && laneC.status === 'dnf_co' && "bg-red-950/80 text-red-400 border border-red-500",
+                  laneC && laneC.status !== 'ready' && laneC.status !== 'dnf_co' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
                   laneC && laneC.status === 'ready' && "bg-neonGreen/20 text-neonGreen border border-neonGreen animate-pulse shadow-glowGreen"
                 )}>
-                  {!laneC ? 'EMPTY' : laneC.status === 'ready' ? 'READY' : 'PENDING'}
+                  {!laneC ? 'EMPTY' : laneC.status === 'dnf_co' ? 'DNF / CO' : laneC.status === 'ready' ? 'READY' : 'PENDING'}
                 </span>
               )}
             </div>

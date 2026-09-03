@@ -238,6 +238,45 @@ app.post('/api/race/finish', (req, res) => {
   }
 });
 
+// 12b. RD: Declare "SEMUA CO / DNF (No Winner)"
+app.post('/api/race/all-co', (req, res) => {
+  try {
+    const { raceId } = req.body;
+    const result = RaceManager.declareAllCO(raceId);
+    
+    io.emit('RACE_ALL_CO', {
+      raceNumber: result.raceNumber,
+      message: 'SEMUA MOBIL COURSE OUT / DNF - TIDAK ADA PEMENANG',
+      timestamp: new Date().toISOString()
+    });
+
+    broadcastFullState();
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 12c. RD: Declare "DEKLARASI RE-RACE"
+app.post('/api/race/re-race', (req, res) => {
+  try {
+    const { raceId, lanes } = req.body;
+    const result = RaceManager.declareReRace(raceId, lanes);
+    
+    io.emit('RACE_RERACE_DECLARED', {
+      raceNumber: result.raceNumber,
+      reRaceLanes: result.reRaceLanes,
+      message: `BALAP ULANG (RE-RACE) JALUR [${result.reRaceLanes.join(', ')}]`,
+      timestamp: new Date().toISOString()
+    });
+
+    broadcastFullState();
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // 13. Scrutineer: "LOLOS" (pass) or "DISKUALIFIKASI" (disqualified)
 app.post('/api/race/scrutineer', (req, res) => {
   try {
