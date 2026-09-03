@@ -22,6 +22,10 @@ class SqliteWrapper {
   async init(customPath = null) {
     const SQL = await initSqlJs();
     this.currentPath = customPath || process.env.DB_PATH || path.join(dbDir, 'tamiya.sqlite');
+    const targetDir = path.dirname(this.currentPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
     if (fs.existsSync(this.currentPath)) {
       try {
         const filebuffer = fs.readFileSync(this.currentPath);
@@ -38,6 +42,10 @@ class SqliteWrapper {
   save() {
     if (!this.rawDb || !this.currentPath) return;
     try {
+      const targetDir = path.dirname(this.currentPath);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
       const data = this.rawDb.export();
       const buffer = Buffer.from(data);
       fs.writeFileSync(this.currentPath, buffer);

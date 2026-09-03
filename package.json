@@ -11,7 +11,12 @@
     "build:client": "npm --prefix client run build",
     "build": "npm run build:client",
     "start": "node server/index.js",
-    "test": "node server/tests/race-flow.test.js"
+    "test": "node server/tests/race-flow.test.js",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:restart": "docker compose restart"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -48,16 +48,35 @@ Sistem manajemen turnamen digital nir-kertas (*paperless*) untuk sirkuit balap T
 
 ## 🚀 Panduan Menjalankan Aplikasi
 
-### Opsi 1: Menjalankan via Docker (Production Ready - Direkomendasikan)
-Pastikan Docker dan Docker Compose telah terpasang di sistem Anda:
+### Opsi 1: Menjalankan via Docker (Production Hardened — Direkomendasikan)
+Sistem telah dilengkapi dengan *multi-stage Docker build* berbasis Alpine Linux yang aman, ringan (~80MB), non-root user (`node`), dan dilengkapi *Docker Healthcheck* otomatis.
 
 ```bash
-# Build dan jalankan seluruh container
-docker compose up --build -d
+# 1. Salin template konfigurasi environment (opsional)
+cp .env.example .env
 
-# Buka di browser:
-# http://localhost:3000
+# 2. Build dan jalankan container production di latar belakang
+npm run docker:up
+# atau: docker compose up --build -d
+
+# 3. Cek status kesehatan container (healthy)
+docker compose ps
+
+# 4. Pantau live server logs
+npm run docker:logs
+# atau: docker compose logs -f
+
+# 5. Hentikan container secara aman (graceful shutdown)
+npm run docker:down
+# atau: docker compose down
 ```
+
+Akses sistem di browser:
+- **Aplikasi Web**: [http://localhost:3000](http://localhost:3000)
+- **Health Check Monitor**: [http://localhost:3000/api/health](http://localhost:3000/api/health)
+- **State Snapshot API**: [http://localhost:3000/api/state](http://localhost:3000/api/state)
+
+> 💡 **Data Persistence**: Seluruh data SQLite dan histori turnamen disimpan secara persisten di Docker Named Volume `dgdash_racing_data` pada `/app/data/tamiya.sqlite`, sehingga data tetap aman meskipun container di-restart atau di-update.
 
 ### Opsi 2: Menjalankan secara Lokal (Node.js)
 ```bash

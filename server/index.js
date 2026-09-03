@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
@@ -19,6 +20,12 @@ const io = new SocketIOServer(server, {
     methods: ['GET', 'POST']
   }
 });
+
+// Production Security & Proxy Settings
+app.disable('x-powered-by');
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 
 app.use(cors());
 app.use(express.json());
@@ -42,6 +49,16 @@ function broadcastFullState() {
 }
 
 // REST APIs
+// 0. Production Health Check Endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    database: db.rawDb ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 // 1. Full State Snapshot
 app.get('/api/state', (req, res) => {
   try {
@@ -456,7 +473,34 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
   console.log(`🏎️ DGDASH RACING SYSTEM BACKEND ACTIVE`);
-  console.log(`📍 Listening on: http://localhost:${PORT}`);
+  console.log(`📍 Listening on: http://0.0.0.0:${PORT}`);
   console.log(`⚡ Real-time Socket.IO and REST API Ready`);
   console.log(`====================================================`);
 });
+
+// Graceful Shutdown Handlers
+const shutdown = (signal) => {
+  console.log(`\n🛑 [SHUTDOWN] Received ${signal}. Starting graceful termination...`);
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+  try {
+    db.save();
+    console.log('💾 [DB] Database flushed and saved to disk successfully.');
+  } catch (err) {
+    console.error('❌ [DB] Error saving database during shutdown:', err);
+  }
+  server.close(() => {
+    console.log('🔒 [SERVER] HTTP and WebSocket connections closed cleanly.');
+    process.exit(0);
+  });
+  // Force termination if connections don't close within 5s
+  setTimeout(() => {
+    console.error('⚠️ [SHUTDOWN] Forced shutdown due to timeout.');
+    process.exit(1);
+  }, 5000).unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
