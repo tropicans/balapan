@@ -1,8 +1,8 @@
 {
-  "name": "tamiya-digital-racing-system",
+  "name": "dgdash-racing-system",
   "version": "1.0.0",
   "type": "module",
-  "description": "Tamiya Digital Racing System (Cyberpunk / Neo-Racing UI)",
+  "description": "DGDash Racing System (Cyberpunk / Neo-Racing UI)",
   "main": "server/index.js",
   "scripts": {
     "dev:server": "node --watch server/index.js",

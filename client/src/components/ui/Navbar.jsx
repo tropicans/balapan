@@ -47,12 +47,12 @@ export function Navbar({ activeScreen, setActiveScreen }) {
         {/* Brand / Logo */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-neonCyan/20 border border-neonCyan flex items-center justify-center clip-cyber">
-            <span className="font-orbitron font-black text-neonCyan text-lg">4D</span>
+            <span className="font-orbitron font-black text-neonCyan text-base">DG</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-sm md:text-base font-orbitron font-black tracking-wider text-white">
-                TAMIYA <span className="text-neonCyan">DIGITAL RACING</span>
+                DGDASH <span className="text-neonCyan">RACING SYSTEM</span>
               </h1>
               <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-orbitron font-bold bg-neonPink/20 text-neonPink border border-neonPink clip-cyber">
                 HEAT #{activeRaceNum}

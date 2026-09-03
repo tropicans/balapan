@@ -1,4 +1,4 @@
-# 🏎️ Tamiya Digital Racing System (Cyberpunk / Neo-Racing HUD)
+# 🏎️ DGDash Racing System (Cyberpunk / Neo-Racing HUD)
 
 Sistem manajemen turnamen digital nir-kertas (*paperless*) untuk sirkuit balap Tamiya Mini 4WD 3-jalur (*3-lane racetrack*) tanpa memerlukan hardware RFID fisik. Menggunakan teknologi *self-scanning* peserta (QR Code), sinkronisasi real-time berbasis WebSocket, dan kontrol terpusat oleh Race Director (RD).
 

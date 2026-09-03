@@ -52,7 +52,7 @@ export function RealtimeTV() {
   }
 
   // Construct Marquee text for upcoming heats
-  let marqueeText = "Turnamen Mini 4WD Tamiya Digital • ";
+  let marqueeText = "Turnamen DGDash Racing System • ";
   if (upcomingRaces.length > 0) {
     const parts = upcomingRaces.map(r => {
       const racerNames = r.racers?.map(rac => `${rac.user_name} (${rac.lane})`).join(', ') || 'Belum Terisi';
@@ -70,12 +70,12 @@ export function RealtimeTV() {
         {/* Left: Tournament & Heat Info */}
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-neonCyan/20 border-2 border-neonCyan flex items-center justify-center clip-cyber shadow-glowCyan">
-            <span className="font-orbitron font-black text-neonCyan text-2xl">4D</span>
+            <span className="font-orbitron font-black text-neonCyan text-2xl">DG</span>
           </div>
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl md:text-3xl font-orbitron font-black text-white tracking-widest text-glow-cyan">
-                TAMIYA DIGITAL RACING SYSTEM
+                DGDASH RACING SYSTEM
               </h1>
               <span className="px-3 py-1 text-sm font-orbitron font-black bg-neonPink/20 text-neonPink border border-neonPink clip-cyber shadow-glowPink">
                 HEAT #{activeRaceNum}

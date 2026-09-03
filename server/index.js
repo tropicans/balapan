@@ -425,9 +425,9 @@ app.get('*', (req, res) => {
       res.send(`
         <!DOCTYPE html>
         <html>
-        <head><title>Tamiya Digital Racing System</title></head>
+        <head><title>DGDash Racing System</title></head>
         <body style="background:#0a0b10;color:#00f0ff;font-family:sans-serif;padding:40px;text-align:center;">
-          <h1>Tamiya Digital Racing System Server Active</h1>
+          <h1>DGDash Racing System Server Active</h1>
           <p>Client build pending or in development mode. Run Vite dev server or npm run build.</p>
         </body>
         </html>
@@ -455,7 +455,7 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`====================================================`);
-  console.log(`🏎️ TAMIYA DIGITAL RACING SYSTEM BACKEND ACTIVE`);
+  console.log(`🏎️ DGDASH RACING SYSTEM BACKEND ACTIVE`);
   console.log(`📍 Listening on: http://localhost:${PORT}`);
   console.log(`⚡ Real-time Socket.IO and REST API Ready`);
   console.log(`====================================================`);

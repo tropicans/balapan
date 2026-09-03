@@ -13,7 +13,7 @@ const uniqueTestDb = path.join(__dirname, `../../data/test_${Date.now()}.sqlite`
 process.env.DB_PATH = uniqueTestDb;
 
 async function runTests() {
-  console.log('🧪 RUNNING TAMIYA DIGITAL RACING SYSTEM TEST SUITE...\n');
+  console.log('🧪 RUNNING DGDASH RACING SYSTEM TEST SUITE...\n');
 
   // 1. Init Database
   await initDatabase();

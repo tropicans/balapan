@@ -74,7 +74,7 @@ export function DeskQRCodes() {
           >
             <div>
               <div className={`inline-block px-3 py-1 font-orbitron font-black text-xs uppercase clip-cyber mb-4 ${l.badge}`}>
-                TAMIYA RACETRACK
+                DGDASH RACETRACK
               </div>
               <h3 className={`text-2xl font-black font-orbitron ${l.text} tracking-wider`}>
                 {l.title}
