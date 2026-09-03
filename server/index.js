@@ -298,6 +298,27 @@ app.post('/api/race/scrutineer', (req, res) => {
   }
 });
 
+// 13b. Scrutineer: Lapis 3 Emergency Override (Ambil Alih Hasil dari Meja Juri)
+app.post('/api/race/scrutineer-override', (req, res) => {
+  try {
+    const { raceId, lane, finishTime, action } = req.body;
+    const result = RaceManager.scrutineerOverride({ raceId, lane, finishTime, action });
+
+    if (result.isNewBTO) {
+      io.emit('NEW_BTO_RECORD', {
+        userName: result.winner.userName,
+        teamName: result.winner.teamName,
+        time: result.winner.finishTime
+      });
+    }
+
+    broadcastFullState();
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // 14. RD Admin Override Panel (Assign / Force Ready / Kick)
 app.post('/api/race/override', (req, res) => {
   try {

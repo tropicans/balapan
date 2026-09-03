@@ -328,6 +328,22 @@ export function RaceProvider({ children }) {
     return data;
   };
 
+  const apiScrutineerOverride = async ({ raceId, lane, finishTime, action }) => {
+    const res = await fetch('/api/race/scrutineer-override', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raceId, lane, finishTime, action })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Gagal mengeksekusi override scrutineer');
+    if (action === 'pass') {
+      sound.playReadySound();
+    } else {
+      sound.playErrorSound();
+    }
+    return data;
+  };
+
   const apiAdminOverride = async (action, payload) => {
     const res = await fetch('/api/race/override', {
       method: 'POST',
@@ -410,6 +426,7 @@ export function RaceProvider({ children }) {
         apiDeclareAllCO,
         apiDeclareReRace,
         apiScrutineerAction,
+        apiScrutineerOverride,
         apiAdminOverride,
         apiTopUp,
         apiRegisterGuest,

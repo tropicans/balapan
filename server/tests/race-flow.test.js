@@ -139,10 +139,43 @@ async function runTests() {
 
   const guestRes = RaceManager.registerGuest('Racer Junior', 'JUNIOR', 20);
   assert.strictEqual(guestRes.user.balance, 20);
-  console.log(`✓ [11/11] Cashier +50 topup verified (${topUpRes.newBalance}) & Guest Racer created (${guestRes.user.name})`);
+  console.log(`✓ [11/12] Cashier +50 topup verified (${topUpRes.newBalance}) & Guest Racer created (${guestRes.user.name})`);
+
+  // 12. Test "LAPIS 3: SCRUTINEER EMERGENCY OVERRIDE"
+  // Race #3 is currently in 'pre-start' after re-race declaration. Start it to 'locked'.
+  RaceManager.startRace(activeRace3.id);
+  const lockedRace3 = db.prepare('SELECT status FROM races WHERE id = ?').get(activeRace3.id);
+  assert.strictEqual(lockedRace3.status, 'locked');
+
+  // Scrutineer triggers emergency override on Lane B (Budi) with 10.850s and 'pass'
+  const overrideRes = RaceManager.scrutineerOverride({
+    raceId: activeRace3.id,
+    lane: 'B',
+    finishTime: 10.850,
+    action: 'pass'
+  });
+
+  assert.strictEqual(overrideRes.success, true);
+  assert.strictEqual(overrideRes.winner.userId, budi.id);
+  assert.strictEqual(overrideRes.winner.lane, 'B');
+  assert.strictEqual(overrideRes.winner.finishTime, 10.850);
+  assert.strictEqual(overrideRes.isNewBTO, true, '10.850s should be new BTO over Andi 11.230s');
+
+  const budiRegPostOverride = db.prepare('SELECT * FROM race_registrations WHERE race_id = ? AND lane = ?').get(activeRace3.id, 'B');
+  assert.strictEqual(budiRegPostOverride.finish_time, 10.850);
+  assert.strictEqual(budiRegPostOverride.scrutineer_status, 'pass');
+
+  const finishedRace3 = db.prepare('SELECT * FROM races WHERE id = ?').get(activeRace3.id);
+  assert.strictEqual(finishedRace3.status, 'completed');
+  assert.strictEqual(finishedRace3.winner_id, budi.id);
+
+  // Check Budi auto-placement into bracket
+  const budiBracket = db.prepare("SELECT * FROM bracket_matches WHERE user_id_1 = ? OR user_id_2 = ?").get(budi.id, budi.id);
+  assert.ok(budiBracket, 'Budi should be auto-placed into Round 2 Elimination Bracket after scrutineer override!');
+  console.log(`✓ [12/12] "SCRUTINEER EMERGENCY OVERRIDE" verified on Race #3 (Budi passed, new BTO 10.850s, auto-seeded into Bracket Match #${budiBracket.match_number})`);
 
   console.log('\n======================================================');
-  console.log('🏁 ALL TEST SUITES PASSED PERFECTLY! ZERO ERRORS!');
+  console.log('🏁 ALL 12 TEST SUITES PASSED PERFECTLY! ZERO ERRORS!');
   console.log('======================================================\n');
 
   // Cleanup test DB

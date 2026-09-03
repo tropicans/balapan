@@ -21,8 +21,8 @@
 
 ### Scrutineer Desk Alerts & Emergency Override (SCRUT)
 
-- [ ] **SCRUT-01**: Layar tablet Scrutineer menampilkan Active Alert Lapis 2 (banner/indikator berkedip kuning) bertuliskan *"Race Aktif Belum Disubmit Admin"* jika balapan sedang berlangsung (`locked`) dan pemenang sudah tiba membawa mobil ke meja pemeriksaan.
-- [ ] **SCRUT-02**: Layar tablet Scrutineer menyediakan tombol darurat "Ambil Alih Hasil (Override)" Lapis 3 untuk memilih pemenang secara manual langsung dari meja scrutineer jika Race Director berhalangan / laptop admin mengalami kendala.
+- [x] **SCRUT-01**: Layar tablet Scrutineer menampilkan Active Alert Lapis 2 (banner/indikator berkedip kuning) bertuliskan *"Race Aktif Belum Disubmit Admin"* jika balapan sedang berlangsung (`locked`) dan pemenang sudah tiba membawa mobil ke meja pemeriksaan.
+- [x] **SCRUT-02**: Layar tablet Scrutineer menyediakan tombol darurat "Ambil Alih Hasil (Override)" Lapis 3 untuk memilih pemenang secara manual langsung dari meja scrutineer jika Race Director berhalangan / laptop admin mengalami kendala.
 
 ## Traceability
 
@@ -30,8 +30,8 @@
 |-------------|-------|--------|
 | EXCP-01 | Phase 1 | Complete |
 | EXCP-02 | Phase 1 | Complete |
-| SCRUT-01 | Phase 2 | Pending |
-| SCRUT-02 | Phase 2 | Pending |
+| SCRUT-01 | Phase 2 | Complete |
+| SCRUT-02 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 4 total

@@ -473,6 +473,73 @@ export class RaceManager {
     };
   }
 
+  // Lapis 3: Scrutineer Emergency Override
+  // Used when RD computer fails/disconnects: Scrutineer manually selects winning lane, optional finish time, and pass/disqualified
+  static scrutineerOverride({ raceId, lane, finishTime = null, action = 'pass' }) {
+    const race = raceId ? db.prepare('SELECT * FROM races WHERE id = ?').get(raceId) : this.getActiveRace();
+    if (!race) throw new Error('Balapan aktif tidak ditemukan');
+
+    if (race.status !== 'pre-start' && race.status !== 'locked') {
+      throw new Error(`Override juri hanya dapat dilakukan saat balapan sedang berlangsung atau pre-start (Status saat ini: ${race.status})`);
+    }
+
+    const targetReg = db.prepare(`
+      SELECT rr.*, u.name as user_name, u.team_name
+      FROM race_registrations rr
+      JOIN users u ON rr.user_id = u.id
+      WHERE rr.race_id = ? AND rr.lane = ?
+    `).get(race.id, lane);
+
+    if (!targetReg) {
+      throw new Error(`Tidak ada pembalap terdaftar pada Jalur ${lane} untuk Heat #${race.race_number}`);
+    }
+
+    const parsedTime = finishTime && !isNaN(parseFloat(finishTime)) ? parseFloat(finishTime) : (targetReg.finish_time || 0.000);
+
+    const overrideTx = db.transaction(() => {
+      // 1. Update finish time on the target registration
+      db.prepare(`
+        UPDATE race_registrations 
+        SET finish_time = ?, status = 'finished'
+        WHERE id = ?
+      `).run(parsedTime, targetReg.id);
+
+      // 2. Mark other registrations in this race as completed or dnf if they had no time
+      db.prepare(`
+        UPDATE race_registrations 
+        SET status = CASE WHEN finish_time IS NOT NULL THEN 'finished' ELSE 'dnf_co' END
+        WHERE race_id = ? AND id != ?
+      `).run(race.id, targetReg.id);
+
+      // 3. Set race winner
+      db.prepare(`
+        UPDATE races 
+        SET winner_id = ?, status = 'completed'
+        WHERE id = ?
+      `).run(targetReg.user_id, race.id);
+    });
+
+    overrideTx();
+
+    // 4. Delegate to handleScrutineerAction to do BTO check, bracket auto-placement, etc.
+    const scrutRes = this.handleScrutineerAction(targetReg.id, action);
+
+    return {
+      success: true,
+      raceNumber: race.race_number,
+      winner: {
+        userId: targetReg.user_id,
+        userName: targetReg.user_name,
+        teamName: targetReg.team_name,
+        lane: targetReg.lane,
+        finishTime: parsedTime
+      },
+      scrutineerStatus: scrutRes.status,
+      isNewBTO: scrutRes.isNewBTO,
+      message: `Emergency Override Berhasil: Jalur ${lane} (${targetReg.user_name}) ditetapkan sebagai pemenang Heat #${race.race_number} [${action.toUpperCase()}].`
+    };
+  }
+
   // Scrutineer Desk: "LOLOS" or "DISKUALIFIKASI"
   static handleScrutineerAction(registrationId, action) {
     const reg = db.prepare(`

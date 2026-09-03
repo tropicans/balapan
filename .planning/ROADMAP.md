@@ -7,7 +7,7 @@ Milestone v1.0 berfokus pada penyelesaian sisa gap fungsional agar sistem mencap
 ## Phases
 
 - [x] **Phase 1: Race Exceptions & Recovery** - Penanganan kondisi Semua Crash/CO (No Winner) dan Alur Deklarasi Re-Race (Permit Gratis, Zero Rescan).
-- [ ] **Phase 2: Scrutineer Desk Alerts & Emergency Override** - Indikator berkedip Active Alert Lapis 2 dan Tombol Ambil Alih Hasil (Override) Lapis 3 di tablet juri.
+- [x] **Phase 2: Scrutineer Desk Alerts & Emergency Override** - Indikator berkedip Active Alert Lapis 2 dan Tombol Ambil Alih Hasil (Override) Lapis 3 di tablet juri.
 
 ## Phase Details
 
@@ -36,14 +36,14 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: Implementasi UI Alert Lapis 2 dan Emergency Override Lapis 3 pada Scrutineer Dashboard
+- [x] 02-01: Implementasi UI Alert Lapis 2 dan Emergency Override Lapis 3 pada Scrutineer Dashboard
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Race Exceptions & Recovery | 1/1 | Complete | 2026-09-03 |
-| 2. Scrutineer Desk Alerts & Emergency Override | 0/1 | Not started | - |
+| 2. Scrutineer Desk Alerts & Emergency Override | 1/1 | Complete | 2026-09-03 |
 
 ---
 *Roadmap defined: 2026-09-03*  
