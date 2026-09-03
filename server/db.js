@@ -173,6 +173,7 @@ export async function initDatabase() {
       winner_id TEXT,
       parent_match_id TEXT,
       status TEXT DEFAULT 'pending',
+      is_final INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(user_id_1) REFERENCES users(id),
       FOREIGN KEY(user_id_2) REFERENCES users(id),
@@ -181,6 +182,12 @@ export async function initDatabase() {
       FOREIGN KEY(parent_match_id) REFERENCES bracket_matches(id)
     );
   `);
+
+  try {
+    db.exec(`ALTER TABLE bracket_matches ADD COLUMN is_final INTEGER DEFAULT 0;`);
+  } catch (e) {
+    // Column may already exist
+  }
 
   seedInitialData();
 }
@@ -245,23 +252,16 @@ function seedInitialData() {
         .run(uuidv4(), race1Id, budi.id);
     }
 
-    // Create Initial Tournament Bracket (Round 2 Single Elimination)
-    const m7Id = uuidv4();
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, status) VALUES (?, 7, 3, 'pending')`).run(m7Id);
-
-    const m5Id = uuidv4();
-    const m6Id = uuidv4();
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 5, 2, ?, 'pending')`).run(m5Id, m7Id);
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 6, 2, ?, 'pending')`).run(m6Id, m7Id);
+    // Create Initial Tournament Bracket (3-Lane Elimination: 3 Heats in Round 2 -> 1 Grand Final in Round 3)
+    const gfId = uuidv4();
+    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, is_final, status) VALUES (?, 4, 3, 1, 'pending')`).run(gfId);
 
     const m1Id = uuidv4();
     const m2Id = uuidv4();
     const m3Id = uuidv4();
-    const m4Id = uuidv4();
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 1, 1, ?, 'pending')`).run(m1Id, m5Id);
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 2, 1, ?, 'pending')`).run(m2Id, m5Id);
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 3, 1, ?, 'pending')`).run(m3Id, m6Id);
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 4, 1, ?, 'pending')`).run(m4Id, m6Id);
+    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 1, 2, ?, 'pending')`).run(m1Id, gfId);
+    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 2, 2, ?, 'pending')`).run(m2Id, gfId);
+    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 3, 2, ?, 'pending')`).run(m3Id, gfId);
 
     console.log('✅ Tournament database seeded successfully!');
   }
