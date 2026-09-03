@@ -41,7 +41,19 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-(None currently active — ready for next milestone definition via `/gsd-new-milestone`)
+- [ ] **ELIM-01**: Skema data & backend logic eliminasi 3-jalur (Jalur A, B, C) dengan auto-advance pemenang antar ronde
+- [ ] **ELIM-02**: Antarmuka Dasbor Eliminasi Berjenjang multi-babak (Babak 2, 3, dst.) dengan heat card 3-pembalap dan filter navigasi
+- [ ] **ELIM-03**: Integrasi Race Director & Layar TV Sirkuit untuk eksekusi heat babak eliminasi real-time
+
+## Current Milestone: v1.2 Multi-Round 3-Lane Elimination System
+
+**Goal:** Mengupgrade modul bracket eliminasi dari skema kaku 2-peserta 8-slot menjadi sistem gugur berjenjang skala besar (Babak 2, Babak 3, dst.) dengan kapasitas 100+ heat dan 3 peserta per race (Line A, Line B, Line C).
+
+**Target Features:**
+1. **3-Lane Bracket Architecture**: Setiap match/heat eliminasi menampung 3 kontestan (Jalur A Pink, Jalur B Cyan, Jalur C Green) memanfaatkan `user_id_3`.
+2. **Multi-Round Hierarchy**: Navigasi berjenjang dinamis (`Babak 2` -> `Babak 3` -> `Babak 4` ... -> `Grand Final 3 Mobil`).
+3. **Scalable Heat Grid & Filter**: Navigasi responsif untuk 100+ heat per babak dengan pencarian nomor heat & nama pembalap.
+4. **Auto-Advance Engine**: Pemenang tiap heat otomatis dipromosikan mengisi slot kosong babak selanjutnya tanpa input kupon ulang.
 
 ### Out of Scope
 

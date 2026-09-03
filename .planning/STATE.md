@@ -1,14 +1,14 @@
 ---
 gsd_state_version: '1.0'
-milestone: v1.1
-milestone_name: "UI/UX & Arena Visual Showcase Polish"
-status: complete
+milestone: v1.2
+milestone_name: "Multi-Round 3-Lane Elimination System"
+status: in-progress
 progress:
   total_phases: 2
-  completed_phases: 2
+  completed_phases: 0
   total_plans: 2
-  completed_plans: 2
-  percent: 100
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -18,27 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-03)
 
 **Core value:** Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi.  
-**Current focus:** Planning next milestone (Milestone v1.1 Shipped)
+**Current focus:** Milestone v1.2: Multi-Round 3-Lane Elimination System
 
 ## Current Position
 
-Phase: None active (Milestone v1.1 Complete)  
-Status: Ready for next milestone initialization (`/gsd-new-milestone`)  
-Last activity: 2026-09-03 — Milestone v1.1 Complete and Archived  
+Phase: Phase 5 - 3-Lane Elimination Backend Engine & Schema
+Plan: To be planned
+Status: Requirements defined, ready for planning
+Last activity: 2026-09-03 — Milestone v1.2 started
 
-Progress: [██████████] 100%
-
-## Performance Metrics
-
-**Milestone v1.1 Velocity:**
-- Total plans completed: 2
-- Total execution time: ~14 min
-- Average duration: 7 min/plan
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 3. RD 3-Column Ergonomics & BTO Shimmer | 1/1 | 8m | 8m |
-| 4. Fullscreen Dynamic Countdown HUD Overlay | 1/1 | 6m | 6m |
+Progress: [░░░░░░░░░░] 0%
 
 ## Shipped Milestones
 - **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03)
