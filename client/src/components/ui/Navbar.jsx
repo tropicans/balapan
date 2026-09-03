@@ -35,7 +35,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
     { id: 'scrutineer', label: 'Scrutineer', icon: ShieldCheck, color: 'green' },
     { id: 'cashier', label: 'Kasir Kupon', icon: CreditCard, color: 'amber' },
     { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan' },
-    { id: 'bracket', label: 'Bracket Babak 2', icon: GitBranch, color: 'pink' },
+    { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink' },
     { id: 'qr-codes', label: 'QR Jalur Fisik', icon: QrCode, color: 'cyan' },
   ];
 
