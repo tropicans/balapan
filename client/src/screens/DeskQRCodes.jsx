@@ -47,7 +47,7 @@ export function DeskQRCodes() {
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-orbitron font-black text-white">
-              STENSIL QR CODE MEJA LINTASAN (LINE A, B, C)
+              QR CODE MEJA LINTASAN (LINE A, B, C)
             </h2>
             <p className="text-xs font-mono text-neonCyan">
               Tampilkan di tablet atau cetak untuk ditempel di meja start masing-masing jalur.
@@ -61,7 +61,7 @@ export function DeskQRCodes() {
           icon={Printer}
           onClick={handlePrint}
         >
-          CETAK STENSIL MEJA
+          CETAK QR CODE
         </CyberButton>
       </div>
 

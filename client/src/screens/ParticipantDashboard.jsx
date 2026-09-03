@@ -261,7 +261,7 @@ export function ParticipantDashboard() {
             <CyberCard variant="cyan" title="DAFTAR JALUR BALAPAN (BABAK 1)">
               <div className="space-y-4">
                 <p className="text-xs text-cyberSilver/70 font-mono">
-                  Arahkan kamera HP ke stensil QR Code di meja lintasan (LINE A / LINE B / LINE C):
+                  Arahkan kamera HP ke QR Code di meja lintasan (LINE A / LINE B / LINE C):
                 </p>
 
                 {/* Camera QR Scanner */}
@@ -292,7 +292,7 @@ export function ParticipantDashboard() {
                 {/* 1-Tap Physical QR Simulator Buttons */}
                 <div className="pt-3 border-t border-gray-800">
                   <div className="text-[10px] font-orbitron text-cyberSilver/50 mb-2 uppercase text-center">
-                    Atau Tap Simulasi Stensil Meja Fisik:
+                    Atau Tap Simulasi Meja Fisik:
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button
