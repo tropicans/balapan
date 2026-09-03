@@ -31,13 +31,14 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ Babak 2 Single Elimination Bracket & auto-placement pemenang tanpa kupon/QR — baseline
 - ✓ Hitung mundur suara manusia 10 s.d. 1 bahasa Indonesia + haptic HP — baseline
 - ✓ Layar TV Sirkuit HUD 16:9 real-time + running text antrean race — baseline
+- ✓ **EXCP-01**: Tombol "SEMUA CO / DNF (No Winner)" menutup race tanpa pemenang, kupon tetap terpotong — Shipped in v1.0
+- ✓ **EXCP-02**: "DEKLARASI RE-RACE" modal checklist jalur, permit gratis, zero rescan — Shipped in v1.0
+- ✓ **SCRUT-01**: Active Alert Lapis 2 (banner kuning berkedip) di tablet Scrutineer saat race locked — Shipped in v1.0
+- ✓ **SCRUT-02**: Tombol darurat "Ambil Alih Hasil (Override)" Lapis 3 di tablet Scrutineer — Shipped in v1.0
 
 ### Active
 
-- [ ] **EXCP-01**: Race Director dapat menutup balapan dengan sekali klik "SEMUA CO / DNF (No Winner)" jika seluruh mobil crash (kupon kualifikasi tetap hangus).
-- [ ] **EXCP-02**: Race Director dapat mendeklarasikan "DEKLARASI RE-RACE" dengan modal centang jalur A/B/C untuk balap ulang gratis tanpa potong kupon dan tanpa scan QR ulang.
-- [ ] **SCRUT-01**: Meja Scrutineer menampilkan Active Alert (Lapis 2) kuning berkedip jika race aktif selesai di trek namun belum disubmit oleh RD.
-- [ ] **SCRUT-02**: Meja Scrutineer memiliki tombol darurat "Ambil Alih Hasil (Override)" (Lapis 3) untuk memilih pemenang langsung dari meja juri.
+*None (Milestone v1.0 completed). Define next requirements with `/gsd-new-milestone`.*
 
 ### Out of Scope
 
@@ -64,6 +65,13 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 | Skenario B (Input Waktu Semi-Manual) | Mencegah loophole mobil terlempar lewat garis sensor | ✓ Good |
 | Sistem "Tanya Nama" di Meja Scrutineer | Menghilangkan kerumitan scan QR kedua kali di meja juri | ✓ Good |
 | Suara Manusia Asli untuk Countdown | Meningkatkan ketegangan atmosfer sirkuit tanpa buzzer bising | ✓ Good |
+| Kupon kualifikasi Semua CO/DNF | Hangus sesuai regulasi turnamen (slot balapan terpakai) | ✓ Shipped v1.0 |
+| Re-Race Free Permit | Balap ulang tanpa potong saldo kupon baru & tanpa scan ulang | ✓ Shipped v1.0 |
+| Scrutineer Emergency Override | Fail-safe Lapis 3 di meja juri untuk auto-placement bagan | ✓ Shipped v1.0 |
+
+## Shipped Milestones
+
+- **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03) — [Archive](milestones/v1.0-ROADMAP.md)
 
 ## Evolution
 
