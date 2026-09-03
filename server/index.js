@@ -351,8 +351,8 @@ app.post('/api/race/override', (req, res) => {
 // 15. RD Advance Bracket Match
 app.post('/api/bracket/advance', (req, res) => {
   try {
-    const { matchId, winnerId } = req.body;
-    const result = RaceManager.advanceBracketWinner(matchId, winnerId);
+    const { matchId, winnerId, isFinal } = req.body;
+    const result = RaceManager.advanceBracketWinner(matchId, winnerId, { isFinal });
     broadcastFullState();
     res.json(result);
   } catch (err) {

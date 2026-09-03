@@ -655,10 +655,14 @@ export class RaceManager {
     return this.seedIntoBracket(userId);
   }
 
-  // RD advances bracket match winner
-  static advanceBracketWinner(matchId, winnerId) {
+  // RD advances bracket match winner with 3:1 hierarchical tree reduction
+  static advanceBracketWinner(matchId, winnerId, options = {}) {
     const match = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(matchId);
     if (!match) throw new Error('Pertandingan bracket tidak ditemukan');
+
+    if (!winnerId || (match.user_id_1 !== winnerId && match.user_id_2 !== winnerId && match.user_id_3 !== winnerId)) {
+      throw new Error('Pemenang harus salah satu dari kontestan pertandingan');
+    }
 
     db.prepare(`
       UPDATE bracket_matches 
@@ -666,19 +670,95 @@ export class RaceManager {
       WHERE id = ?
     `).run(winnerId, matchId);
 
-    // If there is a parent match, place winner in parent match
+    // If marked as Grand Final or final match, complete tournament without advancing to next round
+    const isFinal = Boolean(options.isFinal || match.is_final);
+    if (isFinal) {
+      return {
+        success: true,
+        matchId,
+        winnerId,
+        isFinal: true,
+        tournamentComplete: true
+      };
+    }
+
+    const nextRound = match.round_number + 1;
+
+    // Check if winnerId is already registered in nextRound (prevents duplicate promotion)
+    const alreadyInNext = db.prepare(`
+      SELECT id FROM bracket_matches 
+      WHERE round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
+    `).get(nextRound, winnerId, winnerId, winnerId);
+
+    if (alreadyInNext) {
+      return {
+        success: true,
+        matchId,
+        winnerId,
+        nextRound,
+        alreadyAdvanced: true
+      };
+    }
+
+    const assignSlot = (targetMatch) => {
+      if (!targetMatch.user_id_1) {
+        db.prepare('UPDATE bracket_matches SET user_id_1 = ? WHERE id = ?').run(winnerId, targetMatch.id);
+        return 'user_id_1';
+      } else if (!targetMatch.user_id_2) {
+        db.prepare('UPDATE bracket_matches SET user_id_2 = ? WHERE id = ?').run(winnerId, targetMatch.id);
+        return 'user_id_2';
+      } else if (!targetMatch.user_id_3) {
+        db.prepare('UPDATE bracket_matches SET user_id_3 = ? WHERE id = ?').run(winnerId, targetMatch.id);
+        return 'user_id_3';
+      }
+      return null;
+    };
+
+    // 1. If match has a parent_match_id, try placing winner in parent match
     if (match.parent_match_id) {
       const parent = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(match.parent_match_id);
       if (parent) {
-        if (!parent.user_id_1) {
-          db.prepare('UPDATE bracket_matches SET user_id_1 = ? WHERE id = ?').run(winnerId, parent.id);
-        } else if (!parent.user_id_2) {
-          db.prepare('UPDATE bracket_matches SET user_id_2 = ? WHERE id = ?').run(winnerId, parent.id);
+        const slotAssigned = assignSlot(parent);
+        if (slotAssigned) {
+          return { success: true, matchId, winnerId, nextRound, targetMatchId: parent.id, slot: slotAssigned };
         }
       }
     }
 
-    return { success: true };
+    // 2. Parent match does not exist or is already full -> find open match in nextRound
+    const openNextMatch = db.prepare(`
+      SELECT * FROM bracket_matches 
+      WHERE round_number = ? AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+      ORDER BY match_number ASC
+    `).get(nextRound);
+
+    if (openNextMatch) {
+      const slotAssigned = assignSlot(openNextMatch);
+      db.prepare('UPDATE bracket_matches SET parent_match_id = ? WHERE id = ?').run(openNextMatch.id, matchId);
+      return { success: true, matchId, winnerId, nextRound, targetMatchId: openNextMatch.id, slot: slotAssigned };
+    }
+
+    // 3. No open match in nextRound -> dynamically create a new match in nextRound
+    const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
+    const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
+    const newMatchId = uuidv4();
+
+    db.prepare(`
+      INSERT INTO bracket_matches (id, match_number, round_number, user_id_1, status)
+      VALUES (?, ?, ?, ?, 'pending')
+    `).run(newMatchId, nextMatchNumber, nextRound, winnerId);
+
+    db.prepare('UPDATE bracket_matches SET parent_match_id = ? WHERE id = ?').run(newMatchId, matchId);
+
+    return {
+      success: true,
+      matchId,
+      winnerId,
+      nextRound,
+      targetMatchId: newMatchId,
+      slot: 'user_id_1',
+      createdNewMatch: true
+    };
   }
 
   // RD Admin Override Panel
