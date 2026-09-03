@@ -19,6 +19,10 @@ Mengupgrade modul bracket eliminasi dari format kaku 2-peserta 8-slot menjadi si
   1. Kontestan yang lolos Scrutineer Babak 1 mengisi slot Jalur A, B, C secara bergantian dan adil di Babak 2.
   2. Memilih pemenang di Heat Babak 2 otomatis menempatkan pembalap tersebut ke Babak 3 tanpa duplikasi.
   3. Seluruh unit test backend (termasuk skenario 3-peserta per heat) lulus 100%.
+- **Plans**: 1 plan
+
+Plans:
+- [ ] 05-01: Backend engine 3-jalur (ELIM-01..03), alokasi dinamis 100+ heat, & auto-advance multi-ronde
 
 ---
 
