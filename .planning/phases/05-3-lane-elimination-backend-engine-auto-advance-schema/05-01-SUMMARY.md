@@ -79,5 +79,5 @@ coverage:
 
 ## Verification
 
-- `node server/tests/bracket-3lane.test.js`: All 6 test suites passed with 0 errors (ELIM-01, ELIM-02, ELIM-03 verified).
-- `node server/tests/race-flow.test.js`: All 13 core racing flow tests passed with 0 regressions.
+- `server/tests/bracket-3lane.test.js`: All 6 test suites passed with 0 errors (ELIM-01, ELIM-02, ELIM-03 verified).
+- `server/tests/race-flow.test.js`: All 13 core racing flow tests passed with 0 regressions.
