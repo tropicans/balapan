@@ -42,7 +42,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
   const activeRaceNum = raceState.activeRace?.race_number || 1;
 
   return (
-    <header className="sticky top-0 z-40 bg-obsidian/95 border-b border-cyan-500/20 backdrop-blur-md">
+    <header className="sticky top-0 z-40 bg-obsidian/95 border-b border-cyan-500/20 backdrop-blur-md print:hidden">
       {/* Top Header: Brand Logo & Status + User Switcher */}
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4 border-b border-gray-800/80">
         {/* Brand / Logo */}

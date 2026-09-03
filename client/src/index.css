@@ -196,3 +196,55 @@
   background-size: 100% 4px, 6px 100%;
 }
 
+/* =========================================
+   Print Optimizations (Clean, White, 1-Page)
+   ========================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 6mm;
+  }
+
+  html, body, #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: Arial, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app chrome, background grid, and modals */
+  header,
+  nav,
+  button,
+  .print\:hidden,
+  .no-print,
+  .cyber-grid,
+  .bg-midnight,
+  .bg-obsidian {
+    background: transparent !important;
+    background-image: none !important;
+  }
+
+  header,
+  nav,
+  .print\:hidden,
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-strip {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
