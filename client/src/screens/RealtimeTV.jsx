@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
-import { Trophy, Zap, Clock, ShieldCheck, Flag, Radio } from 'lucide-react';
+import { Trophy, Zap, Clock, ShieldCheck, Flag, Radio, Crown } from 'lucide-react';
 import clsx from 'clsx';
 
 export function RealtimeTV() {
@@ -278,18 +278,35 @@ export function RealtimeTV() {
                   return (
                     <div
                       key={item.id}
-                      className="p-3 bg-black/60 border border-gray-800 clip-cyber flex items-center justify-between"
+                      className={clsx(
+                        "p-3 clip-cyber flex items-center justify-between transition-all",
+                        idx === 0
+                          ? "gold-shimmer-border bg-gradient-to-r from-amber-950/40 via-black/80 to-black/90 shadow-[0_0_25px_rgba(255,215,0,0.35)]"
+                          : "bg-black/60 border border-gray-800"
+                      )}
                     >
                       <div className="flex items-center gap-3">
                         <div className={clsx(
-                          "w-8 h-8 flex items-center justify-center font-orbitron font-black text-sm clip-cyber border",
-                          rankColors[idx] || rankColors[3]
+                          "w-9 h-9 flex items-center justify-center font-orbitron font-black text-sm clip-cyber border",
+                          idx === 0
+                            ? "bg-yellow-400 text-black border-yellow-300 shadow-[0_0_15px_rgba(255,215,0,0.8)] animate-pulse"
+                            : (rankColors[idx] || rankColors[3])
                         )}>
-                          #{idx + 1}
+                          {idx === 0 ? <Crown className="w-5 h-5 text-black" /> : `#${idx + 1}`}
                         </div>
                         <div>
-                          <div className="font-orbitron font-bold text-white text-base">
-                            {item.user_name}
+                          <div className="flex items-center gap-2">
+                            <div className={clsx(
+                              "font-orbitron font-black text-base",
+                              idx === 0 ? "text-yellow-300 text-glow-gold" : "text-white"
+                            )}>
+                              {item.user_name}
+                            </div>
+                            {idx === 0 && (
+                              <span className="px-1.5 py-0.5 text-[9px] font-orbitron font-black bg-yellow-400 text-black clip-cyber uppercase tracking-wider">
+                                RECORD BTO #1
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs font-mono text-neonPink">
                             [{item.team_name || 'NO TAG'}] • Race #{item.race_number}
@@ -297,7 +314,10 @@ export function RealtimeTV() {
                         </div>
                       </div>
 
-                      <div className="text-2xl font-orbitron font-black text-neonGreen text-glow-green">
+                      <div className={clsx(
+                        "text-2xl font-orbitron font-black",
+                        idx === 0 ? "text-yellow-300 text-glow-gold" : "text-neonGreen text-glow-green"
+                      )}>
                         {parseFloat(item.finish_time).toFixed(3)}s
                       </div>
                     </div>

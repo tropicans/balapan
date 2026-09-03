@@ -451,43 +451,135 @@ export function RaceDirectorDashboard() {
       </div>
 
       {/* 4. Module 4: Finish Input Panel (Scenario B) */}
-      <CyberCard variant="amber" title="INPUT WAKTU FINISH JURI / RD (SCENARIO B)">
+      <CyberCard variant="amber" title="INPUT WAKTU FINISH JURI / RD (SCENARIO B) // HORIZONTAL 3-LANE MATRIX">
         <form onSubmit={handleSubmitFinish} className="space-y-4">
-          <p className="text-xs font-mono text-cyberSilver/70">
-            Ketik waktu yang terbaca dari layar LED timer sirkuit (misal: <code className="text-neonCyan">11.450</code>). Pemenang dengan waktu terendah akan otomatis dikirim ke Meja Scrutineer.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-mono text-cyberSilver/70">
+              Ketik waktu yang terbaca dari layar stopwatch LED fisik sirkuit (misal: <code className="text-neonCyan font-bold">11.450</code>). Kolom di bawah terpetakan sejajar fisik Jalur A (Kiri), B (Tengah), C (Kanan).
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {['A', 'B', 'C'].map(laneLetter => {
-              const reg = registrations.find(r => r.lane === laneLetter);
+            {[
+              {
+                lane: 'A',
+                label: 'JALUR A (KIRI)',
+                border: 'border-neonPink/60',
+                bg: 'bg-neonPink/5',
+                text: 'text-neonPink',
+                badge: 'bg-neonPink/20 text-neonPink border-neonPink',
+                focus: 'focus:border-neonPink',
+                glow: 'shadow-[0_0_15px_rgba(255,0,85,0.25)]',
+                inputColor: 'text-neonPink',
+                reg: laneA
+              },
+              {
+                lane: 'B',
+                label: 'JALUR B (TENGAH)',
+                border: 'border-neonCyan/60',
+                bg: 'bg-neonCyan/5',
+                text: 'text-neonCyan',
+                badge: 'bg-neonCyan/20 text-neonCyan border-neonCyan',
+                focus: 'focus:border-neonCyan',
+                glow: 'shadow-[0_0_15px_rgba(0,240,255,0.25)]',
+                inputColor: 'text-neonCyan',
+                reg: laneB
+              },
+              {
+                lane: 'C',
+                label: 'JALUR C (KANAN)',
+                border: 'border-neonGreen/60',
+                bg: 'bg-neonGreen/5',
+                text: 'text-neonGreen',
+                badge: 'bg-neonGreen/20 text-neonGreen border-neonGreen',
+                focus: 'focus:border-neonGreen',
+                glow: 'shadow-[0_0_15px_rgba(57,255,20,0.25)]',
+                inputColor: 'text-neonGreen',
+                reg: laneC
+              }
+            ].map(col => {
+              const reg = col.reg;
+              const isDNF = reg?.status === 'dnf_co';
               return (
-                <div key={laneLetter} className="p-3 bg-black/60 border border-gray-800 clip-cyber">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-orbitron font-bold text-sm text-neonCyan">JALUR {laneLetter}</span>
-                    <span className="text-xs font-mono text-white truncate max-w-[120px]">
-                      {reg ? reg.user_name : '(Kosong)'}
-                    </span>
+                <div 
+                  key={col.lane} 
+                  className={`p-4 bg-obsidian border-2 ${col.border} ${col.bg} clip-cyber flex flex-col justify-between space-y-3 transition-all ${col.glow}`}
+                >
+                  {/* Card Header: Lane Tag & Driver */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`px-2.5 py-1 text-xs font-orbitron font-black uppercase clip-cyber border ${col.badge}`}>
+                        {col.label}
+                      </span>
+                      {isDNF && (
+                        <span className="px-2 py-0.5 text-[10px] font-orbitron font-bold bg-red-600/30 text-red-400 border border-red-500 clip-cyber">
+                          DNF / CO
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="p-2 bg-black/70 border border-gray-800 clip-cyber min-h-[50px] flex flex-col justify-center">
+                      {reg ? (
+                        <div>
+                          <div className="text-sm font-orbitron font-bold text-white truncate">
+                            {reg.user_name}
+                          </div>
+                          {reg.team_name && (
+                            <div className="text-[11px] font-mono text-neonCyan">
+                              [{reg.team_name}]
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs font-mono text-cyberSilver/40 italic">
+                          (Tidak Terdaftar / Kosong)
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    step="0.001"
-                    placeholder="Contoh: 11.450"
-                    disabled={!reg}
-                    value={finishTimes[laneLetter]}
-                    onChange={(e) => setFinishTimes({ ...finishTimes, [laneLetter]: e.target.value })}
-                    className="w-full bg-obsidian border border-neonAmber/50 px-3 py-2 text-lg font-orbitron font-bold text-neonAmber focus:outline-none focus:border-neonAmber clip-cyber disabled:opacity-30"
-                  />
+
+                  {/* Input Field with Quick Clear */}
+                  <div>
+                    <label className="text-[10px] font-mono text-cyberSilver/60 block mb-1 uppercase tracking-wider">
+                      Waktu Stopwatch (Detik)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.001"
+                        placeholder="00.000"
+                        disabled={!reg || isDNF}
+                        value={finishTimes[col.lane]}
+                        onChange={(e) => setFinishTimes({ ...finishTimes, [col.lane]: e.target.value })}
+                        className={`w-full bg-black/90 border-2 ${col.border} ${col.focus} px-3 py-2.5 text-2xl font-orbitron font-black text-center ${col.inputColor} tracking-widest focus:outline-none clip-cyber disabled:opacity-30`}
+                      />
+                      {finishTimes[col.lane] && (
+                        <button
+                          type="button"
+                          onClick={() => setFinishTimes({ ...finishTimes, [col.lane]: '' })}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-cyberSilver/40 hover:text-white text-xs font-bold px-1.5 py-0.5"
+                          title="Hapus Waktu"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="text-xs font-mono text-cyberSilver/60">
+              * Hanya jalur dengan data pembalap yang perlu diisi waktu finish.
+            </div>
             <CyberButton
               type="submit"
               variant="amber"
               size="lg"
               disabled={loading || registrations.length === 0}
+              className="py-3.5 px-8"
             >
               SIMPAN WAKTU & KIRIM KE SCRUTINEER
             </CyberButton>

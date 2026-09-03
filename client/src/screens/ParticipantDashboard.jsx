@@ -14,7 +14,8 @@ import {
   Flag, 
   Clock, 
   ShieldAlert, 
-  UserCheck 
+  UserCheck,
+  Trophy 
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -371,9 +372,14 @@ export function ParticipantDashboard() {
                 </div>
               )}
               {myScrutStatus === 'pass' && (
-                <div className="text-xs text-neonGreen font-mono mt-2 font-bold flex items-center justify-center gap-1">
-                  <UserCheck className="w-4 h-4" />
-                  <span>LOLOS SCRUTINEER // TIKET BABAK 2 AMAN!</span>
+                <div className="p-3.5 gold-shimmer-border bg-gradient-to-r from-amber-950/60 via-black/90 to-amber-950/60 clip-cyber text-center space-y-1 mt-3 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                  <div className="flex items-center justify-center gap-2 text-yellow-300 font-orbitron font-black text-sm text-glow-gold">
+                    <Trophy className="w-5 h-5 text-yellow-400 animate-pulse" />
+                    <span>LOLOS SCRUTINEER // TIKET BABAK 2 AMAN!</span>
+                  </div>
+                  <p className="text-[11px] text-yellow-200/80 font-mono">
+                    Selamat! Mobil Anda dinyatakan sah dan otomatis ditempatkan di Bagan Eliminasi Babak Kedua.
+                  </p>
                 </div>
               )}
               {myScrutStatus === 'disqualified' && (
