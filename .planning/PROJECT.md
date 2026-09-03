@@ -38,7 +38,9 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-*None (Milestone v1.0 completed). Define next requirements with `/gsd-new-milestone`.*
+- [ ] **UI-01**: Layout input finish time horizontal 3-kolom di Dasbor Race Director (`RaceDirectorDashboard.jsx`) sejajar dengan jalur A, B, dan C.
+- [ ] **UI-02**: Efek visual pendar emas dinamis (*cyber shimmer border*) pada pemegang rekor BTO #1 di TV HUD dan kartu pemenang di dashboard pembalap.
+- [ ] **UI-03**: Overlay visual hitungan mundur raksasa dramatis di layar TV Sirkuit 16:9 (`RealtimeTV.jsx`) yang sinkron dengan countdown audio & status GO.
 
 ### Out of Scope
 
