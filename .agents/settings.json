@@ -146,7 +146,11 @@
       "read_file(~/Downloads/Projects/self-hosted-ai-starter-kit/Dev/m4d/.agents/gsd-core/*)",
       "read_file(~/Downloads/Projects/self-hosted-ai-starter-kit/Dev/m4d/.agents/agents/gsd-*)",
       "read_file(~/Downloads/Projects/self-hosted-ai-starter-kit/Dev/m4d/.agents/skills/gsd-*)",
-      "command(node ~/Downloads/Projects/self-hosted-ai-starter-kit/Dev/m4d/.agents/hooks/*)"
+      "command(node ~/Downloads/Projects/self-hosted-ai-starter-kit/Dev/m4d/.agents/hooks/*)",
+      "read_file(~/Downloads/oprek/Dev/balapan/.agents/gsd-core/*)",
+      "read_file(~/Downloads/oprek/Dev/balapan/.agents/agents/gsd-*)",
+      "read_file(~/Downloads/oprek/Dev/balapan/.agents/skills/gsd-*)",
+      "command(node ~/Downloads/oprek/Dev/balapan/.agents/hooks/*)"
     ]
   }
 }
