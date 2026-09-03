@@ -72,9 +72,9 @@ npm run docker:down
 ```
 
 Akses sistem di browser:
-- **Aplikasi Web**: [http://localhost:3000](http://localhost:3000)
-- **Health Check Monitor**: [http://localhost:3000/api/health](http://localhost:3000/api/health)
-- **State Snapshot API**: [http://localhost:3000/api/state](http://localhost:3000/api/state)
+- **Aplikasi Web**: [http://localhost:3050](http://localhost:3050)
+- **Health Check Monitor**: [http://localhost:3050/api/health](http://localhost:3050/api/health)
+- **State Snapshot API**: [http://localhost:3050/api/state](http://localhost:3050/api/state)
 
 > 💡 **Data Persistence**: Seluruh data SQLite dan histori turnamen disimpan secara persisten di Docker Named Volume `dgdash_racing_data` pada `/app/data/tamiya.sqlite`, sehingga data tetap aman meskipun container di-restart atau di-update.
 
