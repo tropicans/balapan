@@ -35,12 +35,13 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **EXCP-02**: "DEKLARASI RE-RACE" modal checklist jalur, permit gratis, zero rescan — Shipped in v1.0
 - ✓ **SCRUT-01**: Active Alert Lapis 2 (banner kuning berkedip) di tablet Scrutineer saat race locked — Shipped in v1.0
 - ✓ **SCRUT-02**: Tombol darurat "Ambil Alih Hasil (Override)" Lapis 3 di tablet Scrutineer — Shipped in v1.0
+- ✓ **UI-01**: Layout input finish time horizontal 3-kolom di Dasbor Race Director (`RaceDirectorDashboard.jsx`) sejajar jalur A, B, C — Shipped in v1.1
+- ✓ **UI-02**: Efek visual pendar emas dinamis (*cyber shimmer border*) pada pemegang rekor BTO #1 dan kartu pemenang — Shipped in v1.1
+- ✓ **UI-03**: Overlay visual hitungan mundur raksasa dramatis di layar TV Sirkuit 16:9 (`RealtimeTV.jsx`) sinkron dengan audio & GO — Shipped in v1.1
 
 ### Active
 
-- [ ] **UI-01**: Layout input finish time horizontal 3-kolom di Dasbor Race Director (`RaceDirectorDashboard.jsx`) sejajar dengan jalur A, B, dan C.
-- [ ] **UI-02**: Efek visual pendar emas dinamis (*cyber shimmer border*) pada pemegang rekor BTO #1 di TV HUD dan kartu pemenang di dashboard pembalap.
-- [ ] **UI-03**: Overlay visual hitungan mundur raksasa dramatis di layar TV Sirkuit 16:9 (`RealtimeTV.jsx`) yang sinkron dengan countdown audio & status GO.
+(None currently active — ready for next milestone definition via `/gsd-new-milestone`)
 
 ### Out of Scope
 
@@ -70,10 +71,14 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 | Kupon kualifikasi Semua CO/DNF | Hangus sesuai regulasi turnamen (slot balapan terpakai) | ✓ Shipped v1.0 |
 | Re-Race Free Permit | Balap ulang tanpa potong saldo kupon baru & tanpa scan ulang | ✓ Shipped v1.0 |
 | Scrutineer Emergency Override | Fail-safe Lapis 3 di meja juri untuk auto-placement bagan | ✓ Shipped v1.0 |
+| Ergonomi 3-Kolom Stopwatch | Menyamai tata letak 3 stopwatch fisik di meja Race Director | ✓ Shipped v1.1 |
+| Cyber Golden Shimmer BTO | Animasi pendar hangat untuk membedakan rekor puncak BTO #1 | ✓ Shipped v1.1 |
+| Fullscreen Countdown HUD Overlay | Overlay 16:9 fixed z-50 sinkron WebSocket audio & selebrasi GO | ✓ Shipped v1.1 |
 
 ## Shipped Milestones
 
 - **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03) — [Archive](milestones/v1.0-ROADMAP.md)
+- **v1.1**: UI/UX & Arena Visual Showcase Polish (Shipped 2026-09-03) — [Archive](milestones/v1.1-ROADMAP.md)
 
 ## Evolution
 
@@ -93,4 +98,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-03 after Milestone v1.0 initialization*
+*Last updated: 2026-09-03 after Milestone v1.1 completion*
