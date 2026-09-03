@@ -129,3 +129,57 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #ff0055;
 }
+
+/* Dynamic Fullscreen Countdown HUD Overlay */
+.countdown-radial-bg-running {
+  background: radial-gradient(circle at center, rgba(255, 0, 85, 0.28) 0%, rgba(10, 11, 16, 0.94) 65%, #050608 100%);
+}
+
+.countdown-radial-bg-complete {
+  background: radial-gradient(circle at center, rgba(57, 255, 20, 0.35) 0%, rgba(10, 11, 16, 0.94) 65%, #050608 100%);
+}
+
+.countdown-radial-bg-stopped {
+  background: radial-gradient(circle at center, rgba(0, 240, 255, 0.3) 0%, rgba(10, 11, 16, 0.94) 65%, #050608 100%);
+}
+
+.countdown-number-pulse {
+  animation: countdown-pulse 1s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes countdown-pulse {
+  0% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 35px rgba(255, 0, 85, 0.9));
+  }
+  50% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(255, 0, 85, 0.6));
+  }
+  100% {
+    transform: scale(0.97);
+    filter: drop-shadow(0 0 15px rgba(255, 0, 85, 0.4));
+  }
+}
+
+.text-glow-countdown {
+  text-shadow: 0 0 20px rgba(255, 0, 85, 0.9), 0 0 50px rgba(255, 0, 85, 0.6), 0 0 90px rgba(255, 0, 85, 0.4);
+}
+
+.text-glow-go {
+  text-shadow: 0 0 30px rgba(57, 255, 20, 0.95), 0 0 70px rgba(57, 255, 20, 0.7), 0 0 110px rgba(57, 255, 20, 0.5);
+}
+
+.countdown-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.45) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.05),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.05)
+  );
+  background-size: 100% 4px, 6px 100%;
+}
+

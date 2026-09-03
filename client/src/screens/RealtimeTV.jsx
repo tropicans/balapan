@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
-import { Trophy, Zap, Clock, ShieldCheck, Flag, Radio, Crown } from 'lucide-react';
+import { Trophy, Zap, Clock, ShieldCheck, Flag, Radio, Crown, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import clsx from 'clsx';
 
 export function RealtimeTV() {
-  const { raceState, bannerAlert } = useRace();
+  const { raceState, bannerAlert, countdown } = useRace();
   const [timeClock, setTimeClock] = useState('');
 
   // Live Digital Clock
@@ -344,6 +344,203 @@ export function RealtimeTV() {
           </div>
         </div>
       </div>
+
+      {/* 4. Fullscreen Dynamic Countdown HUD Overlay (UI-03) */}
+      {countdown?.active && (
+        <div 
+          className={clsx(
+            "fixed inset-0 z-50 flex flex-col justify-between p-6 md:p-12 select-none overflow-hidden transition-all duration-300 backdrop-blur-xl border-4",
+            countdown.status === 'complete' && "countdown-radial-bg-complete border-neonGreen shadow-[inset_0_0_100px_rgba(57,255,20,0.5)]",
+            countdown.status === 'stopped' && "countdown-radial-bg-stopped border-neonCyan shadow-[inset_0_0_80px_rgba(0,240,255,0.4)]",
+            countdown.status !== 'complete' && countdown.status !== 'stopped' && "countdown-radial-bg-running border-neonPink shadow-[inset_0_0_120px_rgba(255,0,85,0.5)]"
+          )}
+        >
+          {/* Scanline texture */}
+          <div className="absolute inset-0 pointer-events-none countdown-scanlines opacity-40" />
+
+          {/* Top Decorative Header */}
+          <div className="relative z-10 flex items-center justify-between border-b-2 border-white/20 pb-4 bg-black/40 px-6 py-3 clip-cyber">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1 bg-red-600/30 border border-red-500 clip-cyber">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                <span className="text-xs font-orbitron font-black text-red-400 tracking-wider">
+                  LIVE LAUNCH CONTROL
+                </span>
+              </div>
+              <span className="text-sm font-mono text-cyberSilver tracking-widest uppercase hidden sm:inline">
+                BABAK 2 ELIMINASI // HEAT #{activeRaceNum}
+              </span>
+            </div>
+
+            <div className="text-right">
+              <div className="text-xs font-mono text-neonCyan tracking-widest uppercase">
+                CIRCUIT STATUS // COUNTDOWN HUD
+              </div>
+              <div className="text-sm font-orbitron font-bold text-white tracking-widest">
+                TIME: {timeClock}
+              </div>
+            </div>
+          </div>
+
+          {/* Center Stage: Giant Countdown Visual */}
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center my-4">
+            {countdown.status === 'running' && (
+              <div className="flex flex-col items-center justify-center space-y-4">
+                {/* 10-Segment Progress Ring / Bar Indicator */}
+                <div className="flex items-center gap-2 mb-2">
+                  {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((seg) => {
+                    const isPassed = seg <= countdown.seconds;
+                    return (
+                      <div
+                        key={seg}
+                        className={clsx(
+                          "w-4 md:w-6 h-2 md:h-3 clip-cyber transition-all duration-300",
+                          isPassed
+                            ? "bg-neonPink shadow-[0_0_10px_rgba(255,0,85,0.8)]"
+                            : "bg-gray-800/80 border border-gray-700/50"
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Giant Numeral */}
+                <div className="relative flex items-center justify-center">
+                  <span className="text-9xl sm:text-[13rem] md:text-[17rem] lg:text-[21rem] font-orbitron font-black text-white text-glow-countdown countdown-number-pulse tracking-tighter leading-none select-none">
+                    {countdown.seconds}
+                  </span>
+                </div>
+
+                {/* Spelled Indonesian Word */}
+                <div className="px-8 py-2 bg-black/60 border-2 border-neonAmber/80 clip-cyber shadow-glowAmber">
+                  <span className="text-2xl sm:text-4xl md:text-5xl font-orbitron font-black text-neonAmber tracking-[0.25em] uppercase text-glow-amber">
+                    {countdown.word || `DETIK ${countdown.seconds}`}
+                  </span>
+                </div>
+
+                {/* Instructions */}
+                <p className="text-xs sm:text-sm md:text-base font-mono text-cyberSilver/90 tracking-widest uppercase mt-3">
+                  PERSIAPAN AKHIR BOX START • MARSHAL & PEMBALAP POSISIKAN MOBIL
+                </p>
+              </div>
+            )}
+
+            {countdown.status === 'complete' && (
+              <div className="flex flex-col items-center justify-center space-y-6 animate-pulse">
+                <div className="flex items-center justify-center gap-4 text-neonGreen">
+                  <Flag className="w-16 h-16 md:w-24 md:h-24 animate-bounce" />
+                  <Zap className="w-16 h-16 md:w-24 md:h-24 animate-ping" />
+                  <Flag className="w-16 h-16 md:w-24 md:h-24 animate-bounce" />
+                </div>
+
+                <h2 className="text-6xl sm:text-8xl md:text-9xl lg:text-[12rem] font-orbitron font-black text-neonGreen text-glow-go tracking-tight leading-none">
+                  {countdown.message || "GO! LEPAS MOBIL!"}
+                </h2>
+
+                <div className="px-10 py-4 bg-neonGreen/20 border-2 border-neonGreen clip-cyber shadow-[0_0_50px_rgba(57,255,20,0.8)]">
+                  <span className="text-xl sm:text-3xl md:text-4xl font-orbitron font-black text-white tracking-widest uppercase">
+                    MARSHAL: LEPAS KETIGA MOBIL SEKARANG!
+                  </span>
+                </div>
+
+                <div className="text-sm md:text-base font-mono text-neonGreen/90 tracking-widest uppercase">
+                  STATUS: GREEN FLAG CONFIRMED // RACE TIME RUNNING
+                </div>
+              </div>
+            )}
+
+            {countdown.status === 'stopped' && (
+              <div className="flex flex-col items-center justify-center space-y-6">
+                <div className="flex items-center justify-center gap-3 text-neonCyan">
+                  <CheckCircle2 className="w-16 h-16 md:w-20 md:h-20 animate-pulse" />
+                </div>
+
+                <h2 className="text-6xl sm:text-8xl md:text-9xl font-orbitron font-black text-neonCyan text-glow-cyan tracking-tight leading-none">
+                  {countdown.message || "READY - SIAP LEPAS!"}
+                </h2>
+
+                <div className="px-8 py-3 bg-neonCyan/20 border-2 border-neonCyan clip-cyber shadow-glowCyan">
+                  <span className="text-lg sm:text-2xl md:text-3xl font-orbitron font-black text-white tracking-widest uppercase">
+                    INTERUPSI RACE DIRECTOR: KETIGA PEMBALAP TELAH SIAP
+                  </span>
+                </div>
+
+                <div className="text-sm font-mono text-neonCyan/80 tracking-widest uppercase">
+                  MARSHAL SEGERA LEPAS MOBIL PADA ABA-ABA MANUAL
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Grid: 3 Track Lanes Lineup at the Start Box */}
+          <div className="relative z-10 border-t-2 border-white/20 pt-4 bg-black/50 px-6 py-4 clip-cyber">
+            <div className="text-[11px] font-mono text-cyberSilver/70 uppercase tracking-widest mb-2 text-center">
+              KENDARAAN PADA BOX START SIRKUIT:
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Lane A */}
+              <div className="p-3 bg-neonPink/10 border-2 border-neonPink/70 clip-cyber flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-1 text-xs font-orbitron font-black bg-neonPink text-black clip-cyber">
+                    JALUR A
+                  </span>
+                  <div>
+                    <div className="font-orbitron font-bold text-white text-sm">
+                      {laneA?.user_name || 'BELUM TERISI'}
+                    </div>
+                    <div className="text-[10px] font-mono text-neonPink">
+                      [{laneA?.team_name || 'NO TAG'}]
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs font-mono text-cyberSilver">
+                  {laneA?.status ? laneA.status.toUpperCase() : 'GRID #1'}
+                </div>
+              </div>
+
+              {/* Lane B */}
+              <div className="p-3 bg-neonCyan/10 border-2 border-neonCyan/70 clip-cyber flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-1 text-xs font-orbitron font-black bg-neonCyan text-black clip-cyber">
+                    JALUR B
+                  </span>
+                  <div>
+                    <div className="font-orbitron font-bold text-white text-sm">
+                      {laneB?.user_name || 'BELUM TERISI'}
+                    </div>
+                    <div className="text-[10px] font-mono text-neonCyan">
+                      [{laneB?.team_name || 'NO TAG'}]
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs font-mono text-cyberSilver">
+                  {laneB?.status ? laneB.status.toUpperCase() : 'GRID #2'}
+                </div>
+              </div>
+
+              {/* Lane C */}
+              <div className="p-3 bg-neonGreen/10 border-2 border-neonGreen/70 clip-cyber flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-1 text-xs font-orbitron font-black bg-neonGreen text-black clip-cyber">
+                    JALUR C
+                  </span>
+                  <div>
+                    <div className="font-orbitron font-bold text-white text-sm">
+                      {laneC?.user_name || 'BELUM TERISI'}
+                    </div>
+                    <div className="text-[10px] font-mono text-neonGreen">
+                      [{laneC?.team_name || 'NO TAG'}]
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs font-mono text-cyberSilver">
+                  {laneC?.status ? laneC.status.toUpperCase() : 'GRID #3'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
