@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 ## Current Position
 
 Phase: 1 of 2 (Race Exceptions & Recovery)  
-Plan: 0 of 1 in current phase  
-Status: Ready to plan (`/gsd-plan-phase 1`)  
-Last activity: 2026-09-03 — Milestone v1.0 initialized
+Plan: 1 of 1 in current phase (01-01-PLAN.md generated)  
+Status: Ready to execute (`/gsd-execute-phase 1`)  
+Last activity: 2026-09-03 — Phase 1 plan created
 
 Progress: [░░░░░░░░░░] 0%
 
