@@ -43,54 +43,30 @@ export function Navbar({ activeScreen, setActiveScreen }) {
 
   return (
     <header className="sticky top-0 z-40 bg-obsidian/95 border-b border-cyan-500/20 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3 xl:gap-4">
+      {/* Top Header: Brand Logo & Status + User Switcher */}
+      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4 border-b border-gray-800/80">
         {/* Brand / Logo */}
-        <div className="flex items-center gap-2.5 xl:gap-3 flex-shrink-0">
-          <div className="w-9 h-9 bg-neonCyan/20 border border-neonCyan flex items-center justify-center clip-cyber flex-shrink-0">
-            <span className="font-orbitron font-black text-neonCyan text-base">DG</span>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-neonCyan/20 border border-neonCyan flex items-center justify-center clip-cyber flex-shrink-0">
+            <span className="font-orbitron font-black text-neonCyan text-sm">DG</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm md:text-base font-orbitron font-black tracking-wider text-white whitespace-nowrap">
-                DGDASH <span className="text-neonCyan">RACING SYSTEM</span>
-              </h1>
-              <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-orbitron font-bold bg-neonPink/20 text-neonPink border border-neonPink clip-cyber whitespace-nowrap">
-                HEAT #{activeRaceNum}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono text-cyberSilver/60 whitespace-nowrap">
-              <span className="inline-flex items-center gap-1">
-                <span className={clsx("w-2 h-2 rounded-full", connected ? "bg-neonGreen animate-pulse" : "bg-red-500")} />
-                {connected ? "LIVE SYNC" : "OFFLINE"}
-              </span>
-              <span>•</span>
-              <span className="uppercase">NEO-RACING HUD v2.0</span>
-            </div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-sm md:text-base font-orbitron font-black tracking-wider text-white whitespace-nowrap">
+              DGDASH <span className="text-neonCyan">RACING SYSTEM</span>
+            </h1>
+            <span className="px-1.5 py-0.5 text-[10px] font-orbitron font-bold bg-neonPink/20 text-neonPink border border-neonPink clip-cyber whitespace-nowrap">
+              HEAT #{activeRaceNum}
+            </span>
+          </div>
+          <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-cyberSilver/60 border-l border-gray-800 pl-3">
+            <span className="inline-flex items-center gap-1">
+              <span className={clsx("w-2 h-2 rounded-full", connected ? "bg-neonGreen animate-pulse" : "bg-red-500")} />
+              {connected ? "LIVE SYNC" : "OFFLINE"}
+            </span>
+            <span>•</span>
+            <span className="uppercase">NEO-RACING HUD v2.0</span>
           </div>
         </div>
-
-        {/* Navigation Screen Switcher Tabs */}
-        <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 overflow-x-auto no-scrollbar py-1 flex-shrink min-w-0">
-          {screens.map(s => {
-            const Icon = s.icon;
-            const isActive = activeScreen === s.id;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveScreen(s.id)}
-                className={clsx(
-                  "flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 text-[11px] xl:text-xs font-orbitron font-semibold uppercase tracking-wider whitespace-nowrap flex-shrink-0 transition-all duration-150 clip-cyber border",
-                  isActive
-                    ? "bg-neonCyan/20 text-neonCyan border-neonCyan shadow-glowCyan"
-                    : "bg-midnight/60 text-cyberSilver/70 border-gray-800 hover:border-gray-600 hover:text-white"
-                )}
-              >
-                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{s.label}</span>
-              </button>
-            );
-          })}
-        </nav>
 
         {/* User Session & Role Switcher */}
         <div className="relative flex-shrink-0">
@@ -98,7 +74,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
             onClick={() => setUserDropdown(!userDropdown)}
             className="flex items-center gap-2 px-3 py-1.5 bg-midnight border border-neonCyan/40 clip-cyber hover:border-neonCyan text-left whitespace-nowrap"
           >
-            <div className="w-7 h-7 rounded-full bg-neonCyan/20 flex items-center justify-center border border-neonCyan text-neonCyan font-bold text-xs">
+            <div className="w-6 h-6 rounded-full bg-neonCyan/20 flex items-center justify-center border border-neonCyan text-neonCyan font-bold text-xs">
               {currentUser?.name ? currentUser.name[0] : 'U'}
             </div>
             <div className="hidden sm:block">
@@ -147,27 +123,29 @@ export function Navbar({ activeScreen, setActiveScreen }) {
         </div>
       </div>
 
-      {/* Mobile Screen Switcher Bar */}
-      <div className="lg:hidden flex items-center gap-1 px-3 py-1.5 overflow-x-auto no-scrollbar border-t border-gray-800 bg-midnight/80">
-        {screens.map(s => {
-          const Icon = s.icon;
-          const isActive = activeScreen === s.id;
-          return (
-            <button
-              key={s.id}
-              onClick={() => setActiveScreen(s.id)}
-              className={clsx(
-                "flex items-center gap-1 px-2.5 py-1 text-[11px] font-orbitron uppercase whitespace-nowrap flex-shrink-0 clip-cyber border",
-                isActive
-                  ? "bg-neonCyan/20 text-neonCyan border-neonCyan"
-                  : "bg-obsidian text-cyberSilver/70 border-gray-800"
-              )}
-            >
-              <Icon className="w-3 h-3 flex-shrink-0" />
-              <span>{s.label}</span>
-            </button>
-          );
-        })}
+      {/* Navigation Screen Switcher Tabs Bar */}
+      <div className="max-w-7xl mx-auto px-4 py-1.5">
+        <nav className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {screens.map(s => {
+            const Icon = s.icon;
+            const isActive = activeScreen === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveScreen(s.id)}
+                className={clsx(
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-orbitron font-semibold uppercase tracking-wider whitespace-nowrap flex-shrink-0 transition-all duration-150 clip-cyber border",
+                  isActive
+                    ? "bg-neonCyan/20 text-neonCyan border-neonCyan shadow-glowCyan"
+                    : "bg-midnight/70 text-cyberSilver/75 border-gray-800 hover:border-gray-600 hover:text-white"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{s.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );
