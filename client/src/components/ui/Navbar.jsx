@@ -70,7 +70,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
         </div>
 
         {/* Navigation Screen Switcher Tabs */}
-        <nav className="hidden lg:flex items-center gap-1.5 overflow-x-auto py-1">
+        <nav className="hidden lg:flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
           {screens.map(s => {
             const Icon = s.icon;
             const isActive = activeScreen === s.id;
@@ -148,7 +148,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
       </div>
 
       {/* Mobile Screen Switcher Bar */}
-      <div className="lg:hidden flex items-center gap-1 px-3 py-1.5 overflow-x-auto border-t border-gray-800 bg-midnight/80">
+      <div className="lg:hidden flex items-center gap-1 px-3 py-1.5 overflow-x-auto no-scrollbar border-t border-gray-800 bg-midnight/80">
         {screens.map(s => {
           const Icon = s.icon;
           const isActive = activeScreen === s.id;

@@ -114,10 +114,14 @@
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Vertical only, hide horizontal bar */
 ::-webkit-scrollbar {
   width: 6px;
-  height: 6px;
+  height: 0px;
+}
+::-webkit-scrollbar:horizontal {
+  display: none;
+  height: 0px;
 }
 ::-webkit-scrollbar-track {
   background: #0a0b10;
@@ -128,6 +132,15 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #ff0055;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Dynamic Fullscreen Countdown HUD Overlay */
