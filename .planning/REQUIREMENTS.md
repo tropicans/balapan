@@ -6,9 +6,9 @@ Mengembangkan modul turnamen eliminasi berjenjang (Babak 2, Babak 3, dst.) denga
 ## Functional Requirements
 
 ### 1. 3-Lane Elimination Backend Engine & Data Schema
-- [ ] **ELIM-01**: Sistem mendukung 3 pembalap per heat (`user_id_1`, `user_id_2`, `user_id_3` memetakan ke Jalur A Pink, Jalur B Cyan, Jalur C Green) pada tabel `bracket_matches`.
-- [ ] **ELIM-02**: Logika `seedIntoBracket` menempatkan peserta yang lolos Scrutineer Babak 1 ke slot kosong 3-jalur di Babak 2 secara berurutan dan mampu membuat heat baru secara dinamis hingga 100+ heat.
-- [ ] **ELIM-03**: Auto-Advance Engine secara otomatis mempromosikan 1 pemenang dari tiap heat di Babak $R$ ke slot kosong di Babak $R+1$ hingga mencapai Grand Final (3 mobil).
+- [x] **ELIM-01**: Sistem mendukung 3 pembalap per heat (`user_id_1`, `user_id_2`, `user_id_3` memetakan ke Jalur A Pink, Jalur B Cyan, Jalur C Green) pada tabel `bracket_matches`.
+- [x] **ELIM-02**: Logika `seedIntoBracket` menempatkan peserta yang lolos Scrutineer Babak 1 ke slot kosong 3-jalur di Babak 2 secara berurutan dan mampu membuat heat baru secara dinamis hingga 100+ heat.
+- [x] **ELIM-03**: Auto-Advance Engine secara otomatis mempromosikan 1 pemenang dari tiap heat di Babak $R$ ke slot kosong di Babak $R+1$ hingga mencapai Grand Final (3 mobil).
 
 ### 2. Scalable Multi-Round Dashboard & UI Experience
 - [ ] **ELIM-04**: Antarmuka dasbor eliminasi (`BracketDashboard.jsx`) mengadopsi navigasi berjenjang (*Round Selector Tabs*: Babak 2, Babak 3, Babak 4, Grand Final) dengan label jumlah heat aktif.
@@ -24,9 +24,9 @@ Mengembangkan modul turnamen eliminasi berjenjang (Babak 2, Babak 3, dst.) denga
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ELIM-01 | Phase 5 | Pending |
-| ELIM-02 | Phase 5 | Pending |
-| ELIM-03 | Phase 5 | Pending |
+| ELIM-01 | Phase 5 | Complete |
+| ELIM-02 | Phase 5 | Complete |
+| ELIM-03 | Phase 5 | Complete |
 | ELIM-04 | Phase 6 | Pending |
 | ELIM-05 | Phase 6 | Pending |
 | ELIM-06 | Phase 6 | Pending |

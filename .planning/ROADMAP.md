@@ -1,6 +1,7 @@
 # Roadmap: Milestone v1.2 — Multi-Round 3-Lane Elimination System
 
 ## Milestone Summary
+
 Mengupgrade modul bracket eliminasi dari format kaku 2-peserta 8-slot menjadi sistem gugur berjenjang skala besar (Babak 2, Babak 3, dst.) dengan kapasitas 100+ heat dan 3 peserta per race (Line A, Line B, Line C).
 
 ---
@@ -8,7 +9,9 @@ Mengupgrade modul bracket eliminasi dari format kaku 2-peserta 8-slot menjadi si
 ## Phases
 
 ### Phase 5: 3-Lane Elimination Backend Engine & Auto-Advance Schema
+
 **Goal**: Mengembangkan backend engine eliminasi 3-jalur (Jalur A, B, C) dengan dukungan pembuatan heat dinamis hingga 100+ heat dan auto-advance pemenang antar ronde secara berjenjang.
+
 - **Requirements**: `ELIM-01`, `ELIM-02`, `ELIM-03`
 - **Deliverables**:
   1. Update fungsi `seedIntoBracket` di `server/raceManager.js` untuk mengisi 3 slot kontestan (`user_id_1`, `user_id_2`, `user_id_3`) per heat.
@@ -19,15 +22,19 @@ Mengupgrade modul bracket eliminasi dari format kaku 2-peserta 8-slot menjadi si
   1. Kontestan yang lolos Scrutineer Babak 1 mengisi slot Jalur A, B, C secara bergantian dan adil di Babak 2.
   2. Memilih pemenang di Heat Babak 2 otomatis menempatkan pembalap tersebut ke Babak 3 tanpa duplikasi.
   3. Seluruh unit test backend (termasuk skenario 3-peserta per heat) lulus 100%.
-- **Plans**: 1 plan
+- **Plans**: 1/1 plans executed
 
 Plans:
-- [ ] 05-01: Backend engine 3-jalur (ELIM-01..03), alokasi dinamis 100+ heat, & auto-advance multi-ronde
+
+- [x] 05-01-PLAN.md
+- [x] 05-01: Backend engine 3-jalur (ELIM-01..03), alokasi dinamis 100+ heat, & auto-advance multi-ronde
 
 ---
 
 ### Phase 6: Multi-Round Scalable Elimination Dashboard UI
+
 **Goal**: Merombak antarmuka dasbor eliminasi (`BracketDashboard.jsx`) dan Navbar untuk mendukung navigasi multi-ronde, kartu heat 3-jalur, dan pagination/filter 100+ heat yang mulus.
+
 - **Requirements**: `ELIM-04`, `ELIM-05`, `ELIM-06`, `ELIM-07`
 - **Deliverables**:
   1. Navigasi tab babak berjenjang (`Babak 2`, `Babak 3`, `Babak 4`, `Grand Final`) di `BracketDashboard.jsx`.
