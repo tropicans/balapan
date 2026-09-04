@@ -70,6 +70,14 @@ export class TicketEngine {
   }
 
   /**
+   * Alias for lockQualifyingStage
+   */
+  static lockQualifying(options = {}) {
+    const io = options?.io !== undefined ? options.io : options;
+    return this.lockQualifyingStage(io);
+  }
+
+  /**
    * Unlock qualifying stage (e.g. for reset/admin override)
    */
   static unlockQualifyingStage(io = null) {

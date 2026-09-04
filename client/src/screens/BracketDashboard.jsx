@@ -160,7 +160,9 @@ export function BracketDashboard() {
       }
     };
 
-    const cfg = laneConfigs[lane];
+    const ticketNumber = lane === 'A' ? match.ticket_number_1 : (lane === 'B' ? match.ticket_number_2 : match.ticket_number_3);
+    const ticketIndex = lane === 'A' ? match.ticket_index_1 : (lane === 'B' ? match.ticket_index_2 : match.ticket_index_3);
+    const displayName = (userName && ticketIndex) ? `${userName} #${ticketIndex}` : userName;
 
     return (
       <div
@@ -175,11 +177,18 @@ export function BracketDashboard() {
             {cfg.badgeText}
           </span>
           <div className="min-w-0">
-            <div className={clsx(
-              "text-xs font-orbitron truncate",
-              hasContestant ? (isWinner ? "text-neonGreen font-black" : "text-white") : "text-gray-600 italic text-[11px]"
-            )}>
-              {userName || (selectedRound === 2 ? 'Menunggu Lolos Babak 1...' : 'Menunggu Pemenang Heat...')}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={clsx(
+                "text-xs font-orbitron truncate",
+                hasContestant ? (isWinner ? "text-neonGreen font-black" : "text-white") : "text-gray-600 italic text-[11px]"
+              )}>
+                {displayName || (selectedRound === 2 ? 'Menunggu Lolos Babak 1...' : 'Menunggu Pemenang Heat...')}
+              </span>
+              {ticketNumber && (
+                <span className="px-1.5 py-0.2 bg-neonCyan/20 text-neonCyan border border-neonCyan/60 font-mono font-bold text-[9px] clip-cyber">
+                  #{ticketNumber}
+                </span>
+              )}
             </div>
             {userTeam && (
               <div className={clsx("text-[10px] font-mono truncate", cfg.teamText)}>
@@ -216,22 +225,25 @@ export function BracketDashboard() {
   const renderMatchCard = (match) => {
     const isCompleted = match.status === 'completed';
     const isFinalMatch = match.is_final === 1 || match.round_number === highestRound;
+    const isAutoAdvanced = match.is_auto_advanced === 1;
 
     return (
       <div
         key={match.id}
         className={clsx(
           "p-4 bg-obsidian border clip-cyber space-y-2.5 relative transition-all duration-200",
-          isCompleted 
-            ? "border-neonGreen/50 bg-neonGreen/5 shadow-glowGreen" 
-            : isFinalMatch 
-              ? "border-neonAmber/60 bg-neonAmber/5 shadow-glowAmber" 
-              : "border-gray-800 hover:border-neonCyan/50"
+          isAutoAdvanced
+            ? "border-neonAmber/80 bg-neonAmber/10 shadow-glowAmber"
+            : isCompleted 
+              ? "border-neonGreen/50 bg-neonGreen/5 shadow-glowGreen" 
+              : isFinalMatch 
+                ? "border-neonAmber/60 bg-neonAmber/5 shadow-glowAmber" 
+                : "border-gray-800 hover:border-neonCyan/50"
         )}
       >
         {/* Match Header */}
         <div className="flex items-center justify-between text-[11px] font-orbitron border-b border-gray-800/80 pb-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-white font-bold tracking-wider">
               HEAT #{match.match_number}
             </span>
@@ -239,6 +251,12 @@ export function BracketDashboard() {
               <span className="px-1.5 py-0.2 bg-neonAmber/20 text-neonAmber border border-neonAmber clip-cyber text-[9px] font-black flex items-center gap-1">
                 <Trophy className="w-3 h-3" />
                 GRAND FINAL
+              </span>
+            )}
+            {isAutoAdvanced && (
+              <span className="px-2 py-0.5 bg-neonAmber/20 border border-neonAmber text-neonAmber font-orbitron font-black text-[9px] flex items-center gap-1 clip-cyber animate-pulse">
+                <Zap className="w-3 h-3 text-neonAmber" />
+                AUTO-ADVANCE
               </span>
             )}
           </div>
@@ -256,6 +274,13 @@ export function BracketDashboard() {
             )}
           </div>
         </div>
+
+        {isAutoAdvanced && (
+          <div className="px-2.5 py-1 bg-neonAmber/15 border border-neonAmber/60 text-neonAmber font-mono text-[10px] flex items-center gap-1.5 clip-cyber">
+            <Zap className="w-3.5 h-3.5 text-neonAmber flex-shrink-0" />
+            <span className="font-bold">⚡ AUTO-ADVANCE // 3 JALUR PEMBALAP SAMA</span>
+          </div>
+        )}
 
         {/* 3 Lane Competitor Rows */}
         <div className="space-y-2">

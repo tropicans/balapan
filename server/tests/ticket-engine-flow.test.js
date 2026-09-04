@@ -262,7 +262,58 @@ async function runTests() {
 
     console.log('✓ Task 3: Dual-source trigger, 60s void rollback, dan DNF zero-ticket guarantee terverifikasi 100%.');
 
-    console.log('\n🎉 ALL 09-01 TASKS PASSED SUCCESSFULLY!');
+    // =========================================================================
+    // TASK 4 (Plan 09-02 Task 1): REST API /api/tickets, Lock Qualifying & Rejection
+    // =========================================================================
+    console.log('\n--- Task 4: REST API /api/tickets, Lock Qualifying, dan Rejection ---');
+
+    // 1. GET /api/tickets
+    const resTickets = await fetch(`${baseUrl}/api/tickets`);
+    assert.strictEqual(resTickets.status, 200, 'GET /api/tickets harus 200 OK');
+    const ticketsData = await resTickets.json();
+    assert.strictEqual(ticketsData.success, true);
+    assert.ok(ticketsData.data.tickets.length > 0, 'Harus ada tiket terbit di database');
+    assert.ok(ticketsData.data.total_issued > 0, 'total_issued harus > 0');
+    assert.strictEqual(ticketsData.data.is_locked, false, 'Awalnya kualifikasi belum terkunci');
+
+    // 2. POST /api/tickets/lock-qualifying
+    const resLock = await fetch(`${baseUrl}/api/tickets/lock-qualifying`, { method: 'POST' });
+    assert.strictEqual(resLock.status, 200, 'POST lock-qualifying harus 200 OK');
+    const lockData = await resLock.json();
+    assert.strictEqual(lockData.success, true);
+    assert.strictEqual(lockData.data.is_locked, true);
+    assert.strictEqual(TicketEngine.isQualifyingLocked(), true, 'TicketEngine harus mengenali state locked');
+
+    // 3. Reject issueTicket when locked
+    assert.throws(() => {
+      TicketEngine.issueTicket({
+        userId: andi.id,
+        serialNumber: 'LOCKED-TEST',
+        lane: 'A'
+      });
+    }, /Kualifikasi telah dikunci/i, 'issueTicket saat locked harus ditolak');
+
+    // Reject via REST /api/marshal/record-winner when locked
+    const resBlockedMarshal = await fetch(`${baseUrl}/api/marshal/record-winner`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        serial_number: 'TKT-TEST-CHAN',
+        lane: 'B'
+      })
+    });
+    assert.strictEqual(resBlockedMarshal.status, 500, 'Marshal record winner harus gagal 500 saat locked');
+    const blockedData = await resBlockedMarshal.json();
+    assert.ok(blockedData.error.includes('dikunci'), 'Error message harus menyebut kualifikasi dikunci');
+
+    // 4. POST /api/tickets/unlock-qualifying
+    const resUnlock = await fetch(`${baseUrl}/api/tickets/unlock-qualifying`, { method: 'POST' });
+    assert.strictEqual(resUnlock.status, 200, 'POST unlock-qualifying harus 200 OK');
+    assert.strictEqual(TicketEngine.isQualifyingLocked(), false, 'State harus kembali open');
+
+    console.log('✓ Task 4: API /api/tickets, lock-qualifying, penolakan tiket, dan unlock-qualifying terverifikasi.');
+
+    console.log('\n🎉 ALL 09-01 & 09-02 BACKEND TASKS PASSED SUCCESSFULLY!');
   } finally {
     if (server && server.listening) {
       server.close();

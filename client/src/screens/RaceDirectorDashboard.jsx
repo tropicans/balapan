@@ -15,7 +15,8 @@ import {
   Users, 
   AlertCircle,
   Clock,
-  Search
+  Search,
+  ShieldAlert
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -30,12 +31,15 @@ export function RaceDirectorDashboard() {
     apiAdminOverride,
     apiStartCountdown,
     apiResetCountdown,
-    apiStopCountdown
+    apiStopCountdown,
+    apiLockQualifying
   } = useRace();
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [qualifyingLocked, setQualifyingLocked] = useState(false);
+  const [lockQualifyingModalOpen, setLockQualifyingModalOpen] = useState(false);
 
   // Finish times input state
   const [finishTimes, setFinishTimes] = useState({ A: '', B: '', C: '' });
@@ -67,7 +71,33 @@ export function RaceDirectorDashboard() {
         if (data.success) setUserList(data.data);
       })
       .catch(() => {});
+
+    // Fetch initial qualifying lock status
+    fetch('/api/tickets')
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setQualifyingLocked(Boolean(res.data.is_locked));
+        }
+      })
+      .catch(() => {});
   }, [overrideLane]);
+
+  // Handle Lock Qualifying
+  const handleLockQualifying = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await apiLockQualifying();
+      setQualifyingLocked(true);
+      setLockQualifyingModalOpen(false);
+      setSuccessMsg(res.message || 'Kualifikasi Babak 1 berhasil dikunci. Bagan Babak 2 telah difinalisasi.');
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle Finish Time Submission
   const handleSubmitFinish = async (e) => {
@@ -285,20 +315,37 @@ export function RaceDirectorDashboard() {
           </h2>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-cyberSilver/70">STATUS LINTASAN:</span>
-          <span className={clsx(
-            "px-3 py-1 text-xs font-orbitron font-extrabold uppercase clip-cyber",
-            raceStatus === 'draft' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
-            raceStatus === 'pre-start' && "bg-neonCyan/20 text-neonCyan border border-neonCyan animate-pulse",
-            raceStatus === 'locked' && "bg-red-500/20 text-red-400 border border-red-500",
-            raceStatus === 'completed' && "bg-neonGreen/20 text-neonGreen border border-neonGreen"
-          )}>
-            {raceStatus === 'draft' && 'ANTREAN TERBUKA (DRAFT)'}
-            {raceStatus === 'pre-start' && 'TERKUNCI - SIAP START (PRE-START)'}
-            {raceStatus === 'locked' && 'BALAPAN BERLANGSUNG (LOCKED)'}
-            {raceStatus === 'completed' && 'SELESAI (COMPLETED)'}
-          </span>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-cyberSilver/70">STATUS LINTASAN:</span>
+            <span className={clsx(
+              "px-3 py-1 text-xs font-orbitron font-extrabold uppercase clip-cyber",
+              raceStatus === 'draft' && "bg-neonAmber/20 text-neonAmber border border-neonAmber",
+              raceStatus === 'pre-start' && "bg-neonCyan/20 text-neonCyan border border-neonCyan animate-pulse",
+              raceStatus === 'locked' && "bg-red-500/20 text-red-400 border border-red-500",
+              raceStatus === 'completed' && "bg-neonGreen/20 text-neonGreen border border-neonGreen"
+            )}>
+              {raceStatus === 'draft' && 'ANTREAN TERBUKA (DRAFT)'}
+              {raceStatus === 'pre-start' && 'TERKUNCI - SIAP START (PRE-START)'}
+              {raceStatus === 'locked' && 'BALAPAN BERLANGSUNG (LOCKED)'}
+              {raceStatus === 'completed' && 'SELESAI (COMPLETED)'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setLockQualifyingModalOpen(true)}
+            disabled={qualifyingLocked || loading}
+            className={clsx(
+              "px-3 py-1.5 text-xs font-orbitron font-bold flex items-center gap-1.5 clip-cyber border transition-all",
+              qualifyingLocked
+                ? "bg-red-950/40 text-red-400 border-red-500/60 opacity-80 cursor-not-allowed"
+                : "bg-neonAmber/20 text-neonAmber hover:bg-neonAmber hover:text-black border-neonAmber shadow-glowAmber active:scale-95"
+            )}
+            title="Kunci Kualifikasi Babak 1 & Finalisasi Bagan Babak 2"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>{qualifyingLocked ? 'KUALIFIKASI TERKUNCI' : 'KUNCI KUALIFIKASI'}</span>
+          </button>
         </div>
       </div>
 
@@ -721,6 +768,52 @@ export function RaceDirectorDashboard() {
               >
                 MULAI BALAP ULANG
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lock Qualifying Confirmation Modal */}
+      {lockQualifyingModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-obsidian border-2 border-neonAmber p-6 max-w-md w-full clip-cyber space-y-4 shadow-glowAmber">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-neonAmber/20 border border-neonAmber flex items-center justify-center clip-cyber text-neonAmber">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-orbitron font-black text-white">KUNCI KUALIFIKASI</h3>
+                <p className="text-xs font-mono text-neonAmber">FINALISASI BAGAN BABAK 2</p>
+              </div>
+            </div>
+
+            <p className="text-xs font-mono text-cyberSilver/90 leading-relaxed">
+              Apakah Anda yakin ingin mengunci Kualifikasi Babak 1?
+              <br /><br />
+              • Penerbitan tiket Babak 2 baru akan <strong className="text-white">DIBEKUKAN</strong>.
+              <br />
+              • Slot kosong pada match terakhir Babak 2 akan ditetapkan sebagai <strong className="text-neonAmber">Bye Otomatis</strong>.
+              <br />
+              • Bagan eliminasi Babak 2 resmi siap dipertandingkan.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-800">
+              <CyberButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setLockQualifyingModalOpen(false)}
+                disabled={loading}
+              >
+                BATAL
+              </CyberButton>
+              <CyberButton
+                variant="amber"
+                size="sm"
+                onClick={handleLockQualifying}
+                disabled={loading}
+              >
+                {loading ? 'MEMPROSES...' : 'YA, KUNCI SEKARANG'}
+              </CyberButton>
             </div>
           </div>
         </div>

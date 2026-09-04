@@ -105,13 +105,19 @@ export class RaceManager {
       SELECT 
         bm.*,
         u1.name as user_1_name, u1.team_name as user_1_team,
+        t1.ticket_number as ticket_number_1, t1.racer_ticket_index as ticket_index_1,
         u2.name as user_2_name, u2.team_name as user_2_team,
+        t2.ticket_number as ticket_number_2, t2.racer_ticket_index as ticket_index_2,
         u3.name as user_3_name, u3.team_name as user_3_team,
+        t3.ticket_number as ticket_number_3, t3.racer_ticket_index as ticket_index_3,
         w.name as winner_name
       FROM bracket_matches bm
       LEFT JOIN users u1 ON bm.user_id_1 = u1.id
+      LEFT JOIN next_round_tickets t1 ON bm.ticket_id_1 = t1.id
       LEFT JOIN users u2 ON bm.user_id_2 = u2.id
+      LEFT JOIN next_round_tickets t2 ON bm.ticket_id_2 = t2.id
       LEFT JOIN users u3 ON bm.user_id_3 = u3.id
+      LEFT JOIN next_round_tickets t3 ON bm.ticket_id_3 = t3.id
       LEFT JOIN users w ON bm.winner_id = w.id
       ORDER BY bm.round_number ASC, bm.match_number ASC
     `).all();

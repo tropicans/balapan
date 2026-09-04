@@ -171,6 +171,40 @@ export function RaceProvider({ children }) {
       setTimeout(() => setBannerAlert(null), 7000);
     });
 
+    // Phase 09: Ticket Engine & Qualifying Lock Events
+    socketInstance.on('ticket:granted', (data) => {
+      sound.playTicketChime();
+      hapticReady();
+      const t = data.ticket;
+      const racerName = t?.racer_label || t?.user_name || 'Pembalap';
+      const matchInfo = t?.bracket_match_number ? ` // MATCH #${t.bracket_match_number}` : '';
+      setBannerAlert({
+        type: 'success',
+        message: `🎟️ TIKET #${t?.ticket_number || ''} DITERBITKAN: ${racerName} (${t?.team_name || 'INDIVIDUAL'})${matchInfo}`
+      });
+      setTimeout(() => setBannerAlert(null), 6000);
+    });
+
+    socketInstance.on('ticket:voided', (data) => {
+      sound.playErrorSound();
+      hapticError();
+      setBannerAlert({
+        type: 'warning',
+        message: `⚠️ TIKET #${data.ticketNumber || ''} DIBATALKAN (${data.reason || 'Koreksi Meja Finish'})`
+      });
+      setTimeout(() => setBannerAlert(null), 6000);
+    });
+
+    socketInstance.on('qualifying:locked', (data) => {
+      sound.playLockSound();
+      hapticLock();
+      setBannerAlert({
+        type: 'warning',
+        message: '🔒 KUALIFIKASI BABAK 1 RESMI DIKUNCI! BAGAN BABAK 2 TELAH DIFINALISASI.'
+      });
+      setTimeout(() => setBannerAlert(null), 8000);
+    });
+
     setSocket(socketInstance);
 
     return () => {
@@ -405,6 +439,39 @@ export function RaceProvider({ children }) {
     return data;
   };
 
+  const apiLockQualifying = async () => {
+    try {
+      const res = await fetch('/api/tickets/lock-qualifying', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal mengunci kualifikasi');
+      sound.playLockSound();
+      hapticLock();
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      hapticError();
+      throw err;
+    }
+  };
+
+  const apiUnlockQualifying = async () => {
+    try {
+      const res = await fetch('/api/tickets/unlock-qualifying', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal membuka kualifikasi');
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      throw err;
+    }
+  };
+
   return (
     <RaceContext.Provider
       value={{
@@ -433,7 +500,9 @@ export function RaceProvider({ children }) {
         apiStartCountdown,
         apiResetCountdown,
         apiStopCountdown,
-        apiAdvanceBracket
+        apiAdvanceBracket,
+        apiLockQualifying,
+        apiUnlockQualifying
       }}
     >
       {children}

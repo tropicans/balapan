@@ -999,6 +999,49 @@ app.post('/api/marshal/record-bracket-winner', (req, res) => {
   }
 });
 
+// 18a. Get Next Round Tickets & Statistics (TKET-01, TKET-02, D-05, D-06)
+app.get('/api/tickets', (req, res) => {
+  try {
+    const stats = TicketEngine.getTicketStats();
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 18b. Lock Qualifying Stage & Finalize Round 2 Bracket (D-12, D-13)
+app.post('/api/tickets/lock-qualifying', (req, res) => {
+  try {
+    const result = TicketEngine.lockQualifyingStage(io);
+    broadcastFullState();
+    res.json({
+      success: true,
+      message: 'Kualifikasi Babak 1 berhasil dikunci. Bagan Babak 2 telah difinalisasi.',
+      data: result
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 18c. Unlock Qualifying Stage (Admin Reset)
+app.post('/api/tickets/unlock-qualifying', (req, res) => {
+  try {
+    const result = TicketEngine.unlockQualifyingStage(io);
+    broadcastFullState();
+    res.json({
+      success: true,
+      message: 'Kualifikasi Babak 1 berhasil dibuka kembali.',
+      data: result
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // Serve frontend static files in production
 const clientDistPath = path.join(__dirname, '../client/dist');

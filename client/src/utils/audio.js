@@ -124,6 +124,12 @@ class CyberAudioEngine {
       osc.stop(now + 1.5);
     } catch (e) {}
   }
+
+  // Victory / Ticket Granted Chime (Double high melodic chime: 880Hz A5 -> 1318.5Hz E6)
+  playTicketChime() {
+    this.playTone(880, 'sine', 0.12, 0.28);
+    setTimeout(() => this.playTone(1318.51, 'triangle', 0.25, 0.3), 80);
+  }
 }
 
 export const sound = new CyberAudioEngine();
