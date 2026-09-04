@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
-import { Trophy, Zap, Clock, ShieldCheck, Flag, Radio, Crown, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Trophy, Zap, Clock, ShieldCheck, Flag, Radio, Crown, AlertTriangle, CheckCircle2, Ticket, ShieldAlert, Sparkles } from 'lucide-react';
+import { QualifierCelebrationModal } from '../components/ui/QualifierCelebrationModal.jsx';
 import clsx from 'clsx';
 
 export function RealtimeTV() {
@@ -29,6 +30,15 @@ export function RealtimeTV() {
 
   const btoLeaderboard = raceState.btoLeaderboard || [];
   const upcomingRaces = raceState.upcomingRaces || [];
+
+  // Ticket Telemetry & Quota Statistics (Phase 10 E3 & E4)
+  const ticketStats = raceState.ticketStats || {};
+  const totalIssued = ticketStats.total_issued || 0;
+  const targetQuota = ticketStats.target_quota || 24;
+  const remainingQuota = ticketStats.remaining_quota !== undefined ? ticketStats.remaining_quota : Math.max(0, targetQuota - totalIssued);
+  const isLocked = ticketStats.is_locked || false;
+  const isCritical = ticketStats.is_critical || (remainingQuota <= 4 && !isLocked);
+  const ticketsList = ticketStats.tickets || [];
 
   // Determine Dynamic Header Status
   let statusText = "MENUNGGU ANTRIAN";
@@ -87,19 +97,67 @@ export function RealtimeTV() {
           </div>
         </div>
 
-        {/* Right: Dynamic Status Bar & Digital Clock */}
-        <div className="flex items-center gap-4">
+        {/* Right: Ticket Quota Bar, Dynamic Status Bar & Digital Clock */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Widget Kuota Tiket Babak 2 (E3) */}
           <div className={clsx(
-            "px-6 py-2.5 text-base md:text-lg font-orbitron font-black uppercase tracking-wider clip-cyber border-2",
+            "flex flex-col justify-center px-3.5 py-1.5 clip-cyber border transition-all select-none min-w-[190px]",
+            isCritical && "bg-red-950/80 border-neonPink text-neonPink animate-pulse shadow-glowPink",
+            isLocked && "bg-gray-900/90 border-neonCyan text-neonCyan shadow-glowCyan",
+            !isCritical && !isLocked && "bg-black/70 border-neonAmber/60 text-cyberSilver shadow-glowAmber"
+          )}>
+            <div className="flex items-center justify-between gap-2 text-[10px] font-mono uppercase tracking-wider">
+              <span className="flex items-center gap-1">
+                <Ticket className="w-3.5 h-3.5 text-neonAmber shrink-0" />
+                <span className="font-bold text-white">KUOTA BABAK 2</span>
+              </span>
+              <span className={clsx(
+                "font-orbitron font-black",
+                isCritical ? "text-neonPink animate-pulse" : isLocked ? "text-neonCyan" : "text-neonAmber"
+              )}>
+                {isLocked ? "TERKUNCI" : isCritical ? `SISA ${remainingQuota}!` : `${totalIssued}/${targetQuota}`}
+              </span>
+            </div>
+
+            {/* Neon Segment Progress Bar */}
+            <div className="w-full bg-gray-900 h-1.5 rounded-full overflow-hidden mt-1 flex border border-gray-800">
+              <div 
+                className={clsx(
+                  "h-full transition-all duration-500",
+                  isCritical ? "bg-neonPink shadow-[0_0_10px_rgba(255,0,85,0.8)]" : "bg-gradient-to-r from-neonAmber to-neonCyan"
+                )}
+                style={{ width: `${Math.min(100, (totalIssued / Math.max(1, targetQuota)) * 100)}%` }}
+              />
+            </div>
+
+            <div className="text-[9px] font-mono tracking-wider mt-0.5 text-right flex items-center justify-between">
+              <span className="text-cyberSilver/60">{isLocked ? 'FINAL SLOTS' : 'PROGRES'}</span>
+              <span className={clsx(isCritical ? "text-neonPink font-bold" : "text-cyberSilver/80")}>
+                {isLocked ? `${totalIssued} TIKET SAH` : isCritical ? `PEREBUTAN KRITIS! SISA ${remainingQuota}` : `${totalIssued}/${targetQuota} TERISI • SISA ${remainingQuota}`}
+              </span>
+            </div>
+          </div>
+
+          <div className={clsx(
+            "px-5 py-2 text-sm md:text-base font-orbitron font-black uppercase tracking-wider clip-cyber border-2",
             statusStyle
           )}>
             {statusText}
           </div>
-          <div className="px-4 py-2 bg-black/80 border border-gray-800 clip-cyber text-xl font-orbitron font-bold text-cyberSilver">
+          <div className="px-3.5 py-1.5 bg-black/80 border border-gray-800 clip-cyber text-lg md:text-xl font-orbitron font-bold text-cyberSilver">
             {timeClock}
           </div>
         </div>
       </div>
+
+      {/* Qualifying Locked Broadcast Banner (E4) */}
+      {isLocked && (
+        <div className="my-2 bg-gradient-to-r from-neonPink/20 via-neonCyan/30 to-neonAmber/20 border-y-2 border-neonCyan text-white shadow-glowCyan py-2 text-center font-orbitron font-black uppercase tracking-widest text-xs md:text-sm flex items-center justify-center gap-3 animate-pulse">
+          <ShieldAlert className="w-5 h-5 text-neonCyan animate-bounce" />
+          <span>KUALIFIKASI RESMI DITUTUP • BRACKET BABAK 2 SIAP DIMULAI</span>
+          <ShieldAlert className="w-5 h-5 text-neonCyan animate-bounce" />
+        </div>
+      )}
 
       {/* Emergency Broadcast Alert (Re-Race / All CO / Record) */}
       {bannerAlert && (
@@ -333,14 +391,87 @@ export function RealtimeTV() {
         </div>
       </div>
 
-      {/* 3. Footer Marquee Scrolling Ticker (Teks Berjalan) */}
-      <div className="bg-black/90 border-t-2 border-neonCyan/50 py-2.5 px-4 overflow-hidden clip-cyber flex items-center gap-3">
-        <span className="px-2.5 py-1 text-xs font-orbitron font-black bg-neonCyan text-black uppercase clip-cyber whitespace-nowrap">
-          QUEUE LIVE
-        </span>
-        <div className="overflow-hidden whitespace-nowrap flex-1">
-          <div className="inline-block animate-marquee text-xs md:text-sm font-mono text-neonCyan tracking-wider">
-            {marqueeText}
+      {/* 3. Footer Marquee Scrolling Ticker (Running Ticker Pemegang Tiket Babak 2 - E1) */}
+      <div className="bg-black/95 border-t-2 border-neonAmber/50 py-2 px-4 overflow-hidden clip-cyber flex items-center gap-3">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-orbitron font-black bg-neonAmber text-black uppercase clip-cyber whitespace-nowrap shadow-glowAmber">
+          <Ticket className="w-3.5 h-3.5 shrink-0" />
+          <span>ROUND 2 QUALIFIERS</span>
+        </div>
+
+        <div className="overflow-hidden whitespace-nowrap flex-1 relative">
+          <div className="animate-marquee flex items-center">
+            {/* Ticker Content Segment 1 */}
+            <div className="flex items-center shrink-0">
+              {ticketsList.length > 0 ? (
+                // Duplicate elements if <= 2 items to ensure smooth continuous 16:9 loop
+                (ticketsList.length <= 2 ? [...ticketsList, ...ticketsList, ...ticketsList] : ticketsList).map((tkt, idx) => {
+                  const timeFormatted = tkt.created_at ? new Date(tkt.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                  return (
+                    <div key={`tkt-a-${tkt.id || idx}-${idx}`} className="inline-flex items-center gap-2 mx-3">
+                      <span className="bg-neonAmber/20 border border-neonAmber text-neonAmber font-mono px-2 py-0.5 clip-cyber text-xs font-bold shadow-glowAmber">
+                        #{tkt.ticket_number} {tkt.ticket_code}
+                      </span>
+                      <span className="font-orbitron font-bold text-white text-xs">
+                        {tkt.racer_label || tkt.user_name}
+                      </span>
+                      <span className="font-mono text-[11px] text-neonPink">
+                        [{tkt.team_name || 'INDIVIDUAL'}]
+                      </span>
+                      <span className="font-mono text-[10px] text-cyberSilver/60">
+                        ({timeFormatted})
+                      </span>
+                      {tkt.bracket_match_number && (
+                        <span className="font-mono text-[10px] text-neonCyan bg-neonCyan/10 px-1 border border-neonCyan/40 clip-cyber">
+                          M#{tkt.bracket_match_number}
+                        </span>
+                      )}
+                      <span className="text-neonAmber/60 font-bold ml-1">•</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="inline-flex items-center gap-2 text-neonAmber font-orbitron text-xs md:text-sm tracking-wider uppercase px-4">
+                  <Sparkles className="w-4 h-4 text-neonAmber animate-spin" />
+                  <span>BELUM ADA PEMEGANG TIKET BABAK 2 • KUALIFIKASI SEDANG BERLANGSUNG // KANTONGI TIKET DENGAN MEMENANGKAN HEAT!</span>
+                </div>
+              )}
+            </div>
+
+            {/* Ticker Content Segment 2 (for seamless loop) */}
+            <div className="flex items-center shrink-0" aria-hidden="true">
+              {ticketsList.length > 0 ? (
+                (ticketsList.length <= 2 ? [...ticketsList, ...ticketsList, ...ticketsList] : ticketsList).map((tkt, idx) => {
+                  const timeFormatted = tkt.created_at ? new Date(tkt.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                  return (
+                    <div key={`tkt-b-${tkt.id || idx}-${idx}`} className="inline-flex items-center gap-2 mx-3">
+                      <span className="bg-neonAmber/20 border border-neonAmber text-neonAmber font-mono px-2 py-0.5 clip-cyber text-xs font-bold shadow-glowAmber">
+                        #{tkt.ticket_number} {tkt.ticket_code}
+                      </span>
+                      <span className="font-orbitron font-bold text-white text-xs">
+                        {tkt.racer_label || tkt.user_name}
+                      </span>
+                      <span className="font-mono text-[11px] text-neonPink">
+                        [{tkt.team_name || 'INDIVIDUAL'}]
+                      </span>
+                      <span className="font-mono text-[10px] text-cyberSilver/60">
+                        ({timeFormatted})
+                      </span>
+                      {tkt.bracket_match_number && (
+                        <span className="font-mono text-[10px] text-neonCyan bg-neonCyan/10 px-1 border border-neonCyan/40 clip-cyber">
+                          M#{tkt.bracket_match_number}
+                        </span>
+                      )}
+                      <span className="text-neonAmber/60 font-bold ml-1">•</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="inline-flex items-center gap-2 text-neonAmber font-orbitron text-xs md:text-sm tracking-wider uppercase px-4">
+                  <Sparkles className="w-4 h-4 text-neonAmber animate-spin" />
+                  <span>BELUM ADA PEMEGANG TIKET BABAK 2 • KUALIFIKASI SEDANG BERLANGSUNG // KANTONGI TIKET DENGAN MEMENANGKAN HEAT!</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -541,6 +672,9 @@ export function RealtimeTV() {
           </div>
         </div>
       )}
+
+      {/* 5. Holographic Gold "NEW QUALIFIER!" Celebration Modal (E2) */}
+      <QualifierCelebrationModal />
     </div>
   );
 }

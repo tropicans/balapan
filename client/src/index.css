@@ -114,6 +114,23 @@
   }
 }
 
+/* Running Ticker Horizontal Continuous Marquee */
+@keyframes marquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 /* Custom Scrollbar - Vertical only, hide horizontal bar */
 ::-webkit-scrollbar {
   width: 6px;

@@ -3,6 +3,7 @@ import { RaceProvider } from './context/RaceContext.jsx';
 import { Navbar } from './components/ui/Navbar.jsx';
 import { CountdownModal } from './components/ui/CountdownModal.jsx';
 import { BtoCelebrationModal } from './components/ui/BtoCelebrationModal.jsx';
+import { QualifierCelebrationModal } from './components/ui/QualifierCelebrationModal.jsx';
 
 import { ParticipantDashboard } from './screens/ParticipantDashboard.jsx';
 import { RaceDirectorDashboard } from './screens/RaceDirectorDashboard.jsx';
@@ -16,8 +17,16 @@ import { MarshalDashboard } from './screens/MarshalDashboard.jsx';
 function AppContent() {
   const [activeScreen, setActiveScreen] = useState(() => {
     if (typeof window !== 'undefined') {
-      if (window.location.pathname === '/marshal' || window.location.hash === '#marshal') return 'marshal';
-      if (window.location.pathname === '/cashier' || window.location.hash === '#cashier') return 'cashier';
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/tv' || hash === '#tv') return 'tv';
+      if (path === '/marshal' || hash === '#marshal') return 'marshal';
+      if (path === '/cashier' || hash === '#cashier') return 'cashier';
+      if (path === '/director' || path === '/rd' || hash === '#director' || hash === '#rd') return 'rd';
+      if (path === '/bracket' || hash === '#bracket') return 'bracket';
+      if (path === '/scrutineer' || hash === '#scrutineer') return 'scrutineer';
+      if (path === '/qr-codes' || hash === '#qr-codes') return 'qr-codes';
+      if (path === '/participant' || hash === '#participant') return 'participant';
     }
     return 'participant';
   });
@@ -42,6 +51,7 @@ function AppContent() {
       {/* Global Real-Time Modals */}
       <CountdownModal />
       <BtoCelebrationModal />
+      <QualifierCelebrationModal />
     </div>
   );
 }

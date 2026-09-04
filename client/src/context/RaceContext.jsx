@@ -46,6 +46,7 @@ export function RaceProvider({ children }) {
   // Flash Banner / Alerts
   const [bannerAlert, setBannerAlert] = useState(null);
   const [newBtoModal, setNewBtoModal] = useState(null);
+  const [newQualifierModal, setNewQualifierModal] = useState(null);
 
   const { hapticReady, hapticLock, hapticTick, hapticError } = useHaptic();
 
@@ -171,11 +172,20 @@ export function RaceProvider({ children }) {
       setTimeout(() => setBannerAlert(null), 7000);
     });
 
-    // Phase 09: Ticket Engine & Qualifying Lock Events
+    // Phase 09 & 10: Ticket Engine & Qualifying Lock Events
     socketInstance.on('ticket:granted', (data) => {
       sound.playTicketChime();
       hapticReady();
       const t = data.ticket;
+      setNewQualifierModal({ ticket: t, id: Date.now() });
+      try {
+        confetti({
+          particleCount: 120,
+          spread: 70,
+          origin: { y: 0.5 },
+          colors: ['#ffaa00', '#ffd700', '#00f0ff', '#ffffff', '#ff0055']
+        });
+      } catch (e) {}
       const racerName = t?.racer_label || t?.user_name || 'Pembalap';
       const matchInfo = t?.bracket_match_number ? ` // MATCH #${t.bracket_match_number}` : '';
       setBannerAlert({
@@ -483,6 +493,8 @@ export function RaceProvider({ children }) {
         bannerAlert,
         newBtoModal,
         setNewBtoModal,
+        newQualifierModal,
+        setNewQualifierModal,
         switchUser,
         apiScanLane,
         apiSetReady,

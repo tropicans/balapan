@@ -31,15 +31,24 @@ export function Navbar({ activeScreen, setActiveScreen }) {
   ];
 
   const screens = [
-    { id: 'participant', label: 'Peserta (HP)', icon: Smartphone, color: 'cyan' },
-    { id: 'marshal', label: 'Marshal Finish', icon: Flag, color: 'amber' },
-    { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink' },
-    { id: 'scrutineer', label: 'Scrutineer', icon: ShieldCheck, color: 'green' },
-    { id: 'cashier', label: 'Kasir Kupon', icon: CreditCard, color: 'amber' },
-    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan' },
-    { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink' },
-    { id: 'qr-codes', label: 'QR Jalur Fisik', icon: QrCode, color: 'cyan' },
+    { id: 'cashier', label: 'Kasir Kupon', icon: CreditCard, color: 'amber', path: '/cashier' },
+    { id: 'marshal', label: 'Marshal Finish', icon: Flag, color: 'amber', path: '/marshal' },
+    { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director' },
+    { id: 'scrutineer', label: 'Scrutineer', icon: ShieldCheck, color: 'green', path: '/scrutineer' },
+    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
+    { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket' },
+    { id: 'participant', label: 'Peserta (HP)', icon: Smartphone, color: 'cyan', path: '/participant' },
+    { id: 'qr-codes', label: 'QR Jalur Fisik', icon: QrCode, color: 'cyan', path: '/qr-codes' },
   ];
+
+  const handleSelectScreen = (screen) => {
+    setActiveScreen(screen.id);
+    if (typeof window !== 'undefined' && screen.path) {
+      try {
+        window.history.pushState(null, '', screen.path);
+      } catch (e) {}
+    }
+  };
 
   const activeRaceNum = raceState.activeRace?.race_number || 1;
 
@@ -134,7 +143,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
             return (
               <button
                 key={s.id}
-                onClick={() => setActiveScreen(s.id)}
+                onClick={() => handleSelectScreen(s)}
                 className={clsx(
                   "flex items-center gap-1.5 px-3 py-1.5 text-xs font-orbitron font-semibold uppercase tracking-wider whitespace-nowrap flex-shrink-0 transition-all duration-150 clip-cyber border",
                   isActive
