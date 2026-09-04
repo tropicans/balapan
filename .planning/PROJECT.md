@@ -38,27 +38,32 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **UI-01**: Layout input finish time horizontal 3-kolom di Dasbor Race Director (`RaceDirectorDashboard.jsx`) sejajar jalur A, B, C — Shipped in v1.1
 - ✓ **UI-02**: Efek visual pendar emas dinamis (*cyber shimmer border*) pada pemegang rekor BTO #1 dan kartu pemenang — Shipped in v1.1
 - ✓ **UI-03**: Overlay visual hitungan mundur raksasa dramatis di layar TV Sirkuit 16:9 (`RealtimeTV.jsx`) sinkron dengan audio & GO — Shipped in v1.1
+- ✓ **ELIM-01**: Skema data & backend logic eliminasi 3-jalur (Jalur A, B, C) dengan auto-advance pemenang antar ronde — Shipped in v1.2
+- ✓ **ELIM-02**: Antarmuka Dasbor Eliminasi Berjenjang multi-babak (Babak 2, 3, dst.) dengan heat card 3-pembalap dan filter navigasi — Shipped in v1.2
+- ✓ **ELIM-03**: Integrasi Race Director & Layar TV Sirkuit untuk eksekusi heat babak eliminasi real-time — Shipped in v1.2
 
 ### Active
 
-- [ ] **ELIM-01**: Skema data & backend logic eliminasi 3-jalur (Jalur A, B, C) dengan auto-advance pemenang antar ronde
-- [ ] **ELIM-02**: Antarmuka Dasbor Eliminasi Berjenjang multi-babak (Babak 2, 3, dst.) dengan heat card 3-pembalap dan filter navigasi
-- [ ] **ELIM-03**: Integrasi Race Director & Layar TV Sirkuit untuk eksekusi heat babak eliminasi real-time
+- [ ] **COUP-01**: Registrasi Kasir & Generator Lembar Kupon Fisik Siap Cetak (Printable 50-Box Sheet dengan Barcode/ID Paket & nomor seri)
+- [ ] **COUP-02**: Dasbor Marshal Start Box untuk Line-Up Jalur Cepat (Line A, B, C), verifikasi nomor seri kupon, & pencatatan kupon terpakai
+- [ ] **COUP-03**: Engine Hasil Finish Race Director & Penerbitan Otomatis Kupon/Tiket Digital Babak Berikutnya ke Bagan Eliminasi
+- [ ] **COUP-04**: Layar TV Sirkuit Real-time HUD Sinkronisasi Status Race & Live Leaderboard Pemegang Tiket Babak Berikutnya
 
-## Current Milestone: v1.2 Multi-Round 3-Lane Elimination System
+## Current Milestone: v2.0 Physical Coupon & Marshal-Driven Tournament System
 
-**Goal:** Mengupgrade modul bracket eliminasi dari skema kaku 2-peserta 8-slot menjadi sistem gugur berjenjang skala besar (Babak 2, Babak 3, dst.) dengan kapasitas 100+ heat dan 3 peserta per race (Line A, Line B, Line C).
+**Goal:** Mengadaptasi operasional turnamen ke sistem kupon fisik (50+ kotak) yang lazim di lapangan, di mana 100% operasional dijalankan oleh Panitia (Kasir, Marshal Start Box, Race Director), kupon dicoret manual oleh Marshal saat turun race, dan tiket Babak Berikutnya diterbitkan otomatis saat mobil finish.
 
 **Target Features:**
-1. **3-Lane Bracket Architecture**: Setiap match/heat eliminasi menampung 3 kontestan (Jalur A Pink, Jalur B Cyan, Jalur C Green) memanfaatkan `user_id_3`.
-2. **Multi-Round Hierarchy**: Navigasi berjenjang dinamis (`Babak 2` -> `Babak 3` -> `Babak 4` ... -> `Grand Final 3 Mobil`).
-3. **Scalable Heat Grid & Filter**: Navigasi responsif untuk 100+ heat per babak dengan pencarian nomor heat & nama pembalap.
-4. **Auto-Advance Engine**: Pemenang tiap heat otomatis dipromosikan mengisi slot kosong babak selanjutnya tanpa input kupon ulang.
+1. **Registrasi Kasir & Generator Lembar Kupon Fisik**: Kasir mendaftarkan peserta, memilih paket kupon (50 kotak / dinamis), dan mencetak lembar kupon fisik siap pakai dengan nomor seri/ID paket & checklist kotak 1-50.
+2. **Dasbor Marshal Start Box (Quick Race Entry)**: Antarmuka super cepat dan simpel untuk Marshal di dekat lintasan memilih peserta/nomor kupon yang antre di Jalur A, B, C (atau scan ID paket) sebelum mobil dilepas dan mencoret kupon fisik.
+3. **Automated Finish-to-Next-Round Ticket Engine**: Integrasi hasil finish Race Director: jika Klontang kupon hangus, jika Finish sistem otomatis menerbitkan tiket digital Babak 2/Berikutnya dan langsung menempatkannya ke bagan eliminasi multi-round.
+4. **Layar TV Sirkuit & Live Status Papan Pemenang Tiket**: Menampilkan antrean race aktif, hasil race, dan daftar pemegang tiket Babak Berikutnya secara real-time.
 
 ### Out of Scope
 
 - Integrasi sensor perangkat keras RFID/NFC fisik — *Desain sistem sengaja 100% paperless & zero-hardware untuk menekan biaya sirkuit*.
 - Buzzer pelepas start otomatis di akhir countdown — *Pelepasan mobil diserahkan manual kepada Marshal di lapangan agar aman dan adil*.
+- Smartphone scan mandiri oleh peserta saat antre race — *Dialihkan 100% ke operasional panitia (Marshal Start Box) agar alur antrean fisik tidak macet*.
 
 ## Context
 
@@ -86,11 +91,14 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 | Ergonomi 3-Kolom Stopwatch | Menyamai tata letak 3 stopwatch fisik di meja Race Director | ✓ Shipped v1.1 |
 | Cyber Golden Shimmer BTO | Animasi pendar hangat untuk membedakan rekor puncak BTO #1 | ✓ Shipped v1.1 |
 | Fullscreen Countdown HUD Overlay | Overlay 16:9 fixed z-50 sinkron WebSocket audio & selebrasi GO | ✓ Shipped v1.1 |
+| Multi-Round 3-Lane Bracket Schema | Mendukung turnamen besar 100+ heat dengan `user_id_3` | ✓ Shipped v1.2 |
+| Physical Coupon Sheet & Marshal-Driven Flow | Menghilangkan resistensi adopsi di lapangan & mempercepat antrean start box | Planned v2.0 |
 
 ## Shipped Milestones
 
-- **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03) — [Archive](milestones/v1.0-ROADMAP.md)
+- **v1.2**: Multi-Round 3-Lane Elimination System (Shipped 2026-09-03) — [Archive](milestones/v1.2-ROADMAP.md)
 - **v1.1**: UI/UX & Arena Visual Showcase Polish (Shipped 2026-09-03) — [Archive](milestones/v1.1-ROADMAP.md)
+- **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03) — [Archive](milestones/v1.0-ROADMAP.md)
 
 ## Evolution
 
@@ -110,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-03 after Milestone v1.1 completion*
+*Last updated: 2026-09-04 after Milestone v2.0 initialization*

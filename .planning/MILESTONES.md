@@ -1,5 +1,20 @@
 # Project Milestones
 
+## v1.2: Multi-Round 3-Lane Elimination System
+- **Shipped:** 2026-09-03
+- **Phases:** 2 (Phases 5-6)
+- **Plans:** 2
+- **Requirements Satisfied:** 3/3 (`ELIM-01`, `ELIM-02`, `ELIM-03`)
+- **Key Accomplishments:**
+  - Multi-Round 3-Lane Bracket schema with `user_id_3` support in matches table and auto-advance promotion engine.
+  - Multi-round hierarchical elimination dashboard UI (`EliminationDashboard.jsx`) with dynamic round switching, 3-lane heat cards, search filter, and instant advancement indicators.
+  - Real-time Race Director & TV Circuit HUD integration for seamless multi-round elimination heats.
+- **Verification:** 13/13 test suites passed, Vite production build clean.
+- **Roadmap Archive:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
+- **Requirements Archive:** [milestones/v1.2-REQUIREMENTS.md](milestones/v1.2-REQUIREMENTS.md)
+
+---
+
 ## v1.1: UI/UX & Arena Visual Showcase Polish
 - **Shipped:** 2026-09-03
 - **Phases:** 2 (Phases 3-4)

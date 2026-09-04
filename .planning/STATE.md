@@ -1,19 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Multi-Round 3-Lane Elimination System
-current_phase: 06
-status: completed
-last_updated: "2026-09-03T07:46:17.052Z"
-last_activity: 2026-09-03
-last_activity_desc: Phase 06 complete
-state_head: ef68a2d6a10730a9225ae8acdd7719dd1969c6f0
+milestone: v2.0
+milestone_name: Physical Coupon & Marshal-Driven Tournament System
+status: planning
+last_updated: "2026-09-04T01:56:01.081Z"
+last_activity: 2026-09-04
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -27,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-09-04 — Completed quick task 260904-smartphone-camera-scanner-fix: Fix smartphone camera scan on HTTP LAN & provide native photo capture fallback
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-09-04 — Milestone v2.0 started
 
 ### Quick Tasks Completed
 
