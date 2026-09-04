@@ -64,7 +64,9 @@ Mengadaptasi operasional turnamen Mini 4WD ke sistem kupon fisik (lembar 50 kota
   1. Mobil yang mencatatkan waktu finish valid otomatis mendapatkan tiket Babak 2 dan namanya muncul di bracket eliminasi.
   2. Mobil yang mengalami CO/Klontang dicatat hangus kuponnya dan tidak mendapatkan tiket.
   3. Tidak terjadi duplikasi tiket atau race condition saat beberapa mobil finish berurutan.
-- **Plans**: 0/1 plans executed
+- **Plans**: 2/2 plans complete
+- [x] 09-01-PLAN.md
+- [x] 09-02-PLAN.md
 
 ---
 
