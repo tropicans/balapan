@@ -4,11 +4,11 @@ milestone: v2.0
 milestone_name: Physical Coupon & Marshal-Driven Tournament System
 current_phase: 07
 status: executing
-stopped_at: Phase 07 UI-SPEC approved
-last_updated: "2026-09-04T03:21:56.243Z"
+stopped_at: Phase 8 context gathered
+last_updated: "2026-09-04T05:42:28.853Z"
 last_activity: 2026-09-04
 last_activity_desc: Phase 07 marked complete
-state_head: 5b3a3aa9693c2e824e9981a2a457dd1a038891c3
+state_head: 2efa1098779fa68207e8523fb349bc421b94db0b
 progress:
   total_phases: 4
   completed_phases: 1
@@ -53,6 +53,6 @@ Last activity: 2026-09-04 — Phase 07 marked complete
 
 ## Session
 
-**Last session:** 2026-09-04T03:08:54.688Z
-**Stopped at:** Phase 07 UI-SPEC approved
-**Resume file:** .planning/phases/07-pre-printed-coupon-package-registration-cashier-flow/07-UI-SPEC.md
+**Last session:** 2026-09-04T05:42:28.682Z
+**Stopped at:** Phase 8 context gathered
+**Resume file:** .planning/phases/08-marshal-start-box-rapid-line-up-coupon-check-off-dashboard/08-CONTEXT.md
