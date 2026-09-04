@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
 import { CyberButton } from '../components/ui/CyberButton.jsx';
 import { CyberCard } from '../components/ui/CyberCard.jsx';
+import { CouponRegistrationForm } from '../components/cashier/CouponRegistrationForm.jsx';
+import { CouponPackageList } from '../components/cashier/CouponPackageList.jsx';
+import { VoidPackageModal } from '../components/cashier/VoidPackageModal.jsx';
 import { 
   CreditCard, 
   UserPlus, 
@@ -10,13 +13,20 @@ import {
   CheckCircle, 
   AlertCircle, 
   Plus, 
-  User 
+  User,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import clsx from 'clsx';
+import { sound } from '../utils/audio.js';
 
 export function CashierDashboard() {
-  const { apiTopUp, apiRegisterGuest } = useRace();
+  const { apiTopUp, apiRegisterGuest, socket } = useRace();
 
+  // Navigation tab state (default: 'physical')
+  const [activeTab, setActiveTab] = useState('physical'); // 'physical' | 'digital'
+
+  // Users data for autocomplete and digital topup
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -24,24 +34,70 @@ export function CashierDashboard() {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  // New Guest Form
+  // Pre-Printed Coupon Packages data
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+  const [packagesError, setPackagesError] = useState(null);
+
+  // Void modal target package
+  const [voidModalPkg, setVoidModalPkg] = useState(null);
+
+  // New Guest Form (Legacy / Manual)
   const [guestModal, setGuestModal] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestTeam, setGuestTeam] = useState('');
   const [guestBalance, setGuestBalance] = useState(10);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch('/api/users');
       const data = await res.json();
       if (data.success) setUsers(data.data);
     } catch (e) {}
-  };
+  }, []);
+
+  const fetchPackages = useCallback(async () => {
+    setLoadingPackages(true);
+    setPackagesError(null);
+    try {
+      const res = await fetch('/api/coupon-packages');
+      const data = await res.json();
+      if (data.success) {
+        setPackages(data.data);
+      } else {
+        setPackagesError(data.error || 'Gagal memuat daftar paket kupon');
+      }
+    } catch (e) {
+      setPackagesError('Koneksi ke server database turnamen terputus');
+    } finally {
+      setLoadingPackages(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+    fetchPackages();
+  }, [fetchUsers, fetchPackages]);
 
+  // Real-time WebSocket synchronization
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePkgUpdate = () => {
+      fetchPackages();
+      fetchUsers();
+    };
+
+    socket.on('coupon_package_updated', handlePkgUpdate);
+    socket.on('STATE_UPDATE', fetchUsers);
+
+    return () => {
+      socket.off('coupon_package_updated', handlePkgUpdate);
+      socket.off('STATE_UPDATE', fetchUsers);
+    };
+  }, [socket, fetchPackages, fetchUsers]);
+
+  // Legacy digital top up handler
   const handleTopUp = async (amount) => {
     if (!selectedUser) return;
     setLoading(true);
@@ -62,6 +118,7 @@ export function CashierDashboard() {
     }
   };
 
+  // Guest creation handler
   const handleCreateGuest = async (e) => {
     e.preventDefault();
     if (!guestName.trim()) return;
@@ -92,95 +149,178 @@ export function CashierDashboard() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 space-y-6">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto p-3 md:p-5 space-y-5">
+      {/* Header Banner */}
       <div className="bg-obsidian border border-neonAmber/40 p-4 clip-cyber flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-neonAmber/20 border border-neonAmber flex items-center justify-center clip-cyber">
             <CreditCard className="w-6 h-6 text-neonAmber" />
           </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-orbitron font-black text-white">
-              KASIR & TOP UP KUPON // ASSISTED DESK
+            <h2 className="text-xl md:text-2xl font-orbitron font-black text-white tracking-wider">
+              KASIR & PENDAFTARAN KUPON // ASSISTED DESK
             </h2>
             <p className="text-xs font-mono text-neonAmber">
-              Pendaftaran Tamu / Anak & Pengisian Saldo Kupon Balap
+              Registrasi Lembaran Fisik 50-Kotak & Pengisian Saldo Kupon Turnamen
             </p>
           </div>
         </div>
 
+        {/* Action Button */}
         <CyberButton
           variant="amber"
           size="md"
           icon={UserPlus}
           onClick={() => setGuestModal(true)}
         >
-          + TAMBAH PESERTA BARU (TAMU/MANUAL)
+          + TAMBAH PESERTA BARU (MANUAL)
         </CyberButton>
       </div>
 
-      {/* Feedback Notification */}
-      {feedback && (
-        <div className={clsx(
-          "p-4 text-xs font-mono clip-cyber border flex items-center gap-2",
-          feedback.type === 'success' ? "bg-neonGreen/10 border-neonGreen text-neonGreen font-bold" : "bg-red-950/40 border-red-500 text-red-400"
-        )}>
-          {feedback.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-          <span>{feedback.text}</span>
-        </div>
-      )}
+      {/* Navigation Tabs (D-13, UI-SPEC) */}
+      <div className="flex items-center gap-2 border-b border-gray-800 pb-2 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('physical');
+            sound.playTone(600, 'sine', 0.04, 0.1);
+          }}
+          className={clsx(
+            "flex items-center gap-2 px-4 py-2.5 font-orbitron font-bold text-xs md:text-sm tracking-wider uppercase transition-all clip-cyber",
+            activeTab === 'physical'
+              ? "bg-neonAmber/20 text-neonAmber border border-neonAmber shadow-glowAmber"
+              : "bg-black/40 text-gray-400 border border-gray-800 hover:text-white hover:border-gray-700"
+          )}
+        >
+          <Layers className="w-4 h-4 text-neonAmber" />
+          <span>Paket Kupon Fisik (Pre-Printed)</span>
+        </button>
 
-      {/* Search & Participant List */}
-      <CyberCard variant="amber" title="DAFTAR PESERTA TURNAMEN (KLIK UNTUK TOP UP)">
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="w-5 h-5 text-cyberSilver/50 absolute left-3 top-3" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari nama pembalap, racer tag, atau email..."
-              className="w-full bg-black/70 border border-neonAmber/50 pl-10 pr-4 py-2.5 text-sm font-mono text-white clip-cyber focus:outline-none focus:border-neonAmber"
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('digital');
+            sound.playTone(600, 'sine', 0.04, 0.1);
+          }}
+          className={clsx(
+            "flex items-center gap-2 px-4 py-2.5 font-orbitron font-bold text-xs md:text-sm tracking-wider uppercase transition-all clip-cyber",
+            activeTab === 'digital'
+              ? "bg-neonAmber/20 text-neonAmber border border-neonAmber shadow-glowAmber"
+              : "bg-black/40 text-gray-400 border border-gray-800 hover:text-white hover:border-gray-700"
+          )}
+        >
+          <Coins className="w-4 h-4 text-neonAmber" />
+          <span>Top Up Saldo Digital</span>
+        </button>
+      </div>
+
+      {/* Tab 1: Paket Kupon Fisik (Pre-Printed) - 2-Column Split Layout */}
+      {activeTab === 'physical' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Left Column (40% width / 5 cols): Quick Registration Form */}
+          <div className="lg:col-span-5 space-y-4">
+            <CouponRegistrationForm
+              users={users}
+              onRegistered={(newPkg) => {
+                fetchPackages();
+                fetchUsers();
+              }}
+              onRefreshUsers={fetchUsers}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto">
-            {filteredUsers.map(u => (
-              <div
-                key={u.id}
-                onClick={() => setSelectedUser(u)}
-                className={clsx(
-                  "p-3.5 bg-black/50 border clip-cyber transition-all cursor-pointer flex items-center justify-between",
-                  selectedUser?.id === u.id
-                    ? "border-neonAmber bg-neonAmber/15 shadow-glowAmber"
-                    : "border-gray-800 hover:border-neonAmber/40"
-                )}
-              >
-                <div>
-                  <div className="font-orbitron font-bold text-white text-sm truncate">
-                    {u.name}
-                  </div>
-                  <div className="text-xs font-mono text-neonPink tracking-wider">
-                    [{u.team_name || 'NO TAG'}]
-                  </div>
-                  <div className="text-[10px] font-mono text-cyberSilver/50">
-                    {u.is_virtual ? 'Akun Tamu (Virtual)' : u.email}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-xs font-mono text-cyberSilver/60">Saldo</div>
-                  <div className="text-xl font-orbitron font-black text-neonAmber">
-                    {u.coupon_balance ?? 0}
-                  </div>
-                </div>
-              </div>
-            ))}
+          {/* Right Column (60% width / 7 cols): Live Feed & Quota Monitoring */}
+          <div className="lg:col-span-7 space-y-4">
+            <CouponPackageList
+              packages={packages}
+              loading={loadingPackages}
+              error={packagesError}
+              onRefresh={fetchPackages}
+              onOpenVoid={(pkg) => setVoidModalPkg(pkg)}
+            />
           </div>
         </div>
-      </CyberCard>
+      )}
 
-      {/* Top Up Modal */}
+      {/* Tab 2: Top Up Saldo Digital (Legacy v1.0) */}
+      {activeTab === 'digital' && (
+        <div className="space-y-5">
+          {/* Feedback Notification */}
+          {feedback && (
+            <div className={clsx(
+              "p-4 text-xs font-mono clip-cyber border flex items-center gap-2",
+              feedback.type === 'success' ? "bg-neonGreen/10 border-neonGreen text-neonGreen font-bold" : "bg-red-950/40 border-red-500 text-red-400"
+            )}>
+              {feedback.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+              <span>{feedback.text}</span>
+            </div>
+          )}
+
+          {/* Search & Participant List */}
+          <CyberCard variant="amber" title="DAFTAR PESERTA TURNAMEN (KLIK UNTUK TOP UP)">
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="w-5 h-5 text-cyberSilver/50 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Cari nama pembalap, racer tag, atau email..."
+                  className="w-full bg-black/70 border border-neonAmber/50 pl-10 pr-4 py-2.5 text-sm font-mono text-white clip-cyber focus:outline-none focus:border-neonAmber"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto">
+                {filteredUsers.map(u => (
+                  <div
+                    key={u.id}
+                    onClick={() => setSelectedUser(u)}
+                    className={clsx(
+                      "p-3.5 bg-black/50 border clip-cyber transition-all cursor-pointer flex items-center justify-between",
+                      selectedUser?.id === u.id
+                        ? "border-neonAmber bg-neonAmber/15 shadow-glowAmber"
+                        : "border-gray-800 hover:border-neonAmber/40"
+                    )}
+                  >
+                    <div>
+                      <div className="font-orbitron font-bold text-white text-sm truncate">
+                        {u.name}
+                      </div>
+                      <div className="text-xs font-mono text-neonPink tracking-wider">
+                        [{u.team_name || 'NO TAG'}]
+                      </div>
+                      <div className="text-[10px] font-mono text-cyberSilver/50">
+                        {u.is_virtual ? 'Akun Tamu (Virtual)' : u.email}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-xs font-mono text-cyberSilver/60">Saldo</div>
+                      <div className="text-xl font-orbitron font-black text-neonAmber">
+                        {u.coupon_balance ?? 0}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CyberCard>
+        </div>
+      )}
+
+      {/* Emergency Void Modal */}
+      {voidModalPkg && (
+        <VoidPackageModal
+          pkg={voidModalPkg}
+          onClose={() => setVoidModalPkg(null)}
+          onSuccess={(newPkg) => {
+            fetchPackages();
+            fetchUsers();
+          }}
+        />
+      )}
+
+      {/* Top Up Modal for Digital Tab */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="max-w-lg w-full bg-obsidian border-2 border-neonAmber p-6 md:p-8 clip-cyber-lg shadow-glowAmber">
@@ -258,68 +398,84 @@ export function CashierDashboard() {
         </div>
       )}
 
-      {/* Guest Creation Modal */}
+      {/* Guest Participant Creation Modal */}
       {guestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <form onSubmit={handleCreateGuest} className="max-w-md w-full bg-obsidian border-2 border-neonAmber p-6 clip-cyber shadow-glowAmber space-y-4">
-            <h3 className="text-xl font-orbitron font-black text-neonAmber">
-              TAMBAH PESERTA BARU (TAMU / ANAK)
-            </h3>
-
-            <div>
-              <label className="text-xs font-orbitron text-cyberSilver/70 block mb-1">
-                NAMA LENGKAP PESERTA:
-              </label>
-              <input
-                type="text"
-                required
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-                placeholder="Contoh: Gilang Ramadhan"
-                className="w-full bg-black/80 border border-neonAmber/50 px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-neonAmber clip-cyber"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-orbitron text-cyberSilver/70 block mb-1">
-                RACER TAG / NAMA TIM (MAX 10 KARAKTER):
-              </label>
-              <input
-                type="text"
-                maxLength={10}
-                value={guestTeam}
-                onChange={(e) => setGuestTeam(e.target.value)}
-                placeholder="Contoh: GILANG [KID]"
-                className="w-full bg-black/80 border border-neonAmber/50 px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-neonAmber clip-cyber"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-orbitron text-cyberSilver/70 block mb-1">
-                SALDO AWAL KUPON:
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={guestBalance}
-                onChange={(e) => setGuestBalance(e.target.value)}
-                className="w-full bg-black/80 border border-neonAmber/50 px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-neonAmber clip-cyber"
-              />
-            </div>
-
-            <div className="pt-3 border-t border-gray-800 flex justify-end gap-2">
+          <div className="max-w-md w-full bg-obsidian border-2 border-neonAmber p-6 clip-cyber-lg shadow-glowAmber">
+            <div className="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-neonAmber" />
+                <h3 className="text-lg font-orbitron font-black text-white uppercase">DAFTAR PESERTA BARU (TAMU)</h3>
+              </div>
               <button
-                type="button"
                 onClick={() => setGuestModal(false)}
-                className="px-4 py-2 text-xs font-orbitron uppercase text-cyberSilver/70 hover:text-white"
+                className="text-cyberSilver/50 hover:text-white font-mono"
               >
-                BATAL
+                ✕
               </button>
-              <CyberButton type="submit" variant="amber" size="md" disabled={loading}>
-                SIMPAN & DAFTARKAN
-              </CyberButton>
             </div>
-          </form>
+
+            <form onSubmit={handleCreateGuest} className="space-y-4">
+              <div>
+                <label className="block text-xs font-orbitron text-cyberSilver/80 uppercase mb-1">
+                  Nama Peserta / Anak <span className="text-neonAmber">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Farhan Junior"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  className="w-full bg-black/80 border border-neonAmber/50 px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-neonAmber clip-cyber"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-orbitron text-cyberSilver/80 uppercase mb-1">
+                  Tim / Racer Tag (Opsional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: MRT (Maks 10 Huruf)"
+                  maxLength={10}
+                  value={guestTeam}
+                  onChange={(e) => setGuestTeam(e.target.value.toUpperCase())}
+                  className="w-full bg-black/80 border border-neonAmber/50 px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-neonAmber clip-cyber uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-orbitron text-cyberSilver/80 uppercase mb-1">
+                  Saldo Kupon Awal
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={guestBalance}
+                  onChange={(e) => setGuestBalance(parseInt(e.target.value, 10) || 0)}
+                  className="w-full bg-black/80 border border-neonAmber/50 px-3 py-2 text-sm font-mono text-white focus:outline-none focus:border-neonAmber clip-cyber"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setGuestModal(false)}
+                  className="px-4 py-2 text-xs font-orbitron uppercase text-cyberSilver/70 hover:text-white"
+                >
+                  BATAL
+                </button>
+                <CyberButton
+                  type="submit"
+                  variant="amber"
+                  size="md"
+                  disabled={loading || !guestName.trim()}
+                >
+                  DAFTARKAN
+                </CyberButton>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
