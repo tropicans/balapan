@@ -105,10 +105,17 @@ class SqliteWrapper {
     const self = this;
     return (...args) => {
       try {
+        self.rawDb.exec('BEGIN TRANSACTION;');
         const res = fn(...args);
+        self.rawDb.exec('COMMIT;');
         self.save();
         return res;
       } catch (err) {
+        try {
+          self.rawDb.exec('ROLLBACK;');
+        } catch (rbErr) {
+          // ignore rollback error
+        }
         throw err;
       }
     };
@@ -181,6 +188,25 @@ export async function initDatabase() {
       FOREIGN KEY(winner_id) REFERENCES users(id),
       FOREIGN KEY(parent_match_id) REFERENCES bracket_matches(id)
     );
+
+    CREATE TABLE IF NOT EXISTS coupon_packages (
+      id TEXT PRIMARY KEY,
+      serial_number TEXT UNIQUE NOT NULL,
+      user_id TEXT NOT NULL,
+      total_quota INTEGER NOT NULL DEFAULT 50,
+      used_quota INTEGER NOT NULL DEFAULT 0,
+      remaining_quota INTEGER NOT NULL DEFAULT 50,
+      price_paid INTEGER DEFAULT 0,
+      payment_method TEXT DEFAULT 'cash',
+      status TEXT CHECK(status IN ('active', 'completed', 'void')) DEFAULT 'active',
+      void_from_id TEXT DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY(void_from_id) REFERENCES coupon_packages(id)
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_coupon_packages_serial ON coupon_packages(serial_number);
   `);
 
   try {
