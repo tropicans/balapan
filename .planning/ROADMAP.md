@@ -84,7 +84,9 @@ Mengadaptasi operasional turnamen Mini 4WD ke sistem kupon fisik (lembar 50 kota
   1. Layar TV Sirkuit secara dramatis menyiarkan pembalap yang baru lolos mengamankan tiket Babak 2.
   2. Seluruh alur turnamen dari pendaftaran hingga bracket eliminasi bekerja tanpa kendala tanpa memerlukan scan smartphone oleh peserta.
   3. Seluruh unit test suite lulus 100% dan build produksi Vite sukses.
-- **Plans**: 0/1 plans executed
+- **Plans**: 0/2 plans executed
+- [ ] 10-01-PLAN.md
+- [ ] 10-02-PLAN.md
 
 ---
 
