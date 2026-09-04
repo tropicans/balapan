@@ -105,17 +105,10 @@ class SqliteWrapper {
     const self = this;
     return (...args) => {
       try {
-        self.rawDb.exec('BEGIN TRANSACTION;');
         const res = fn(...args);
-        self.rawDb.exec('COMMIT;');
         self.save();
         return res;
       } catch (err) {
-        try {
-          self.rawDb.exec('ROLLBACK;');
-        } catch (rbErr) {
-          // ignore rollback error
-        }
         throw err;
       }
     };

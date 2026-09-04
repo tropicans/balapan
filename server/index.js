@@ -168,6 +168,276 @@ app.post('/api/coupons/topup', (req, res) => {
   }
 });
 
+// 6a. Coupon Packages: Get List with Search & Status Filter
+app.get('/api/coupon-packages', (req, res) => {
+  try {
+    const { search, status } = req.query;
+    let sql = `
+      SELECT 
+        cp.*,
+        u.name as user_name,
+        u.team_name,
+        u.email
+      FROM coupon_packages cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (status && status !== 'all') {
+      sql += ' AND cp.status = ?';
+      params.push(status);
+    }
+
+    if (search && search.trim()) {
+      const term = `%${search.trim()}%`;
+      sql += ' AND (cp.serial_number LIKE ? OR u.name LIKE ? OR u.team_name LIKE ?)';
+      params.push(term, term, term);
+    }
+
+    sql += ' ORDER BY cp.created_at DESC LIMIT 200';
+    const packages = db.prepare(sql).all(...params);
+    res.json({ success: true, data: packages });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6b. Coupon Packages: Get Suggested Next Serial Number
+app.get('/api/coupon-packages/next-serial', (req, res) => {
+  try {
+    const lastPkg = db.prepare(`
+      SELECT serial_number FROM coupon_packages 
+      ORDER BY rowid DESC 
+      LIMIT 1
+    `).get();
+
+    let nextSerial = '001';
+    if (lastPkg && lastPkg.serial_number) {
+      const match = lastPkg.serial_number.match(/(\d+)$/);
+      if (match) {
+        const numStr = match[1];
+        const nextNum = parseInt(numStr, 10) + 1;
+        const prefix = lastPkg.serial_number.slice(0, -numStr.length);
+        nextSerial = prefix + String(nextNum).padStart(numStr.length, '0');
+      } else {
+        nextSerial = `${lastPkg.serial_number}-1`;
+      }
+    }
+    res.json({ success: true, data: { next_serial: nextSerial } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6c. Coupon Packages: Register New Pre-Printed Package
+app.post('/api/coupon-packages', (req, res) => {
+  try {
+    const {
+      serial_number,
+      user_id,
+      new_user_name,
+      team_name,
+      total_quota = 50,
+      price_paid = 0,
+      payment_method = 'cash'
+    } = req.body;
+
+    const serial = String(serial_number || '').trim().toUpperCase();
+    if (!serial || serial.length < 4 || serial.length > 32) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nomor seri wajib diisi (4-32 karakter alfanumerik)'
+      });
+    }
+
+    const quota = parseInt(total_quota, 10);
+    if (isNaN(quota) || quota <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Total kuota harus berupa angka lebih dari 0'
+      });
+    }
+
+    // Cek pra-insert untuk mendeteksi nomor seri duplikat (D-03)
+    const existing = db.prepare(`
+      SELECT cp.*, u.name as racer_name, u.team_name 
+      FROM coupon_packages cp 
+      JOIN users u ON cp.user_id = u.id 
+      WHERE cp.serial_number = ?
+    `).get(serial);
+
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        error: 'SERIAL_EXISTS',
+        message: `Lembar seri #${serial} sudah terdaftar atas nama ${existing.racer_name}.`,
+        existing_package: {
+          id: existing.id,
+          serial_number: existing.serial_number,
+          remaining_quota: existing.remaining_quota,
+          total_quota: existing.total_quota,
+          status: existing.status,
+          user_name: existing.racer_name,
+          team_name: existing.team_name
+        }
+      });
+    }
+
+    let targetUserId = user_id;
+
+    // Dual mode: New user on-the-fly (D-06)
+    if (!targetUserId && new_user_name) {
+      const uId = uuidv4();
+      const tag = team_name ? team_name.substring(0, 10).toUpperCase() : new_user_name.substring(0, 6).toUpperCase();
+      const sanitizedEmail = `${new_user_name.toLowerCase().replace(/[^a-z0-9]/g, '')}_${Date.now().toString().slice(-4)}@tamiya.local`;
+
+      db.prepare(`
+        INSERT INTO users (id, name, email, google_sub_id, team_name, role, is_virtual)
+        VALUES (?, ?, ?, null, ?, 'participant', 0)
+      `).run(uId, new_user_name.trim(), sanitizedEmail, tag);
+
+      db.prepare(`
+        INSERT INTO coupons (id, user_id, balance)
+        VALUES (?, ?, 0)
+      `).run(uuidv4(), uId);
+
+      targetUserId = uId;
+    } else if (targetUserId) {
+      const existingUser = db.prepare('SELECT id FROM users WHERE id = ?').get(targetUserId);
+      if (!existingUser) {
+        return res.status(404).json({ success: false, error: 'Pembalap tidak ditemukan' });
+      }
+      const existingCoupon = db.prepare('SELECT id FROM coupons WHERE user_id = ?').get(targetUserId);
+      if (!existingCoupon) {
+        db.prepare('INSERT INTO coupons (id, user_id, balance) VALUES (?, ?, 0)').run(uuidv4(), targetUserId);
+      }
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Pilih pembalap terdaftar atau masukkan nama pembalap baru'
+      });
+    }
+
+    const pkgId = uuidv4();
+
+    // Atomic transaction: Insert package and sync coupon balance (D-07, T-07-02)
+    db.transaction(() => {
+      db.prepare(`
+        INSERT INTO coupon_packages (
+          id, serial_number, user_id, total_quota, used_quota,
+          remaining_quota, price_paid, payment_method, status, void_from_id
+        ) VALUES (?, ?, ?, ?, 0, ?, ?, ?, 'active', null)
+      `).run(pkgId, serial, targetUserId, quota, quota, price_paid || 0, payment_method || 'cash');
+
+      db.prepare(`
+        UPDATE coupons 
+        SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP 
+        WHERE user_id = ?
+      `).run(quota, targetUserId);
+    })();
+
+    const newPkg = db.prepare(`
+      SELECT cp.*, u.name as user_name, u.team_name, u.email
+      FROM coupon_packages cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE cp.id = ?
+    `).get(pkgId);
+
+    // Broadcast WebSocket events
+    io.emit('coupon_package_updated', { type: 'created', package: newPkg });
+    broadcastFullState();
+
+    res.status(201).json({ success: true, data: { package: newPkg } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6d. Coupon Packages: Emergency Void & Transfer Quota (D-08)
+app.post('/api/coupon-packages/:id/void', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { new_serial_number, reason } = req.body;
+
+    const oldPkg = db.prepare('SELECT * FROM coupon_packages WHERE id = ?').get(id);
+    if (!oldPkg) {
+      return res.status(404).json({ success: false, error: 'Paket kupon tidak ditemukan' });
+    }
+
+    if (oldPkg.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        error: `Paket tidak dapat di-void karena berstatus '${oldPkg.status}'`
+      });
+    }
+
+    if (oldPkg.remaining_quota <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Sisa kuota paket sudah habis (0), tidak dapat ditransfer'
+      });
+    }
+
+    const cleanNewSerial = String(new_serial_number || '').trim().toUpperCase();
+    if (!cleanNewSerial || cleanNewSerial.length < 4 || cleanNewSerial.length > 32) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nomor seri lembar baru wajib diisi (4-32 karakter alfanumerik)'
+      });
+    }
+
+    // Cek keunikan nomor seri baru
+    const serialConflict = db.prepare('SELECT id FROM coupon_packages WHERE serial_number = ?').get(cleanNewSerial);
+    if (serialConflict) {
+      return res.status(409).json({
+        success: false,
+        error: 'SERIAL_EXISTS',
+        message: `Nomor seri baru #${cleanNewSerial} sudah terdaftar dalam sistem.`
+      });
+    }
+
+    const newPkgId = uuidv4();
+
+    // Atomic transaction: Void old package and create replacement with carried quota (D-08, T-07-03)
+    // Note: Saldo digital user di tabel coupons TIDAK DIUBAH karena sisa kuota hanya dialihkan ke fisik baru.
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE coupon_packages 
+        SET status = 'void', updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+      `).run(oldPkg.id);
+
+      db.prepare(`
+        INSERT INTO coupon_packages (
+          id, serial_number, user_id, total_quota, used_quota,
+          remaining_quota, price_paid, payment_method, status, void_from_id
+        ) VALUES (?, ?, ?, ?, 0, ?, 0, 'transfer_void', 'active', ?)
+      `).run(newPkgId, cleanNewSerial, oldPkg.user_id, oldPkg.remaining_quota, oldPkg.remaining_quota, oldPkg.id);
+    })();
+
+    const newPkg = db.prepare(`
+      SELECT cp.*, u.name as user_name, u.team_name, u.email
+      FROM coupon_packages cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE cp.id = ?
+    `).get(newPkgId);
+
+    // Broadcast WebSocket events
+    io.emit('coupon_package_updated', {
+      type: 'voided',
+      old_id: oldPkg.id,
+      new_package: newPkg,
+      reason: reason || null
+    });
+    broadcastFullState();
+
+    res.json({ success: true, data: { new_package: newPkg } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 7. Participant: Scan Lane QR (Babak 1)
 app.post('/api/race/scan', (req, res) => {
   try {
@@ -504,3 +774,5 @@ const shutdown = (signal) => {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+export { app, server, io };
