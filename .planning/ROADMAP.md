@@ -22,7 +22,9 @@ Mengadaptasi operasional turnamen Mini 4WD ke sistem kupon fisik (lembar 50 kota
   1. Kasir dapat mendaftarkan peserta dan mengaitkan nomor seri kupon pre-printed (50 kotak) dalam waktu <10 detik.
   2. Sistem secara tegas menolak pendaftaran jika nomor seri kupon fisik sudah pernah terdaftar sebelumnya.
   3. Pencarian paket kupon melalui nama atau nomor seri mengembalikan data paket dan sisa kuota secara instan.
-- **Plans**: 0/1 plans executed
+- **Plans**: 0/2 plans executed
+  - [ ] `07-01-PLAN.md`: Skema Database coupon_packages, REST API CRUD, dan Test Suite
+  - [ ] `07-02-PLAN.md`: Antarmuka Kasir Cepat 2-Kolom Cyberpunk, Search Filter, dan Modal Void
 
 ---
 

@@ -1,12 +1,12 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v2.0",
+  "milestone": "v2.0 — Physical Coupon & Marshal-Driven Tournament System",
   "phases": [],
   "next": {
-    "command": "/gsd-discuss-phase",
-    "label": "Discuss the first phase",
-    "reason": "Project initialized — plan your first phase"
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 7 of 4 · 0% · executing"
   },
-  "updated_at": "2026-09-04T01:56:01.085Z"
+  "updated_at": "2026-09-04T03:13:38.796Z"
 }
