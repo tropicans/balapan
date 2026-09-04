@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import db, { initDatabase } from './db.js';
 import { RaceManager } from './raceManager.js';
+import { TicketEngine } from './ticketEngine.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -752,7 +753,8 @@ app.post('/api/marshal/record-winner', (req, res) => {
     const boxNumber = newUsed;
     const nowIso = new Date().toISOString();
 
-    // Atomic transaction: debit package quota, sync coupons balance, record log, and seed to bracket
+    // Atomic transaction: debit package quota, sync coupons balance, issue ticket into Round 2 bracket, and record log
+    let ticket = null;
     db.transaction(() => {
       db.prepare(`
         UPDATE coupon_packages 
@@ -766,14 +768,21 @@ app.post('/api/marshal/record-winner', (req, res) => {
         WHERE user_id = ?
       `).run(pkg.user_id);
 
+      // Issue Next Round Ticket (TKET-01, TKET-02, D-01, D-08)
+      ticket = TicketEngine.issueTicket({
+        userId: pkg.user_id,
+        packageId: pkg.id,
+        serialNumber: pkg.serial_number,
+        lane,
+        source: 'marshal',
+        heatNumber: heat_number || null
+      });
+
       db.prepare(`
         INSERT INTO marshal_winner_logs (
-          id, package_id, serial_number, user_id, lane, heat_number, box_number, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?)
-      `).run(logId, pkg.id, pkg.serial_number, pkg.user_id, lane, heat_number || null, boxNumber, nowIso);
-
-      // Auto-seed into Round 2 bracket (MRSH-02, D-06)
-      RaceManager.seedIntoBracket(pkg.user_id);
+          id, package_id, serial_number, user_id, lane, heat_number, box_number, status, ticket_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
+      `).run(logId, pkg.id, pkg.serial_number, pkg.user_id, lane, heat_number || null, boxNumber, ticket.id, nowIso);
     })();
 
     const winnerData = {
@@ -786,13 +795,25 @@ app.post('/api/marshal/record-winner', (req, res) => {
       heat_number: heat_number || null,
       box_number: boxNumber,
       remaining_quota: newRemaining,
-      total_quota: pkg.total_quota
+      total_quota: pkg.total_quota,
+      ticket: ticket || null
     };
 
     io.emit('marshal:winner-recorded', {
       winner: winnerData,
       timestamp: nowIso
     });
+
+    if (ticket) {
+      const stats = TicketEngine.getTicketStats();
+      io.emit('ticket:granted', {
+        ticket,
+        stats: {
+          total_issued: stats.total_issued
+        }
+      });
+    }
+
     broadcastFullState();
 
     res.json({
@@ -805,7 +826,7 @@ app.post('/api/marshal/record-winner', (req, res) => {
   }
 });
 
-// 17b. Undo Last Winner within 60s Window (MRSH-03, D-09)
+// 17b. Undo Last Winner within 60s Window (MRSH-03, D-09, D-10)
 app.post('/api/marshal/undo-last-winner', (req, res) => {
   try {
     const { log_id } = req.body;
@@ -834,23 +855,39 @@ app.post('/api/marshal/undo-last-winner', (req, res) => {
       });
     }
 
-    // Atomic transaction: restore quota, sync coupon balance, mark log as undone
+    // Atomic transaction: void ticket (which frees bracket slot, restores quota & coupon balance), and mark log as undone
+    let voidedTicket = null;
     db.transaction(() => {
-      db.prepare(`
-        UPDATE coupon_packages 
-        SET used_quota = MAX(0, used_quota - 1), 
-            remaining_quota = remaining_quota + 1, 
-            status = 'active', 
-            updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-      `).run(log.package_id);
+      let ticketId = log.ticket_id;
+      if (!ticketId) {
+        const activeTicket = db.prepare(`
+          SELECT id FROM next_round_tickets 
+          WHERE user_id = ? AND package_id = ? AND status = 'issued' 
+          ORDER BY created_at DESC, rowid DESC LIMIT 1
+        `).get(log.user_id, log.package_id);
+        ticketId = activeTicket?.id;
+      }
 
-      db.prepare(`
-        UPDATE coupons 
-        SET balance = balance + 1, 
-            updated_at = CURRENT_TIMESTAMP 
-        WHERE user_id = ?
-      `).run(log.user_id);
+      if (ticketId) {
+        voidedTicket = TicketEngine.voidTicket(ticketId, 'Marshal 60s Undo');
+      } else {
+        // Fallback if no ticket was associated
+        db.prepare(`
+          UPDATE coupon_packages 
+          SET used_quota = MAX(0, used_quota - 1), 
+              remaining_quota = remaining_quota + 1, 
+              status = 'active', 
+              updated_at = CURRENT_TIMESTAMP 
+          WHERE id = ?
+        `).run(log.package_id);
+
+        db.prepare(`
+          UPDATE coupons 
+          SET balance = balance + 1, 
+              updated_at = CURRENT_TIMESTAMP 
+          WHERE user_id = ?
+        `).run(log.user_id);
+      }
 
       db.prepare(`
         UPDATE marshal_winner_logs 
@@ -865,6 +902,15 @@ app.post('/api/marshal/undo-last-winner', (req, res) => {
       log_id: log.id,
       serial_number: log.serial_number
     });
+
+    if (voidedTicket) {
+      io.emit('ticket:voided', {
+        ticketId: voidedTicket.ticketId,
+        ticketNumber: voidedTicket.ticketNumber,
+        reason: 'Marshal 60s Undo'
+      });
+    }
+
     broadcastFullState();
 
     res.json({
@@ -873,7 +919,8 @@ app.post('/api/marshal/undo-last-winner', (req, res) => {
       data: {
         log_id: log.id,
         serial_number: log.serial_number,
-        remaining_quota: updatedPkg ? updatedPkg.remaining_quota : null
+        remaining_quota: updatedPkg ? updatedPkg.remaining_quota : null,
+        voided_ticket: voidedTicket
       }
     });
   } catch (err) {

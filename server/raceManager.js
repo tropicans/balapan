@@ -1,5 +1,6 @@
 import db from './db.js';
 import { v4 as uuidv4 } from 'uuid';
+import { TicketEngine } from './ticketEngine.js';
 
 export class RaceManager {
   // Get currently active race (draft, pre-start, locked) or latest race
@@ -583,8 +584,22 @@ export class RaceManager {
           isNewBTO = true;
         }
 
-        // Auto-place racer into Round 2 Elimination Bracket match!
-        this.placeIntoBracket(reg.user_id);
+        // Find active coupon package for physical serial number if available
+        const pkg = db.prepare(`
+          SELECT id, serial_number FROM coupon_packages 
+          WHERE user_id = ? AND status = 'active' 
+          ORDER BY created_at DESC LIMIT 1
+        `).get(reg.user_id);
+
+        // Issue Ticket via TicketEngine (TKET-01, TKET-02, D-08)
+        TicketEngine.issueTicket({
+          userId: reg.user_id,
+          packageId: pkg?.id || null,
+          serialNumber: pkg?.serial_number || 'DIGITAL',
+          lane: reg.lane || 'A',
+          source: 'race_director',
+          heatNumber: reg.race_number
+        });
       } else {
         // Disqualified - clear winner from race if it was this user
         db.prepare(`
@@ -652,7 +667,19 @@ export class RaceManager {
 
   // Alias for backward compatibility with existing scrutineer handlers
   static placeIntoBracket(userId) {
-    return this.seedIntoBracket(userId);
+    const pkg = db.prepare(`
+      SELECT id, serial_number FROM coupon_packages 
+      WHERE user_id = ? AND status = 'active' 
+      ORDER BY created_at DESC LIMIT 1
+    `).get(userId);
+
+    return TicketEngine.issueTicket({
+      userId,
+      packageId: pkg?.id || null,
+      serialNumber: pkg?.serial_number || 'DIGITAL',
+      lane: 'A',
+      source: 'race_director'
+    });
   }
 
   // RD advances bracket match winner with 3:1 hierarchical tree reduction

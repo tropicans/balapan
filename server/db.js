@@ -216,6 +216,37 @@ export async function initDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_marshal_logs_created ON marshal_winner_logs(created_at);
+
+    CREATE TABLE IF NOT EXISTS next_round_tickets (
+      id TEXT PRIMARY KEY,
+      ticket_number INTEGER UNIQUE NOT NULL,
+      ticket_code TEXT UNIQUE NOT NULL,
+      user_id TEXT NOT NULL,
+      racer_ticket_index INTEGER NOT NULL DEFAULT 1,
+      package_id TEXT,
+      serial_number TEXT NOT NULL,
+      lane TEXT CHECK(lane IN ('A', 'B', 'C')) NOT NULL,
+      source TEXT CHECK(source IN ('marshal', 'race_director')) DEFAULT 'marshal',
+      status TEXT CHECK(status IN ('issued', 'used', 'void')) DEFAULT 'issued',
+      bracket_match_id TEXT,
+      bracket_slot TEXT CHECK(bracket_slot IN ('user_id_1', 'user_id_2', 'user_id_3')),
+      void_reason TEXT DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id),
+      FOREIGN KEY(package_id) REFERENCES coupon_packages(id),
+      FOREIGN KEY(bracket_match_id) REFERENCES bracket_matches(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_tickets_user ON next_round_tickets(user_id);
+    CREATE INDEX IF NOT EXISTS idx_tickets_serial ON next_round_tickets(serial_number);
+    CREATE INDEX IF NOT EXISTS idx_tickets_status ON next_round_tickets(status);
+
+    CREATE TABLE IF NOT EXISTS tournament_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   try {
@@ -223,6 +254,12 @@ export async function initDatabase() {
   } catch (e) {
     // Column may already exist
   }
+
+  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN ticket_id_1 TEXT;`); } catch (e) {}
+  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN ticket_id_2 TEXT;`); } catch (e) {}
+  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN ticket_id_3 TEXT;`); } catch (e) {}
+  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN is_auto_advanced INTEGER DEFAULT 0;`); } catch (e) {}
+  try { db.exec(`ALTER TABLE marshal_winner_logs ADD COLUMN ticket_id TEXT;`); } catch (e) {}
 
   seedInitialData();
 }
