@@ -1,33 +1,69 @@
-# Requirements: Milestone v1.2 — Multi-Round 3-Lane Elimination System
+# Requirements: NEO-TAMIYA Racing System
 
-## Overview
-Mengembangkan modul turnamen eliminasi berjenjang (Babak 2, Babak 3, dst.) dengan format 3-jalur (Jalur A, B, C) per heat dan kapasitas dinamis hingga 100+ heat, menggantikan skema kaku 2-peserta 8-slot.
+**Defined:** 2026-09-04
+**Core Value:** Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi yang diselaraskan dengan sistem kupon fisik di lapangan.
 
-## Functional Requirements
+## v2.0 Requirements
 
-### 1. 3-Lane Elimination Backend Engine & Data Schema
-- [x] **ELIM-01**: Sistem mendukung 3 pembalap per heat (`user_id_1`, `user_id_2`, `user_id_3` memetakan ke Jalur A Pink, Jalur B Cyan, Jalur C Green) pada tabel `bracket_matches`.
-- [x] **ELIM-02**: Logika `seedIntoBracket` menempatkan peserta yang lolos Scrutineer Babak 1 ke slot kosong 3-jalur di Babak 2 secara berurutan dan mampu membuat heat baru secara dinamis hingga 100+ heat.
-- [x] **ELIM-03**: Auto-Advance Engine secara otomatis mempromosikan 1 pemenang dari tiap heat di Babak $R$ ke slot kosong di Babak $R+1$ hingga mencapai Grand Final (3 mobil).
+### Physical Coupon Management & Print (CPN)
 
-### 2. Scalable Multi-Round Dashboard & UI Experience
-- [x] **ELIM-04**: Antarmuka dasbor eliminasi (`BracketDashboard.jsx`) mengadopsi navigasi berjenjang (*Round Selector Tabs*: Babak 2, Babak 3, Babak 4, Grand Final) dengan label jumlah heat aktif.
-- [x] **ELIM-05**: Setiap kartu pertandingan menampilkan 3 baris pembalap ber-aksen warna jalur resmi (Line A Merah/Pink, Line B Cyan/Biru, Line C Hijau) dengan tombol "MENANG" dan ikon mahkota juara.
-- [x] **ELIM-06**: Terdapat filter pencarian cepat (berdasarkan nomor heat atau nama/tim pembalap) serta pagination/virtual grouping agar 100+ heat dapat dijelajahi dengan lancar tanpa lag.
-- [x] **ELIM-07**: Navigasi utama Navbar memperbarui tab dari *"Bracket Babak 2"* menjadi *"Babak Eliminasi"*.
+- [ ] **CPN-01**: Kasir dapat mendaftarkan peserta dan menerbitkan paket kupon fisik (`coupon_packages`) dengan nomor seri unik (misal `PKG-001`) dan kuota race (default 50 kotak).
+- [ ] **CPN-02**: Kasir dapat mencetak lembar kupon fisik standar ukuran A4/A5 yang berisi identitas pembalap/tim, barcode seri paket, dan grid 50 kotak bernomor urut (1-50) via browser print CSS.
+- [ ] **CPN-03**: Sistem mendukung pencarian data paket kupon berdasarkan nama pembalap atau pemindaian barcode seri lembar kupon.
 
-## Future Requirements (Out of Scope for v1.2)
-- Integrasi bagan double-elimination (repechage / loser bracket).
-- Export bagan turnamen dalam format PDF diagram vektor pohon.
+### Marshal Start Box & Track Operations (MRSH)
+
+- [ ] **MRSH-01**: Marshal memiliki antarmuka khusus Start Box (`/marshal`) yang dioptimalkan untuk tablet/smartphone dengan tombol sentuh besar.
+- [ ] **MRSH-02**: Marshal dapat memasukkan 3 peserta ke Jalur A (Pink), Jalur B (Cyan), dan Jalur C (Green) dengan cepat melalui pencarian instan atau scan barcode lembar kupon.
+- [ ] **MRSH-03**: Sebelum mobil dilepas, Dasbor Marshal menampilkan nomor kupon yang harus dicoret (misal "CORET KOTAK #9") dan tombol konfirmasi yang mendebit 1 kupon secara atomic.
+- [ ] **MRSH-04**: Status mobil siap di Start Box otomatis tersinkronisasi secara real-time via WebSocket ke Dasbor Race Director (`/race-director`).
+
+### Finish & Ticket Engine Integration (TKET)
+
+- [ ] **TKET-01**: Ketika mobil dinyatakan FINISH oleh Race Director, sistem secara otomatis menerbitkan record Tiket Babak Berikutnya (`next_round_tickets`) dengan ID tiket unik (misal `TKT-B2-001`).
+- [ ] **TKET-02**: Pemenang tiket Babak Berikutnya secara otomatis ditempatkan ke slot kosong Babak 2 pada bracket eliminasi 3-jalur (v1.2 `matches`).
+- [ ] **TKET-03**: Jika mobil dinyatakan Klontang / CO (DNF), kupon yang dipakai tetap hangus dan tidak ada tiket babak berikutnya yang diterbitkan.
+
+### Arena Circuit TV HUD Showcase (TV-HUD)
+
+- [ ] **TV-HUD-01**: Layar TV Sirkuit 16:9 (`/tv`) menampilkan running ticker / widget real-time yang menyiarkan peserta yang baru saja mengamankan tiket Babak Berikutnya.
+- [ ] **TV-HUD-02**: Layar TV Sirkuit menampilkan total sisa kuota tiket Babak 2 yang masih diperebutkan di arena.
+
+## Future Requirements (v2.x+)
+
+- **TKT-PRINT**: Opsi cetak struk tiket fisik Babak 2 pada mini thermal printer (58mm/80mm) di meja Scrutineer/Race Director.
+- **RACE-STATS**: Analitik rasio Klontang vs Finish per paket kupon pembalap.
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Smartphone scan mandiri oleh peserta saat antre race | Ditiadakan untuk mencegah kemacetan di start box fisik; dialihkan 100% ke lembar kupon fisik & Dasbor Marshal |
+| Hardware RFID/NFC fisik | Menghindari biaya alat mahal bagi komunitas dan sirkuit lokal |
+| Pelepasan mobil dengan buzzer otomatis | Menjaga keamanan mobil dan tangan peserta dengan pelepasan manual oleh Marshal |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ELIM-01 | Phase 5 | Complete |
-| ELIM-02 | Phase 5 | Complete |
-| ELIM-03 | Phase 5 | Complete |
-| ELIM-04 | Phase 6 | Complete |
-| ELIM-05 | Phase 6 | Complete |
-| ELIM-06 | Phase 6 | Complete |
-| ELIM-07 | Phase 6 | Complete |
+| CPN-01 | Phase 07 | Pending |
+| CPN-02 | Phase 07 | Pending |
+| CPN-03 | Phase 07 | Pending |
+| MRSH-01 | Phase 08 | Pending |
+| MRSH-02 | Phase 08 | Pending |
+| MRSH-03 | Phase 08 | Pending |
+| MRSH-04 | Phase 08 | Pending |
+| TKET-01 | Phase 09 | Pending |
+| TKET-02 | Phase 09 | Pending |
+| TKET-03 | Phase 09 | Pending |
+| TV-HUD-01 | Phase 10 | Pending |
+| TV-HUD-02 | Phase 10 | Pending |
+
+**Coverage:**
+- v2.0 requirements: 12 total
+- Mapped to phases: 12
+- Unmapped: 0 ✓
+
+---
+*Requirements defined: 2026-09-04*
+*Last updated: 2026-09-04 after Milestone v2.0 definition*
