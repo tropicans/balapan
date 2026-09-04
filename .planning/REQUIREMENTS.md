@@ -5,11 +5,11 @@
 
 ## v2.0 Requirements
 
-### Physical Coupon Management & Print (CPN)
+### Physical Pre-Printed Coupon Management (CPN)
 
-- [ ] **CPN-01**: Kasir dapat mendaftarkan peserta dan menerbitkan paket kupon fisik (`coupon_packages`) dengan nomor seri unik (misal `PKG-001`) dan kuota race (default 50 kotak).
-- [ ] **CPN-02**: Kasir dapat mencetak lembar kupon fisik standar ukuran A4/A5 yang berisi identitas pembalap/tim, barcode seri paket, dan grid 50 kotak bernomor urut (1-50) via browser print CSS.
-- [ ] **CPN-03**: Sistem mendukung pencarian data paket kupon berdasarkan nama pembalap atau pemindaian barcode seri lembar kupon.
+- [ ] **CPN-01**: Kasir dapat mendaftarkan peserta dan mengaitkan nomor seri lembar kupon fisik pre-printed (misal scan barcode atau input nomor seri kertas fisik) dengan kuota race (default 50 kotak).
+- [ ] **CPN-02**: Kasir memiliki form pendaftaran kilat dengan validasi unik nomor seri pre-printed guna mencegah nomor kupon ganda/terdaftar ulang.
+- [ ] **CPN-03**: Sistem mendukung pencarian data paket kupon pre-printed & pelacakan sisa kuota berdasarkan nama pembalap atau pemindaian nomor seri.
 
 ### Marshal Start Box & Track Operations (MRSH)
 

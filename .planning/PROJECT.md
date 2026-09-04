@@ -44,17 +44,17 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-- [ ] **COUP-01**: Registrasi Kasir & Generator Lembar Kupon Fisik Siap Cetak (Printable 50-Box Sheet dengan Barcode/ID Paket & nomor seri)
+- [ ] **COUP-01**: Registrasi Kasir & Pendaftaran Paket Kupon Fisik Pre-Printed (50 Kotak) dengan validasi nomor seri unik
 - [ ] **COUP-02**: Dasbor Marshal Start Box untuk Line-Up Jalur Cepat (Line A, B, C), verifikasi nomor seri kupon, & pencatatan kupon terpakai
 - [ ] **COUP-03**: Engine Hasil Finish Race Director & Penerbitan Otomatis Kupon/Tiket Digital Babak Berikutnya ke Bagan Eliminasi
 - [ ] **COUP-04**: Layar TV Sirkuit Real-time HUD Sinkronisasi Status Race & Live Leaderboard Pemegang Tiket Babak Berikutnya
 
 ## Current Milestone: v2.0 Physical Coupon & Marshal-Driven Tournament System
 
-**Goal:** Mengadaptasi operasional turnamen ke sistem kupon fisik (50+ kotak) yang lazim di lapangan, di mana 100% operasional dijalankan oleh Panitia (Kasir, Marshal Start Box, Race Director), kupon dicoret manual oleh Marshal saat turun race, dan tiket Babak Berikutnya diterbitkan otomatis saat mobil finish.
+**Goal:** Mengadaptasi operasional turnamen ke sistem kupon fisik pre-printed (50+ kotak) yang lazim di lapangan, di mana 100% operasional dijalankan oleh Panitia (Kasir, Marshal Start Box, Race Director), kupon dicoret manual oleh Marshal saat turun race, dan tiket Babak Berikutnya diterbitkan otomatis saat mobil finish.
 
 **Target Features:**
-1. **Registrasi Kasir & Generator Lembar Kupon Fisik**: Kasir mendaftarkan peserta, memilih paket kupon (50 kotak / dinamis), dan mencetak lembar kupon fisik siap pakai dengan nomor seri/ID paket & checklist kotak 1-50.
+1. **Registrasi Kasir & Paket Kupon Pre-Printed**: Kasir mendaftarkan peserta dan menautkan nomor seri lembar kupon fisik yang sudah dicetak sebelumnya (50 kotak) dengan validasi anti-duplikasi.
 2. **Dasbor Marshal Start Box (Quick Race Entry)**: Antarmuka super cepat dan simpel untuk Marshal di dekat lintasan memilih peserta/nomor kupon yang antre di Jalur A, B, C (atau scan ID paket) sebelum mobil dilepas dan mencoret kupon fisik.
 3. **Automated Finish-to-Next-Round Ticket Engine**: Integrasi hasil finish Race Director: jika Klontang kupon hangus, jika Finish sistem otomatis menerbitkan tiket digital Babak 2/Berikutnya dan langsung menempatkannya ke bagan eliminasi multi-round.
 4. **Layar TV Sirkuit & Live Status Papan Pemenang Tiket**: Menampilkan antrean race aktif, hasil race, dan daftar pemegang tiket Babak Berikutnya secara real-time.
