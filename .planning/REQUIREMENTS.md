@@ -20,14 +20,14 @@
 
 ### Finish & Ticket Engine Integration (TKET)
 
-- [ ] **TKET-01**: Ketika mobil dinyatakan FINISH oleh Race Director, sistem secara otomatis menerbitkan record Tiket Babak Berikutnya (`next_round_tickets`) dengan ID tiket unik (misal `TKT-B2-001`).
-- [ ] **TKET-02**: Pemenang tiket Babak Berikutnya secara otomatis ditempatkan ke slot kosong Babak 2 pada bracket eliminasi 3-jalur (v1.2 `matches`).
-- [ ] **TKET-03**: Jika mobil dinyatakan Klontang / CO (DNF), kupon yang dipakai tetap hangus dan tidak ada tiket babak berikutnya yang diterbitkan.
+- [x] **TKET-01**: Ketika mobil dinyatakan FINISH oleh Race Director, sistem secara otomatis menerbitkan record Tiket Babak Berikutnya (`next_round_tickets`) dengan ID tiket unik (misal `TKT-B2-001`).
+- [x] **TKET-02**: Pemenang tiket Babak Berikutnya secara otomatis ditempatkan ke slot kosong Babak 2 pada bracket eliminasi 3-jalur (v1.2 `matches`).
+- [x] **TKET-03**: Jika mobil dinyatakan Klontang / CO (DNF), kupon yang dipakai tetap hangus dan tidak ada tiket babak berikutnya yang diterbitkan.
 
 ### Arena Circuit TV HUD Showcase (TV-HUD)
 
-- [ ] **TV-HUD-01**: Layar TV Sirkuit 16:9 (`/tv`) menampilkan running ticker / widget real-time yang menyiarkan peserta yang baru saja mengamankan tiket Babak Berikutnya.
-- [ ] **TV-HUD-02**: Layar TV Sirkuit menampilkan total sisa kuota tiket Babak 2 yang masih diperebutkan di arena.
+- [x] **TV-HUD-01**: Layar TV Sirkuit 16:9 (`/tv`) menampilkan running ticker / widget real-time yang menyiarkan peserta yang baru saja mengamankan tiket Babak Berikutnya.
+- [x] **TV-HUD-02**: Layar TV Sirkuit menampilkan total sisa kuota tiket Babak 2 yang masih diperebutkan di arena.
 
 ## Future Requirements (v2.x+)
 
@@ -53,11 +53,11 @@
 | MRSH-02 | Phase 08 | Complete |
 | MRSH-03 | Phase 08 | Complete |
 | MRSH-04 | Phase 08 | Complete |
-| TKET-01 | Phase 09 | Pending |
-| TKET-02 | Phase 09 | Pending |
-| TKET-03 | Phase 09 | Pending |
-| TV-HUD-01 | Phase 10 | Pending |
-| TV-HUD-02 | Phase 10 | Pending |
+| TKET-01 | Phase 09 | Complete |
+| TKET-02 | Phase 09 | Complete |
+| TKET-03 | Phase 09 | Complete |
+| TV-HUD-01 | Phase 10 | Complete |
+| TV-HUD-02 | Phase 10 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 12 total
