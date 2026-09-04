@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
 import { CyberButton } from '../components/ui/CyberButton.jsx';
 import { CyberCard } from '../components/ui/CyberCard.jsx';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { 
   QrCode, 
   Coins, 
@@ -15,9 +15,14 @@ import {
   Clock, 
   ShieldAlert, 
   UserCheck,
-  Trophy 
+  Trophy,
+  Upload,
+  AlertCircle,
+  Smartphone,
+  HelpCircle
 } from 'lucide-react';
 import clsx from 'clsx';
+import { parseLaneCode, checkCameraSupport } from '../utils/qrScannerHelper.js';
 
 export function ParticipantDashboard() {
   const { 
@@ -32,8 +37,13 @@ export function ParticipantDashboard() {
   const [scannerOpen, setScannerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'success'|'error'|'warn', text: '' }
+  const [cameraError, setCameraError] = useState(null);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [teamTagInput, setTeamTagInput] = useState(currentUser?.team_name || '');
   const [editingProfile, setEditingProfile] = useState(false);
+
+  const scannerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const activeRace = raceState.activeRace;
   const activeRaceNumber = activeRace?.race_number || 1;
@@ -47,41 +57,95 @@ export function ParticipantDashboard() {
     r.racers?.some(rac => rac.user_name === currentUser?.name)
   );
 
-  // Setup HTML5 QR Scanner
-  useEffect(() => {
-    let scanner = null;
-    if (scannerOpen) {
-      scanner = new Html5QrcodeScanner("qr-reader", {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      }, false);
+  // Check device camera capability
+  const cameraSupport = typeof window !== 'undefined' ? checkCameraSupport() : { supported: true, reason: 'READY' };
 
-      scanner.render(
-        (decodedText) => {
-          handleQRScan(decodedText);
-          scanner.clear();
-          setScannerOpen(false);
-        },
-        (error) => {
-          // Scanning frame error, keep scanning
+  // Stop camera helper
+  const stopCamera = async () => {
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
         }
-      );
+        scannerRef.current.clear();
+      } catch (err) {
+        console.warn('Scanner stop error:', err);
+      }
+      scannerRef.current = null;
+    }
+    setIsStreaming(false);
+  };
+
+  // Setup HTML5 QR Scanner with rear camera and secure context handling
+  useEffect(() => {
+    let isCancelled = false;
+
+    const startCamera = async () => {
+      setCameraError(null);
+
+      // Check if secure context
+      const support = checkCameraSupport();
+      if (!support.supported) {
+        setCameraError(support.message);
+        return;
+      }
+
+      try {
+        const scanner = new Html5Qrcode("qr-reader");
+        scannerRef.current = scanner;
+
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+          },
+          (decodedText) => {
+            if (!isCancelled) {
+              handleQRScan(decodedText);
+              stopCamera();
+              setScannerOpen(false);
+            }
+          },
+          () => {
+            // Scanning frame pass
+          }
+        );
+
+        if (!isCancelled) {
+          setIsStreaming(true);
+        }
+      } catch (err) {
+        console.error("Camera start failed:", err);
+        if (!isCancelled) {
+          const errMsg = err?.message || '';
+          if (errMsg.toLowerCase().includes('permission') || errMsg.toLowerCase().includes('denied')) {
+            setCameraError('Izin akses kamera ditolak oleh browser. Berikan izin kamera di pengaturan browser.');
+          } else if (errMsg.toLowerCase().includes('secure') || !window.isSecureContext) {
+            setCameraError('Kamera live membutuhkan koneksi HTTPS atau "localhost". Silakan gunakan opsi "Ambil Foto QR" atau tombol jalur.');
+          } else {
+            setCameraError(`Kamera tidak dapat dimulai: ${errMsg || 'Kamera sedang dipakai aplikasi lain atau tidak terdeteksi.'}`);
+          }
+        }
+      }
+    };
+
+    if (scannerOpen) {
+      startCamera();
+    } else {
+      stopCamera();
     }
 
     return () => {
-      if (scanner) {
-        try { scanner.clear(); } catch (e) {}
-      }
+      isCancelled = true;
+      stopCamera();
     };
   }, [scannerOpen]);
 
-  const handleQRScan = async (laneCode) => {
-    // laneCode format could be "LINE A", "LANE_A", "A", or URL "https://.../?lane=A"
-    let lane = 'A';
-    const upper = laneCode.toUpperCase();
-    if (upper.includes('B') || upper === 'LINE B') lane = 'B';
-    else if (upper.includes('C') || upper === 'LINE C') lane = 'C';
-    else lane = 'A';
+  // Handle QR Scan decoded result
+  const handleQRScan = async (rawCode) => {
+    const lane = parseLaneCode(rawCode);
 
     setLoading(true);
     setFeedback(null);
@@ -96,6 +160,33 @@ export function ParticipantDashboard() {
       setFeedback({ type: 'error', text: err.message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fallback: Scan QR from taken photo or uploaded image (works even without HTTPS!)
+  const handleFileScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setFeedback(null);
+    try {
+      // Create temporary reader instance if needed
+      const fileScanner = new Html5Qrcode("qr-file-temp-container");
+      const decodedText = await fileScanner.scanFile(file, false);
+      fileScanner.clear();
+      handleQRScan(decodedText);
+      setScannerOpen(false);
+    } catch (err) {
+      console.warn("File QR scan error:", err);
+      setFeedback({ 
+        type: 'error', 
+        text: 'QR Code tidak terdeteksi pada foto. Pastikan posisi foto tegak lurus, fokus, dan pencahayaan cukup.' 
+      });
+    } finally {
+      setLoading(false);
+      // reset file input
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -261,60 +352,144 @@ export function ParticipantDashboard() {
             <CyberCard variant="cyan" title="DAFTAR JALUR BALAPAN (BABAK 1)">
               <div className="space-y-4">
                 <p className="text-xs text-cyberSilver/70 font-mono">
-                  Arahkan kamera HP ke QR Code di meja lintasan (LINE A / LINE B / LINE C):
+                  Arahkan kamera HP ke QR Code di meja lintasan (LINE A / LINE B / LINE C) atau ambil foto:
                 </p>
 
-                {/* Camera QR Scanner */}
+                {/* Hidden input for native camera photo capture (works 100% on HTTP & HTTPS) */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileScan}
+                />
+                <div id="qr-file-temp-container" className="hidden" />
+
+                {/* Camera QR Scanner Modal / Viewport */}
                 {scannerOpen ? (
-                  <div className="space-y-2">
-                    <div id="qr-reader" className="w-full bg-black rounded overflow-hidden" />
-                    <CyberButton 
-                      variant="red" 
-                      size="sm" 
-                      className="w-full" 
-                      onClick={() => setScannerOpen(false)}
-                    >
-                      TUTUP KAMERA
-                    </CyberButton>
+                  <div className="space-y-3 bg-black/90 p-3 border border-neonCyan/40 clip-cyber">
+                    {cameraError ? (
+                      <div className="space-y-3 p-3 bg-red-950/40 border border-red-500/60 clip-cyber text-left">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <div className="text-xs font-orbitron font-bold text-red-400">
+                              KENDALA KAMERA SMARTPHONE
+                            </div>
+                            <p className="text-[11px] text-cyberSilver/90 font-mono leading-relaxed">
+                              {cameraError}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-red-900/50 space-y-2">
+                          <div className="text-[10px] font-orbitron text-neonAmber uppercase">
+                            Solusi Langsung:
+                          </div>
+                          <CyberButton
+                            variant="amber"
+                            size="sm"
+                            className="w-full text-xs font-bold"
+                            icon={Smartphone}
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            AMBIL FOTO QR DENGAN KAMERA HP
+                          </CyberButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <div id="qr-reader" className="w-full bg-black rounded overflow-hidden min-h-[220px]" />
+                          {!isStreaming && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-cyberSilver font-mono text-xs gap-2">
+                              <Camera className="w-8 h-8 text-neonCyan animate-pulse" />
+                              <span>Memulai kamera belakang...</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-center text-cyberSilver/60 font-mono">
+                          Posisikan QR code meja di dalam kotak pemindai
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
+                      <CyberButton 
+                        variant="cyan" 
+                        size="sm" 
+                        className="w-full text-xs"
+                        icon={Upload}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        FOTO QR
+                      </CyberButton>
+                      <CyberButton 
+                        variant="red" 
+                        size="sm" 
+                        className="w-full text-xs" 
+                        onClick={() => {
+                          setScannerOpen(false);
+                          setCameraError(null);
+                        }}
+                      >
+                        TUTUP
+                      </CyberButton>
+                    </div>
                   </div>
                 ) : (
-                  <CyberButton
-                    variant="cyan"
-                    size="lg"
-                    className="w-full py-4 text-base"
-                    icon={Camera}
-                    onClick={() => setScannerOpen(true)}
-                  >
-                    BUKA KAMERA SCAN QR
-                  </CyberButton>
+                  <div className="space-y-2">
+                    <CyberButton
+                      variant="cyan"
+                      size="lg"
+                      className="w-full py-4 text-base"
+                      icon={Camera}
+                      onClick={() => {
+                        setCameraError(null);
+                        setScannerOpen(true);
+                      }}
+                    >
+                      BUKA KAMERA SCAN QR
+                    </CyberButton>
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full py-2.5 px-3 bg-obsidian border border-neonAmber/40 text-neonAmber hover:border-neonAmber hover:bg-neonAmber/10 font-orbitron text-xs font-bold clip-cyber flex items-center justify-center gap-2 transition-all"
+                    >
+                      <Smartphone className="w-4 h-4 shrink-0" />
+                      <span>AMBIL FOTO QR (KAMERA HP)</span>
+                    </button>
+                  </div>
                 )}
 
                 {/* 1-Tap Physical QR Simulator Buttons */}
                 <div className="pt-3 border-t border-gray-800">
                   <div className="text-[10px] font-orbitron text-cyberSilver/50 mb-2 uppercase text-center">
-                    Atau Tap Simulasi Meja Fisik:
+                    Atau Tap Simulasi Meja Fisik Langsung:
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => handleQRScan('A')}
                       disabled={loading}
-                      className="py-3 bg-neonPink/15 border border-neonPink text-neonPink font-orbitron font-black text-sm clip-cyber hover:bg-neonPink/30 hover:shadow-glowPink"
+                      className="py-3 bg-neonPink/15 border border-neonPink text-neonPink font-orbitron font-black text-sm clip-cyber hover:bg-neonPink/30 hover:shadow-glowPink active:scale-95 transition-all"
                     >
-                      SCAN LINE A
+                      LINE A
                     </button>
                     <button
                       onClick={() => handleQRScan('B')}
                       disabled={loading}
-                      className="py-3 bg-neonCyan/15 border border-neonCyan text-neonCyan font-orbitron font-black text-sm clip-cyber hover:bg-neonCyan/30 hover:shadow-glowCyan"
+                      className="py-3 bg-neonCyan/15 border border-neonCyan text-neonCyan font-orbitron font-black text-sm clip-cyber hover:bg-neonCyan/30 hover:shadow-glowCyan active:scale-95 transition-all"
                     >
-                      SCAN LINE B
+                      LINE B
                     </button>
                     <button
                       onClick={() => handleQRScan('C')}
                       disabled={loading}
-                      className="py-3 bg-neonGreen/15 border border-neonGreen text-neonGreen font-orbitron font-black text-sm clip-cyber hover:bg-neonGreen/30 hover:shadow-glowGreen"
+                      className="py-3 bg-neonGreen/15 border border-neonGreen text-neonGreen font-orbitron font-black text-sm clip-cyber hover:bg-neonGreen/30 hover:shadow-glowGreen active:scale-95 transition-all"
                     >
-                      SCAN LINE C
+                      LINE C
                     </button>
                   </div>
                 </div>
