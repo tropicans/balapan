@@ -41,23 +41,26 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **ELIM-01**: Skema data & backend logic eliminasi 3-jalur (Jalur A, B, C) dengan auto-advance pemenang antar ronde — Shipped in v1.2
 - ✓ **ELIM-02**: Antarmuka Dasbor Eliminasi Berjenjang multi-babak (Babak 2, 3, dst.) dengan heat card 3-pembalap dan filter navigasi — Shipped in v1.2
 - ✓ **ELIM-03**: Integrasi Race Director & Layar TV Sirkuit untuk eksekusi heat babak eliminasi real-time — Shipped in v1.2
+- ✓ **CPN-01**: Kasir daftarkan peserta & kaitkan nomor seri lembar kupon fisik pre-printed (50 kotak) — Shipped in v2.0
+- ✓ **CPN-02**: Form pendaftaran kilat dengan validasi unik nomor seri anti-duplikasi — Shipped in v2.0
+- ✓ **CPN-03**: Pencarian data paket kupon & pelacakan sisa kuota via nama atau pemindaian serial — Shipped in v2.0
+- ✓ **MRSH-01**: Antarmuka khusus Start Box (`/marshal`) dioptimalkan tablet dengan touch target 64px+ — Shipped in v2.0
+- ✓ **MRSH-02**: Pengisian kilat 3 kontestan Jalur A/B/C via pencarian instan / scan barcode — Shipped in v2.0
+- ✓ **MRSH-03**: Dasbor Marshal menampilkan instruksi nomor kupon dicoret & debit atomic — Shipped in v2.0
+- ✓ **MRSH-04**: Status mobil di Start Box tersinkronisasi real-time via WebSocket ke Race Director — Shipped in v2.0
+- ✓ **TKET-01**: Mobil FINISH otomatis menerbitkan tiket Babak Berikutnya (`next_round_tickets`) — Shipped in v2.0
+- ✓ **TKET-02**: Pemenang tiket otomatis ditempatkan ke slot kosong Babak 2 bracket 3-jalur — Shipped in v2.0
+- ✓ **TKET-03**: Mobil Klontang/CO menghanguskan kupon tanpa menerbitkan tiket babak berikutnya — Shipped in v2.0
+- ✓ **TV-HUD-01**: Layar TV Sirkuit 16:9 (`/tv`) menampilkan running ticker real-time tiket Babak Berikutnya — Shipped in v2.0
+- ✓ **TV-HUD-02**: Layar TV Sirkuit menampilkan total sisa kuota tiket Babak 2 yang diperebutkan — Shipped in v2.0
 
 ### Active
 
-- [ ] **COUP-01**: Registrasi Kasir & Pendaftaran Paket Kupon Fisik Pre-Printed (50 Kotak) dengan validasi nomor seri unik
-- [ ] **COUP-02**: Dasbor Marshal Start Box untuk Line-Up Jalur Cepat (Line A, B, C), verifikasi nomor seri kupon, & pencatatan kupon terpakai
-- [ ] **COUP-03**: Engine Hasil Finish Race Director & Penerbitan Otomatis Kupon/Tiket Digital Babak Berikutnya ke Bagan Eliminasi
-- [ ] **COUP-04**: Layar TV Sirkuit Real-time HUD Sinkronisasi Status Race & Live Leaderboard Pemegang Tiket Babak Berikutnya
+*(None currently active — run `/gsd-new-milestone` to define next milestone)*
 
-## Current Milestone: v2.0 Physical Coupon & Marshal-Driven Tournament System
+## Current Milestone: Complete (v2.0 Shipped)
 
-**Goal:** Mengadaptasi operasional turnamen ke sistem kupon fisik pre-printed (50+ kotak) yang lazim di lapangan, di mana 100% operasional dijalankan oleh Panitia (Kasir, Marshal Start Box, Race Director), kupon dicoret manual oleh Marshal saat turun race, dan tiket Babak Berikutnya diterbitkan otomatis saat mobil finish.
-
-**Target Features:**
-1. **Registrasi Kasir & Paket Kupon Pre-Printed**: Kasir mendaftarkan peserta dan menautkan nomor seri lembar kupon fisik yang sudah dicetak sebelumnya (50 kotak) dengan validasi anti-duplikasi.
-2. **Dasbor Marshal Start Box (Quick Race Entry)**: Antarmuka super cepat dan simpel untuk Marshal di dekat lintasan memilih peserta/nomor kupon yang antre di Jalur A, B, C (atau scan ID paket) sebelum mobil dilepas dan mencoret kupon fisik.
-3. **Automated Finish-to-Next-Round Ticket Engine**: Integrasi hasil finish Race Director: jika Klontang kupon hangus, jika Finish sistem otomatis menerbitkan tiket digital Babak 2/Berikutnya dan langsung menempatkannya ke bagan eliminasi multi-round.
-4. **Layar TV Sirkuit & Live Status Papan Pemenang Tiket**: Menampilkan antrean race aktif, hasil race, dan daftar pemegang tiket Babak Berikutnya secara real-time.
+**Milestone v2.0 Shipped:** Sistem kupon fisik pre-printed (50 kotak) dan operasional berbasis Marshal Start Box telah beroperasi penuh, terintegrasi dengan Race Director, Bracket Eliminasi 3-jalur, serta TV Sirkuit Realtime HUD.
 
 ### Out of Scope
 
@@ -68,7 +71,7 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 ## Context
 
 - Beroperasi di jaringan tertutup sirkuit (LAN / Wi-Fi Hotspot) atau cloud.
-- WebSocket latensi rendah (<50ms) untuk sinkronisasi HP peserta, dasbor RD, tablet juri, dan TV sirkuit.
+- WebSocket latensi rendah (<50ms) untuk sinkronisasi HP peserta, dasbor RD, tablet juri, dasbor marshal, dan TV sirkuit.
 - Estetika Cyberpunk / Neo-Racing: Midnight Obsidian (`#0a0b10`), Neon Pink (`#ff0055`), Electric Cyan (`#00f0ff`), Acid Green (`#39ff14`).
 
 ## Constraints
@@ -92,10 +95,14 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 | Cyber Golden Shimmer BTO | Animasi pendar hangat untuk membedakan rekor puncak BTO #1 | ✓ Shipped v1.1 |
 | Fullscreen Countdown HUD Overlay | Overlay 16:9 fixed z-50 sinkron WebSocket audio & selebrasi GO | ✓ Shipped v1.1 |
 | Multi-Round 3-Lane Bracket Schema | Mendukung turnamen besar 100+ heat dengan `user_id_3` | ✓ Shipped v1.2 |
-| Physical Coupon Sheet & Marshal-Driven Flow | Menghilangkan resistensi adopsi di lapangan & mempercepat antrean start box | Planned v2.0 |
+| Physical Coupon Sheet & Marshal-Driven Flow | Menghilangkan resistensi adopsi di lapangan & mempercepat antrean start box | ✓ Shipped v2.0 |
+| Atomic Coupon Debit & 60s Undo Window | Menjamin integritas pemotongan kupon fisik dan toleransi salah klik panitia | ✓ Shipped v2.0 |
+| Automatic Sequential Ticket Seeding | Menempatkan pemenang tiket Babak 2 secara adil dan otomatis tanpa manipulasi | ✓ Shipped v2.0 |
+| Realtime Neon TV Ticker & Progress HUD | Memacu atmosfer kompetitif dan transparansi sisa tiket turnamen | ✓ Shipped v2.0 |
 
 ## Shipped Milestones
 
+- **v2.0**: Physical Coupon & Marshal-Driven Tournament System (Shipped 2026-09-04) — [Archive](milestones/v2.0-ROADMAP.md)
 - **v1.2**: Multi-Round 3-Lane Elimination System (Shipped 2026-09-03) — [Archive](milestones/v1.2-ROADMAP.md)
 - **v1.1**: UI/UX & Arena Visual Showcase Polish (Shipped 2026-09-03) — [Archive](milestones/v1.1-ROADMAP.md)
 - **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03) — [Archive](milestones/v1.0-ROADMAP.md)
@@ -118,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 after Milestone v2.0 initialization*
+*Last updated: 2026-09-04 after v2.0 milestone completion*

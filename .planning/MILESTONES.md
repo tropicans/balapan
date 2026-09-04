@@ -1,6 +1,25 @@
 # Project Milestones
 
+## v2.0: Physical Coupon & Marshal-Driven Tournament System
+- **Shipped:** 2026-09-04
+- **Phases:** 4 (Phases 07-10)
+- **Plans:** 8
+- **Requirements Satisfied:** 12/12 (`CPN-01`..`03`, `MRSH-01`..`04`, `TKET-01`..`03`, `TV-HUD-01`..`02`)
+- **Key Accomplishments:**
+  - Registrasi paket kupon fisik pre-printed (50 kotak) di Kasir (`/cashier`) dengan validasi nomor seri unik anti-duplikasi, pelacakan sisa kuota, dan pemindaian barcode cepat.
+  - Dasbor khusus Marshal Start Box (`/marshal`) tablet-friendly dengan touch target 64px+, pengisian kilat Jalur A (Pink), B (Cyan), C (Green), prompt instruksi coret kupon fisik atomic, sinkronisasi WebSocket ke Race Director, dan window undo 60 detik.
+  - Finish-to-Next-Round Ticket Engine otomatis menerbitkan tiket Babak 2 (`TKT-B2-XXX`) saat mobil FINISH dan menempatkannya ke slot kosong bracket eliminasi 3-jalur (dan hangus kupon tanpa tiket jika Klontang/CO).
+  - Layar TV Sirkuit 16:9 (`/tv`) dilengkapi running ticker siaran langsung pembalap peraih tiket Babak 2 dan neon progress widget pemantau sisa kuota tiket arena.
+  - Integrasi quick task perbaikan pemindaian barcode kamera smartphone (`260904-smartphone-camera-scanner-fix`).
+- **Verification:** 35/35 tests passing (6 suites), Vite production build clean (0 errors).
+- **Roadmap Archive:** [milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md)
+- **Requirements Archive:** [milestones/v2.0-REQUIREMENTS.md](milestones/v2.0-REQUIREMENTS.md)
+- **Audit Report:** [milestones/v2.0-MILESTONE-AUDIT.md](milestones/v2.0-MILESTONE-AUDIT.md)
+
+---
+
 ## v1.2: Multi-Round 3-Lane Elimination System
+
 - **Shipped:** 2026-09-03
 - **Phases:** 2 (Phases 5-6)
 - **Plans:** 2
@@ -16,6 +35,7 @@
 ---
 
 ## v1.1: UI/UX & Arena Visual Showcase Polish
+
 - **Shipped:** 2026-09-03
 - **Phases:** 2 (Phases 3-4)
 - **Plans:** 2
@@ -31,6 +51,7 @@
 ---
 
 ## v1.0: Full SRS & Blueprint Compliance
+
 - **Shipped:** 2026-09-03
 - **Phases:** 2 (Phases 1-2)
 - **Plans:** 2
