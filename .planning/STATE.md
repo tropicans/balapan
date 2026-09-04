@@ -30,9 +30,15 @@ See: .planning/PROJECT.md (updated 2026-09-03)
 Phase: 06
 Plan: Not started
 Status: All phases complete
-Last activity: 2026-09-03 — Phase 06 complete
+Last activity: 2026-09-04 — Completed quick task 260904-smartphone-camera-scanner-fix: Fix smartphone camera scan on HTTP LAN & provide native photo capture fallback
 
 Progress: [░░░░░░░░░░] 0%
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260904-smartphone-camera-scanner-fix | Fix Smartphone Camera QR Scanner | 2026-09-04 | 1c8bfa9 | [260904-smartphone-camera-scanner-fix](./quick/260904-smartphone-camera-scanner-fix/) |
 
 ## Shipped Milestones
 
