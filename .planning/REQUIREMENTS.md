@@ -7,16 +7,16 @@
 
 ### Physical Pre-Printed Coupon Management (CPN)
 
-- [ ] **CPN-01**: Kasir dapat mendaftarkan peserta dan mengaitkan nomor seri lembar kupon fisik pre-printed (misal scan barcode atau input nomor seri kertas fisik) dengan kuota race (default 50 kotak).
-- [ ] **CPN-02**: Kasir memiliki form pendaftaran kilat dengan validasi unik nomor seri pre-printed guna mencegah nomor kupon ganda/terdaftar ulang.
-- [ ] **CPN-03**: Sistem mendukung pencarian data paket kupon pre-printed & pelacakan sisa kuota berdasarkan nama pembalap atau pemindaian nomor seri.
+- [x] **CPN-01**: Kasir dapat mendaftarkan peserta dan mengaitkan nomor seri lembar kupon fisik pre-printed (misal scan barcode atau input nomor seri kertas fisik) dengan kuota race (default 50 kotak).
+- [x] **CPN-02**: Kasir memiliki form pendaftaran kilat dengan validasi unik nomor seri pre-printed guna mencegah nomor kupon ganda/terdaftar ulang.
+- [x] **CPN-03**: Sistem mendukung pencarian data paket kupon pre-printed & pelacakan sisa kuota berdasarkan nama pembalap atau pemindaian nomor seri.
 
 ### Marshal Start Box & Track Operations (MRSH)
 
-- [ ] **MRSH-01**: Marshal memiliki antarmuka khusus Start Box (`/marshal`) yang dioptimalkan untuk tablet/smartphone dengan tombol sentuh besar.
-- [ ] **MRSH-02**: Marshal dapat memasukkan 3 peserta ke Jalur A (Pink), Jalur B (Cyan), dan Jalur C (Green) dengan cepat melalui pencarian instan atau scan barcode lembar kupon.
-- [ ] **MRSH-03**: Sebelum mobil dilepas, Dasbor Marshal menampilkan nomor kupon yang harus dicoret (misal "CORET KOTAK #9") dan tombol konfirmasi yang mendebit 1 kupon secara atomic.
-- [ ] **MRSH-04**: Status mobil siap di Start Box otomatis tersinkronisasi secara real-time via WebSocket ke Dasbor Race Director (`/race-director`).
+- [x] **MRSH-01**: Marshal memiliki antarmuka khusus Start Box (`/marshal`) yang dioptimalkan untuk tablet/smartphone dengan tombol sentuh besar.
+- [x] **MRSH-02**: Marshal dapat memasukkan 3 peserta ke Jalur A (Pink), Jalur B (Cyan), dan Jalur C (Green) dengan cepat melalui pencarian instan atau scan barcode lembar kupon.
+- [x] **MRSH-03**: Sebelum mobil dilepas, Dasbor Marshal menampilkan nomor kupon yang harus dicoret (misal "CORET KOTAK #9") dan tombol konfirmasi yang mendebit 1 kupon secara atomic.
+- [x] **MRSH-04**: Status mobil siap di Start Box otomatis tersinkronisasi secara real-time via WebSocket ke Dasbor Race Director (`/race-director`).
 
 ### Finish & Ticket Engine Integration (TKET)
 
@@ -46,13 +46,13 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CPN-01 | Phase 07 | Pending |
-| CPN-02 | Phase 07 | Pending |
-| CPN-03 | Phase 07 | Pending |
-| MRSH-01 | Phase 08 | Pending |
-| MRSH-02 | Phase 08 | Pending |
-| MRSH-03 | Phase 08 | Pending |
-| MRSH-04 | Phase 08 | Pending |
+| CPN-01 | Phase 07 | Complete |
+| CPN-02 | Phase 07 | Complete |
+| CPN-03 | Phase 07 | Complete |
+| MRSH-01 | Phase 08 | Complete |
+| MRSH-02 | Phase 08 | Complete |
+| MRSH-03 | Phase 08 | Complete |
+| MRSH-04 | Phase 08 | Complete |
 | TKET-01 | Phase 09 | Pending |
 | TKET-02 | Phase 09 | Pending |
 | TKET-03 | Phase 09 | Pending |

@@ -107,5 +107,5 @@ Mengimplementasikan skema database `marshal_winner_logs`, REST API endpoints unt
    - Terintegrasi penuh ke dalam `package.json` test script.
 
 ## Verification Results
-- `node server/tests/marshal-flow.test.js` -> PASS
+- `server/tests/marshal-flow.test.js` (Node test) -> PASS
 - `npm test` -> PASS (Semua 4 test suite lulus 100% tanpa regresi)
