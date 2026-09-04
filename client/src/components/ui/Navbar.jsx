@@ -12,7 +12,8 @@ import {
   Radio, 
   User, 
   Coins, 
-  ChevronDown 
+  ChevronDown,
+  Flag
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -31,6 +32,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
 
   const screens = [
     { id: 'participant', label: 'Peserta (HP)', icon: Smartphone, color: 'cyan' },
+    { id: 'marshal', label: 'Marshal Finish', icon: Flag, color: 'amber' },
     { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink' },
     { id: 'scrutineer', label: 'Scrutineer', icon: ShieldCheck, color: 'green' },
     { id: 'cashier', label: 'Kasir Kupon', icon: CreditCard, color: 'amber' },

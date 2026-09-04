@@ -11,9 +11,16 @@ import { CashierDashboard } from './screens/CashierDashboard.jsx';
 import { RealtimeTV } from './screens/RealtimeTV.jsx';
 import { BracketDashboard } from './screens/BracketDashboard.jsx';
 import { DeskQRCodes } from './screens/DeskQRCodes.jsx';
+import { MarshalDashboard } from './screens/MarshalDashboard.jsx';
 
 function AppContent() {
-  const [activeScreen, setActiveScreen] = useState('participant');
+  const [activeScreen, setActiveScreen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      if (window.location.pathname === '/marshal' || window.location.hash === '#marshal') return 'marshal';
+      if (window.location.pathname === '/cashier' || window.location.hash === '#cashier') return 'cashier';
+    }
+    return 'participant';
+  });
 
   return (
     <div className="min-h-screen bg-midnight text-cyberSilver cyber-grid flex flex-col font-mono selection:bg-neonCyan selection:text-black">
@@ -26,6 +33,7 @@ function AppContent() {
         {activeScreen === 'rd' && <RaceDirectorDashboard />}
         {activeScreen === 'scrutineer' && <ScrutineerDashboard />}
         {activeScreen === 'cashier' && <CashierDashboard />}
+        {activeScreen === 'marshal' && <MarshalDashboard />}
         {activeScreen === 'tv' && <RealtimeTV />}
         {activeScreen === 'bracket' && <BracketDashboard />}
         {activeScreen === 'qr-codes' && <DeskQRCodes />}
