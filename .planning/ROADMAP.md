@@ -85,8 +85,8 @@ Mengadaptasi operasional turnamen Mini 4WD ke sistem kupon fisik (lembar 50 kota
   2. Seluruh alur turnamen dari pendaftaran hingga bracket eliminasi bekerja tanpa kendala tanpa memerlukan scan smartphone oleh peserta.
   3. Seluruh unit test suite lulus 100% dan build produksi Vite sukses.
 - **Plans**: 0/2 plans executed
-- [ ] 10-01-PLAN.md
-- [ ] 10-02-PLAN.md
+- [x] 10-01-PLAN.md
+- [x] 10-02-PLAN.md
 
 ---
 
