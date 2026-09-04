@@ -1,12 +1,12 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v1.2 — Multi-Round 3-Lane Elimination System",
+  "milestone": "v2.0",
   "phases": [],
   "next": {
-    "command": "/gsd-new-milestone",
-    "label": "Start a new milestone",
-    "reason": "All phases complete — start a new milestone"
+    "command": "/gsd-discuss-phase",
+    "label": "Discuss the first phase",
+    "reason": "Project initialized — plan your first phase"
   },
-  "updated_at": "2026-09-03T07:46:17.116Z"
+  "updated_at": "2026-09-04T01:56:01.085Z"
 }
