@@ -231,8 +231,8 @@ app.get('/api/coupon-packages/next-serial', (req, res) => {
   }
 });
 
-// 6c. Coupon Packages: Register New Pre-Printed Package
-app.post('/api/coupon-packages', (req, res) => {
+// 6c. Coupon Packages: Register / Activate New Pre-Printed Package (Cashier)
+const handleRegisterPackage = (req, res) => {
   try {
     const {
       serial_number,
@@ -353,7 +353,9 @@ app.post('/api/coupon-packages', (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
-});
+};
+app.post('/api/coupon-packages', handleRegisterPackage);
+app.post('/api/cashier/packages/activate', handleRegisterPackage);
 
 // 6d. Coupon Packages: Emergency Void & Transfer Quota (D-08)
 app.post('/api/coupon-packages/:id/void', (req, res) => {
@@ -808,9 +810,7 @@ app.post('/api/marshal/record-winner', (req, res) => {
       const stats = TicketEngine.getTicketStats();
       io.emit('ticket:granted', {
         ticket,
-        stats: {
-          total_issued: stats.total_issued
-        }
+        stats
       });
     }
 
@@ -822,7 +822,7 @@ app.post('/api/marshal/record-winner', (req, res) => {
       data: winnerData
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
@@ -993,6 +993,98 @@ app.post('/api/marshal/record-bracket-winner', (req, res) => {
       success: true,
       message: 'Pemenang match bracket berhasil dicatat',
       data: result
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 17f. Marshal Start Box Registration & Debit
+app.post('/api/marshal/register-box', (req, res) => {
+  try {
+    const { serial_number, lane, box_number } = req.body;
+    if (!lane || !['A', 'B', 'C'].includes(lane.toUpperCase())) {
+      return res.status(400).json({ success: false, error: 'Jalur tidak valid (harus A, B, atau C)' });
+    }
+    const cleanSerial = String(serial_number || '').trim().toUpperCase();
+    if (!cleanSerial) {
+      return res.status(400).json({ success: false, error: 'Nomor seri kupon wajib diisi' });
+    }
+
+    const pkg = db.prepare(`
+      SELECT cp.*, u.name as user_name, u.team_name 
+      FROM coupon_packages cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE UPPER(TRIM(cp.serial_number)) = ?
+    `).get(cleanSerial);
+
+    if (!pkg) {
+      return res.status(404).json({
+        success: false,
+        error: 'KUPON BELUM TERDAFTAR DI KASIR',
+        code: 'COUPON_NOT_FOUND'
+      });
+    }
+
+    if (pkg.status === 'void' || pkg.remaining_quota <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Kuota Kupon Telah Habis atau Lembar Void'
+      });
+    }
+
+    // Ensure coupon balance in coupons table is at least 1 so registerLane passes
+    const userCoupon = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(pkg.user_id);
+    if (!userCoupon || userCoupon.balance < 1) {
+      db.prepare('UPDATE coupons SET balance = 1 WHERE user_id = ?').run(pkg.user_id);
+    }
+
+    // Register into race lane
+    const regResult = RaceManager.registerLane(pkg.user_id, lane.toUpperCase());
+
+    // Auto set ready so race can start smoothly
+    try {
+      RaceManager.setReady(pkg.user_id);
+    } catch (e) {}
+
+    // Record marshal box log / debit quota
+    const newUsed = pkg.used_quota + 1;
+    const newRemaining = Math.max(0, pkg.remaining_quota - 1);
+    const newStatus = newRemaining === 0 ? 'depleted' : 'active';
+    const logId = uuidv4();
+
+    db.transaction(() => {
+      db.prepare(`
+        INSERT INTO marshal_winner_logs (
+          id, package_id, serial_number, user_id, lane, box_number, status
+        ) VALUES (?, ?, ?, ?, ?, ?, 'active')
+      `).run(logId, pkg.id, cleanSerial, pkg.user_id, lane.toUpperCase(), box_number || newUsed);
+
+      db.prepare(`
+        UPDATE coupon_packages 
+        SET used_quota = ?, remaining_quota = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(newUsed, newRemaining, newStatus, pkg.id);
+
+      db.prepare(`
+        UPDATE coupons 
+        SET balance = MAX(0, balance - 1), updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ?
+      `).run(pkg.user_id);
+    })();
+
+    broadcastFullState();
+
+    res.json({
+      success: true,
+      data: {
+        registration: regResult,
+        box_number: box_number || newUsed,
+        remaining_quota: newRemaining,
+        user_name: pkg.user_name,
+        lane: lane.toUpperCase(),
+        serial_number: cleanSerial
+      }
     });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

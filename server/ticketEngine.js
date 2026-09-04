@@ -258,9 +258,7 @@ export class TicketEngine {
       const stats = this.getTicketStats();
       io.emit('ticket:granted', {
         ticket: ticketResult,
-        stats: {
-          total_issued: stats.total_issued
-        }
+        stats
       });
       io.emit('bracket_updated');
     }
@@ -377,6 +375,24 @@ export class TicketEngine {
     const totalVoid = db.prepare("SELECT COUNT(*) as count FROM next_round_tickets WHERE status = 'void'").get()?.count || 0;
     const isLocked = this.isQualifyingLocked();
 
+    let targetQuota = 24;
+    try {
+      const quotaSetting = db.prepare("SELECT value FROM tournament_settings WHERE key = 'qualifying_target_quota'").get();
+      if (quotaSetting?.value) {
+        targetQuota = parseInt(quotaSetting.value, 10) || 24;
+      } else {
+        const r2Count = db.prepare("SELECT COUNT(*) as count FROM bracket_matches WHERE round_number = 2").get()?.count || 0;
+        if (r2Count > 0) {
+          targetQuota = r2Count * 3;
+        }
+      }
+    } catch (e) {
+      // fallback
+    }
+
+    const remainingQuota = Math.max(0, targetQuota - totalIssued);
+    const isCritical = remainingQuota <= 4 && !isLocked;
+
     const racers = db.prepare(`
       SELECT u.id as user_id, u.name as user_name, u.team_name, COUNT(t.id) as ticket_count
       FROM next_round_tickets t
@@ -397,7 +413,10 @@ export class TicketEngine {
     return {
       total_issued: totalIssued,
       total_void: totalVoid,
+      target_quota: targetQuota,
+      remaining_quota: remainingQuota,
       is_locked: isLocked,
+      is_critical: isCritical,
       racers,
       tickets
     };

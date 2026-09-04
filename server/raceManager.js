@@ -128,6 +128,7 @@ export class RaceManager {
       upcomingRaces,
       scrutineerQueue,
       bracketMatches,
+      ticketStats: TicketEngine.getTicketStats(),
       serverTime: new Date().toISOString()
     };
   }
