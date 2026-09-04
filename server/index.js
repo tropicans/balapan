@@ -698,6 +698,261 @@ app.post('/api/countdown/stop', (req, res) => {
   res.json({ success: true, message: 'Countdown dihentikan. Siap Lepas!' });
 });
 
+// ====================================================
+// 17. MARSHAL & JURI FINISH RAPID CHECK-OFF APIs (PHASE 08)
+// ====================================================
+
+// 17a. Record Round 1 Winner via Coupon Serial Number & Lane (MRSH-02, MRSH-03)
+app.post('/api/marshal/record-winner', (req, res) => {
+  try {
+    const { serial_number, lane, heat_number } = req.body;
+
+    if (!lane || !['A', 'B', 'C'].includes(lane)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Jalur kemenangan tidak valid. Harus Jalur A, B, atau C'
+      });
+    }
+
+    const cleanSerial = String(serial_number || '').trim().toUpperCase();
+    if (!cleanSerial) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nomor seri kupon wajib diisi'
+      });
+    }
+
+    // Lookup active coupon package
+    const pkg = db.prepare(`
+      SELECT cp.*, u.name as user_name, u.team_name, u.email
+      FROM coupon_packages cp
+      JOIN users u ON cp.user_id = u.id
+      WHERE UPPER(TRIM(cp.serial_number)) = ?
+    `).get(cleanSerial);
+
+    if (!pkg) {
+      return res.status(404).json({
+        success: false,
+        error: 'KUPON BELUM TERDAFTAR DI KASIR',
+        code: 'COUPON_NOT_FOUND'
+      });
+    }
+
+    if (pkg.status === 'void' || pkg.remaining_quota <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Kuota Kupon Telah Habis atau Lembar Void'
+      });
+    }
+
+    const logId = uuidv4();
+    const newUsed = pkg.used_quota + 1;
+    const newRemaining = pkg.remaining_quota - 1;
+    const newStatus = newRemaining === 0 ? 'completed' : 'active';
+    const boxNumber = newUsed;
+    const nowIso = new Date().toISOString();
+
+    // Atomic transaction: debit package quota, sync coupons balance, record log, and seed to bracket
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE coupon_packages 
+        SET used_quota = ?, remaining_quota = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+      `).run(newUsed, newRemaining, newStatus, pkg.id);
+
+      db.prepare(`
+        UPDATE coupons 
+        SET balance = MAX(0, balance - 1), updated_at = CURRENT_TIMESTAMP 
+        WHERE user_id = ?
+      `).run(pkg.user_id);
+
+      db.prepare(`
+        INSERT INTO marshal_winner_logs (
+          id, package_id, serial_number, user_id, lane, heat_number, box_number, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?)
+      `).run(logId, pkg.id, pkg.serial_number, pkg.user_id, lane, heat_number || null, boxNumber, nowIso);
+
+      // Auto-seed into Round 2 bracket (MRSH-02, D-06)
+      RaceManager.seedIntoBracket(pkg.user_id);
+    })();
+
+    const winnerData = {
+      log_id: logId,
+      serial_number: pkg.serial_number,
+      user_id: pkg.user_id,
+      user_name: pkg.user_name,
+      team_name: pkg.team_name,
+      lane,
+      heat_number: heat_number || null,
+      box_number: boxNumber,
+      remaining_quota: newRemaining,
+      total_quota: pkg.total_quota
+    };
+
+    io.emit('marshal:winner-recorded', {
+      winner: winnerData,
+      timestamp: nowIso
+    });
+    broadcastFullState();
+
+    res.json({
+      success: true,
+      message: 'Pemenang heat berhasil dicatat',
+      data: winnerData
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 17b. Undo Last Winner within 60s Window (MRSH-03, D-09)
+app.post('/api/marshal/undo-last-winner', (req, res) => {
+  try {
+    const { log_id } = req.body;
+
+    let log = null;
+    if (log_id) {
+      log = db.prepare(`SELECT * FROM marshal_winner_logs WHERE id = ? AND status = 'active'`).get(log_id);
+    } else {
+      log = db.prepare(`SELECT * FROM marshal_winner_logs WHERE status = 'active' ORDER BY created_at DESC, rowid DESC LIMIT 1`).get();
+    }
+
+    if (!log) {
+      return res.status(404).json({
+        success: false,
+        error: 'Tidak ada catatan pemenang aktif untuk dibatalkan'
+      });
+    }
+
+    // 60 seconds time window verification
+    const createdAtMs = new Date(log.created_at).getTime();
+    const elapsedSeconds = (Date.now() - createdAtMs) / 1000;
+    if (elapsedSeconds > 60) {
+      return res.status(400).json({
+        success: false,
+        error: 'Koreksi Kedaluwarsa (>60s)'
+      });
+    }
+
+    // Atomic transaction: restore quota, sync coupon balance, mark log as undone
+    db.transaction(() => {
+      db.prepare(`
+        UPDATE coupon_packages 
+        SET used_quota = MAX(0, used_quota - 1), 
+            remaining_quota = remaining_quota + 1, 
+            status = 'active', 
+            updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ?
+      `).run(log.package_id);
+
+      db.prepare(`
+        UPDATE coupons 
+        SET balance = balance + 1, 
+            updated_at = CURRENT_TIMESTAMP 
+        WHERE user_id = ?
+      `).run(log.user_id);
+
+      db.prepare(`
+        UPDATE marshal_winner_logs 
+        SET status = 'undone' 
+        WHERE id = ?
+      `).run(log.id);
+    })();
+
+    const updatedPkg = db.prepare(`SELECT remaining_quota FROM coupon_packages WHERE id = ?`).get(log.package_id);
+
+    io.emit('marshal:winner-undone', {
+      log_id: log.id,
+      serial_number: log.serial_number
+    });
+    broadcastFullState();
+
+    res.json({
+      success: true,
+      message: 'Pemenang heat berhasil dibatalkan dan kuota kupon dikembalikan',
+      data: {
+        log_id: log.id,
+        serial_number: log.serial_number,
+        remaining_quota: updatedPkg ? updatedPkg.remaining_quota : null
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 17c. Recent Winners Log (Last 5)
+app.get('/api/marshal/recent-winners', (req, res) => {
+  try {
+    const logs = db.prepare(`
+      SELECT 
+        mwl.*, 
+        u.name as user_name, 
+        u.team_name,
+        cp.total_quota, 
+        cp.remaining_quota
+      FROM marshal_winner_logs mwl
+      JOIN users u ON mwl.user_id = u.id
+      JOIN coupon_packages cp ON mwl.package_id = cp.id
+      ORDER BY mwl.created_at DESC, mwl.rowid DESC
+      LIMIT 5
+    `).all();
+
+    res.json({ success: true, data: logs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 17d. Active Round 2 Bracket Match (MRSH-04, D-11)
+app.get('/api/marshal/active-bracket-match', (req, res) => {
+  try {
+    const match = db.prepare(`
+      SELECT bm.*, 
+        u1.name as user_1_name, u1.team_name as user_1_team,
+        u2.name as user_2_name, u2.team_name as user_2_team,
+        u3.name as user_3_name, u3.team_name as user_3_team
+      FROM bracket_matches bm
+      LEFT JOIN users u1 ON bm.user_id_1 = u1.id
+      LEFT JOIN users u2 ON bm.user_id_2 = u2.id
+      LEFT JOIN users u3 ON bm.user_id_3 = u3.id
+      WHERE bm.status = 'pending'
+      ORDER BY bm.round_number ASC, bm.match_number ASC
+      LIMIT 1
+    `).get();
+
+    res.json({ success: true, data: { match: match || null } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 17e. 1-Tap Winner Selection for Round 2 Bracket Match (MRSH-04, D-12)
+app.post('/api/marshal/record-bracket-winner', (req, res) => {
+  try {
+    const { match_id, winner_id } = req.body;
+    if (!match_id || !winner_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'match_id dan winner_id wajib diisi'
+      });
+    }
+
+    const result = RaceManager.advanceBracketWinner(match_id, winner_id);
+    io.emit('bracket_updated', { match_id, winner_id, result });
+    broadcastFullState();
+
+    res.json({
+      success: true,
+      message: 'Pemenang match bracket berhasil dicatat',
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+
 // Serve frontend static files in production
 const clientDistPath = path.join(__dirname, '../client/dist');
 app.use(express.static(clientDistPath));

@@ -200,6 +200,22 @@ export async function initDatabase() {
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS idx_coupon_packages_serial ON coupon_packages(serial_number);
+
+    CREATE TABLE IF NOT EXISTS marshal_winner_logs (
+      id TEXT PRIMARY KEY,
+      package_id TEXT NOT NULL,
+      serial_number TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      lane TEXT CHECK(lane IN ('A', 'B', 'C')) NOT NULL,
+      heat_number INTEGER DEFAULT NULL,
+      box_number INTEGER NOT NULL,
+      status TEXT CHECK(status IN ('active', 'undone')) DEFAULT 'active',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(package_id) REFERENCES coupon_packages(id),
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_marshal_logs_created ON marshal_winner_logs(created_at);
   `);
 
   try {
