@@ -44,7 +44,9 @@ Mengadaptasi operasional turnamen Mini 4WD ke sistem kupon fisik (lembar 50 kota
   1. Marshal dapat mengisi 3 pembalap ke jalur A, B, C dalam waktu <15 detik tanpa lag.
   2. Nomor urut kupon yang harus dicoret tampil jelas dan saldo kupon terpotong 1 secara atomic.
   3. Dasbor Race Director menerima data line-up dari Marshal secara real-time tanpa perlu refresh.
-- **Plans**: 0/1 plans executed
+- **Plans**: 0/2 plans executed
+- [ ] 08-01-PLAN.md: Skema Database marshal_winner_logs, REST API Pencatatan Pemenang Babak 1 & 2, Debit Atomic, dan 60s Undo
+- [ ] 08-02-PLAN.md: Dasbor Tablet HUD /marshal, 3-Lane Selector, On-Screen Numpad Sentuh, Web Audio Chime, dan Dual-Mode Execution
 
 ---
 
