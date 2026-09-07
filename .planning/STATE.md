@@ -37,6 +37,7 @@ Last activity: 2026-09-04 — Milestone v2.0 completed and archived
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260907-b5c | Fix ReferenceError cfg is not defined in BracketDashboard | 2026-09-07 | 7490376 | [260907-b5c-cek-http-localhost-3050-bracket](./quick/260907-b5c-cek-http-localhost-3050-bracket/) |
 
 ## Shipped Milestones
 
