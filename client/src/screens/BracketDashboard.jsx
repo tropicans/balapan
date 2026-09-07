@@ -163,6 +163,7 @@ export function BracketDashboard() {
     const ticketNumber = lane === 'A' ? match.ticket_number_1 : (lane === 'B' ? match.ticket_number_2 : match.ticket_number_3);
     const ticketIndex = lane === 'A' ? match.ticket_index_1 : (lane === 'B' ? match.ticket_index_2 : match.ticket_index_3);
     const displayName = (userName && ticketIndex) ? `${userName} #${ticketIndex}` : userName;
+    const cfg = laneConfigs[lane] || laneConfigs.A;
 
     return (
       <div
