@@ -1,112 +1,136 @@
+<!-- generated-by: gsd-doc-writer -->
 # 🏎️ DGDash Racing System (Cyberpunk / Neo-Racing HUD)
 
-Sistem manajemen turnamen digital nir-kertas (*paperless*) untuk sirkuit balap Tamiya Mini 4WD 3-jalur (*3-lane racetrack*) tanpa memerlukan hardware RFID fisik. Menggunakan teknologi *self-scanning* peserta (QR Code), sinkronisasi real-time berbasis WebSocket, dan kontrol terpusat oleh Race Director (RD).
+[![Version](https://img.shields.io/badge/version-2.0.0-ff0055.svg)](package.json)
+[![Node](https://img.shields.io/badge/node-%3E%3D20.0.0-00f0ff.svg)](package.json)
+[![License](https://img.shields.io/badge/license-ISC-39ff14.svg)](package.json)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](Dockerfile)
+
+Sistem manajemen turnamen balap Tamiya Mini 4WD 3-jalur (*3-lane racetrack*) 100% web yang dirancang nir-kertas (*paperless*) dan bebas hardware RFID/NFC fisik dengan sinkronisasi real-time berbasis WebSocket, kupon fisik pre-printed, kontrol Race Director, dan broadcast HUD TV Sirkuit.
 
 ---
 
-## ⚡ Fitur Utama & Modul Sistem
+## ⚡ Modul & Fitur Utama
 
-### 1. 📱 Modul Peserta & Scan Jalur (Babak 1)
-- **Dual-Track Registrasi**: Login Google / Akun Peserta Mandiri dengan pengaturan Racer Tag / Nama Tim (Maks 10 karakter, misal: `ANDI [RRT]`).
-- **Scanner Kamera QR**: Scan stensil `LINE A`, `LINE B`, `LINE C` di meja lintasan.
-- **Validasi Kupon & Optimistic Concurrency**: Memastikan saldo kupon $\ge 1$. Jika jalur sudah terisi atau balapan sudah berjalan, sistem otomatis mengalihkan peserta ke antrean Heat berikutnya.
-- **Tombol "SIAP BALAP" Raksasa**: Mengisi 30% layar dengan konfirmasi getaran (*haptic vibration* via `navigator.vibrate`).
-- **Tombol "BATAL / SALAH JALUR"**: Pengembalian kupon instan jika balapan masih berstatus *draft*. Begitu Race Director mengunci balapan, tombol batal otomatis dinonaktifkan di HP peserta.
+### 1. 📱 Modul Peserta & Scan Jalur (Kualifikasi Babak 1)
+- **Registrasi Mandiri & Tamu**: Login nama tim/pembalap (maks 10 karakter, misal `ANDI [RRT]`).
+- **Scanner Kamera QR Mobile**: Pindai stensil `LINE A`, `LINE B`, `LINE C` di meja lintasan dengan deteksi secure context.
+- **Validasi Kupon & Optimistic Concurrency**: Memastikan saldo kupon $\ge 1$, otomatis mengalihkan peserta ke heat berikutnya bila slot terisi.
+- **Tombol "SIAP BALAP" Raksasa & Batal**: Konfirmasi haptic touch; tombol batal otomatis terkunci saat balapan dikunci Race Director.
 
 ### 2. 🎛️ Dasbor Komando Pusat (Race Director / RD)
-- **Status 3 Jalur Real-Time**: Status *Grey* (Kosong), *Yellow* (Pending Scan), *Green* (Siap Balap dengan nama pembalap).
-- **Tombol "KUNCI BALAPAN"**: Mengunci antrean lintasan, memotong 1 kupon permanen dari seluruh peserta pada heat tersebut, menonaktifkan tombol batal di HP peserta, dan memperbarui status Layar TV menjadi `READY - LINTASAN SIAP!`.
-- **Panel Input Waktu Finish (Skenario B)**: Memasukkan waktu stopwatch track fisik (misal: `11.450` detik). Pemenang dengan waktu tercepat otomatis dikirim ke antrean Meja Scrutineer.
-- **Panel Override RD**: RD dapat melakukan *assign* peserta manual/tamu, *force-ready*, atau *kick/reset* slot dengan refund kupon dalam 1 tap tanpa perlu mengetik keyboard.
+- **Monitoring Jalur Real-Time**: Status *Kosong*, *Pending Scan*, dan *Siap Balap* per jalur.
+- **Kunci Balapan**: Debit otomatis 1 kupon per peserta, penguncian status race, dan sinkronisasi ke seluruh layar.
+- **Stopwatch Input 3-Kolom**: Layout ergonomis sejajar Jalur A, B, C untuk memasukkan catatan waktu finish fisik.
+- **Prosedur Pengecualian**: Tombol "SEMUA CO / DNF (No Winner)" dan "DEKLARASI RE-RACE" dengan free permit zero-debit.
 
-### 3. 🛡️ Meja Pemeriksaan Fisik (Scrutineering - "Tanya Nama")
-- **Mode Tablet Zero-Keyboard**: Menampilkan kartu pemenang heat yang menunggu verifikasi fisik mobil.
-- **Aksi LOLOS (PASS)**: Mobil memenuhi regulasi $\rightarrow$ otomatis meloloskan pembalap ke Bracket Turnamen Babak Kedua (*Single Elimination*) tanpa perlu scan QR atau kupon lagi. Memperbarui papan Best Time Overall (BTO).
-- **Aksi DISKUALIFIKASI (DQ)**: Membatalkan kemenangan dan mencabut dari papan rekor BTO.
-- **Animasi Takeover Rekor BTO**: Jika catatan waktu merupakan yang tercepat hari itu, Layar TV otomatis menampilkan layar selebrasi emas *NEW RECORD BTO!* disertai sirene dan konfeti.
+### 3. 🛡️ Meja Pemeriksaan Fisik (Scrutineer — "Tanya Nama")
+- **Antarmuka Tablet Zero-Keyboard**: Verifikasi fisik mobil pemenang heat (LOLOS / DQ).
+- **Active Alert & Emergency Override**: Peringatan visual saat race dikunci dan tombol pengambilalihan darurat untuk auto-seeding bracket.
+- **Rekor Best Time Overall (BTO)**: Pendar emas dinamis (*cyber shimmer*) dan confetti perayaan untuk rekor tercepat baru.
 
-### 4. 💳 Dasbor Kasir Kupon (Assisted Track)
-- **Tambah Peserta Tamu / Anak**: Mendaftarkan akun virtual (`guest101@tamiya.local`) secara instan dengan saldo awal kupon.
-- **Top Up Kupon Kilat**: Tombol instan `+10`, `+50`, `+100` kupon atau input custom dengan pencarian cepat nama/tag peserta.
+### 4. 💳 Meja Kasir & Paket Kupon Fisik (Cashier)
+- **Registrasi Paket Kupon Pre-Printed**: Registrasi paket kupon 50-kotak dengan nomor seri barcode fisik unik anti-duplikasi.
+- **Pencarian Kilat & Pelacakan Sisa Kuota**: Pelacakan kuota kupon aktif berdasarkan serial kupon atau nama peserta.
+- **Emergency Void & Replacement**: Pembatalan lembar kupon rusak dan transfer sisa kuota ke serial pengganti.
 
-### 5. 📺 Layar TV Publik Sirkuit (16:9 Neo-Racing HUD)
-- **Aesthetic Cyberpunk Cockpit HUD**: Tekstur carbon, scanline CRT, border neon glowing (*Neon Pink* Jalur A, *Electric Cyan* Jalur B, *Acid Green* Jalur C).
-- **Status Bar Dinamis**: *MENUNGGU ANTRIAN* $\rightarrow$ *READY - LINTASAN SIAP!* $\rightarrow$ *BALAPAN BERLANGSUNG* $\rightarrow$ *VERIFIKASI MEJA*.
-- **Kolom Kiri (60%)**: Blok raksasa Jalur A, B, C dengan nama pembalap dan display catatan waktu real-time.
-- **Kolom Kanan (40%)**: Papan peringkat **Top 5 Best Time Overall (BTO)** dengan medali emas, perak, dan perunggu.
-- **Footer Marquee**: Teks berjalan (*ticker*) menampilkan antrean heat selanjutnya secara real-time.
+### 5. 🏁 Dasbor Marshal Meja Start Box (`/marshal`)
+- **Antarmuka Tablet Cepat (Touch Target 64px+)**: Pengisian cepat 3 kontestan via barcode scanner / pencarian instan.
+- **Check-off Kupon Fisik & Atomic Debit**: Instruksi nomor kotak kupon yang harus dicoret panitia beserta toleransi koreksi undo 60 detik.
+- **Eksekusi Bracket Eliminasi Babak 2**: Mode ganda untuk mencatat pemenang heat kualifikasi maupun pemenang pertandingan bracket eliminasi 1-tap.
 
-### 6. 🔊 Hitungan Mundur Suara Manusia Babak Kedua (Voice Countdown)
-- Hitungan mundur 10 detik interaktif dengan suara manusia berbahasa Indonesia: *"Sepuluh... Sembilan... Delapan... Tujuh... Enam... Lima... Empat... Tiga... Dua... Satu!"*.
-- Tombol **"SIAP / STOP SEKARANG"** dari RD: Menghentikan audio secara instan dan mengubah TV menjadi banner hijau berkedip `RACE READY - LEPAS!` serta memicu getaran serentak di HP peserta.
-- **Bagan Turnamen Babak 2**: Pohon eliminasi dari Perempat Final (Quarterfinals) $\rightarrow$ Semifinal $\rightarrow$ Grand Final.
+### 6. 🏆 Bracket Eliminasi Berjenjang 3-Jalur (`/bracket`)
+- **Skema 3-Jalur Berjenjang**: Mendukung turnamen skala besar (Babak 2, Babak 3, hingga Grand Final).
+- **Auto-Advance 3:1**: Pemenang tiap heat otomatis melaju mengisi slot pertandingan babak berikutnya.
+- **Filter & Navigasi**: Tab babak, pencarian nomor heat/pembalap/tim, dan filter status (Semua / Pending / Selesai).
 
-### 7. 🖨️ Stensil QR Code Meja Start
-- Halaman cetak/display stensil siap pakai untuk `LINE A`, `LINE B`, dan `LINE C`.
+### 7. 🎟️ Ticket Engine (Finish-to-Next-Round)
+- **Penerbitan Tiket Otomatis**: Setiap mobil yang FINISH sah otomatis diterbitkan tiket babak berikutnya (`next_round_tickets`).
+- **Sequential Bracket Seeding**: Tiket otomatis dialokasikan ke slot kosong bracket Babak 2 secara berurutan dan adil.
+- **Kunci Kualifikasi**: Race Director dapat mengunci kualifikasi saat kuota tiket Babak 2 terpenuhi.
+
+### 8. 📺 Layar TV Sirkuit Realtime HUD (16:9 Cyberpunk)
+- **Status Antrean & Live Race**: Visualisasi cockpit futuristik Jalur A (Pink), B (Cyan), C (Green).
+- **Ticket Quota Bar & Critical Pulse**: Status sisa kuota tiket Babak 2 dengan efek berkedip saat kritis ($\le 4$ tiket).
+- **Running Ticker Marquee**: Teks berjalan menampilkan daftar pembalap yang lolos tiket Babak 2.
+- **Holographic Gold Celebration Modal**: Pop-up selebrasi fullscreen saat pembalap baru mengamankan tiket Babak 2.
+- **Suara Manusia & Countdown Overlay**: Hitung mundur dramatis 10 detik bahasa Indonesia sinkron dengan visual.
 
 ---
 
-## 🚀 Panduan Menjalankan Aplikasi
+## 🗺️ Peta Navigasi Rute
 
-### Opsi 1: Menjalankan via Docker (Production Hardened — Direkomendasikan)
-Sistem telah dilengkapi dengan *multi-stage Docker build* berbasis Alpine Linux yang aman, ringan (~80MB), non-root user (`node`), dan dilengkapi *Docker Healthcheck* otomatis.
+| Rute URL | Layar / Peran | Deskripsi |
+|----------|---------------|-----------|
+| `/` | Peserta (Participant) | Pendaftaran jalur, scan QR kamera HP, konfirmasi siap balap |
+| `/rd` | Race Director | Kontrol start, stopwatch finish, status jalur, re-race, kunci kualifikasi |
+| `/scrutineer` | Scrutineer | Verifikasi fisik mobil pemenang, status LOLOS/DQ, BTO override |
+| `/cashier` | Kasir (Cashier) | Registrasi paket kupon 50-kotak, topup kupon digital, void kupon |
+| `/marshal` | Marshal Meja Start | Rapid line-up kontestan, pencatatan pemenang, check-off nomor kupon |
+| `/bracket` | Bagan Eliminasi | Manajemen dan monitoring bracket turnamen 3-jalur multi-round |
+| `/tv` | Layar TV Sirkuit | Tampilan publik 16:9 HUD, papan BTO, ticket bar, countdown overlay |
+| `/stencil` | Stensil Meja Lintasan | Format cetak QR Code meja start untuk Jalur A, Jalur B, Jalur C |
 
+---
+
+## 🚀 Panduan Instalasi & Menjalankan
+
+### Kebutuhan Sistem
+- **Node.js**: `>= 20.0.0`
+- **Docker & Docker Compose** (opsional, direkomendasikan untuk deployment sirkuit)
+
+### Opsi 1: Menjalankan via Docker Compose (Direkomendasikan)
 ```bash
-# 1. Salin template konfigurasi environment (opsional)
+# 1. Salin konfigurasi environment
 cp .env.example .env
 
-# 2. Build dan jalankan container production di latar belakang
-npm run docker:up
-# atau: docker compose up --build -d
+# 2. Build dan jalankan container produksi
+docker compose up -d --build
 
-# 3. Cek status kesehatan container (healthy)
+# 3. Cek status container (healthy)
 docker compose ps
-
-# 4. Pantau live server logs
-npm run docker:logs
-# atau: docker compose logs -f
-
-# 5. Hentikan container secara aman (graceful shutdown)
-npm run docker:down
-# atau: docker compose down
 ```
+Aplikasi aktif di: **[http://localhost:3050](http://localhost:3050)**
 
-Akses sistem di browser:
-- **Aplikasi Web**: [http://localhost:3050](http://localhost:3050)
-- **Health Check Monitor**: [http://localhost:3050/api/health](http://localhost:3050/api/health)
-- **State Snapshot API**: [http://localhost:3050/api/state](http://localhost:3050/api/state)
-
-> 💡 **Data Persistence**: Seluruh data SQLite dan histori turnamen disimpan secara persisten di Docker Named Volume `dgdash_racing_data` pada `/app/data/tamiya.sqlite`, sehingga data tetap aman meskipun container di-restart atau di-update.
-
-### Opsi 2: Menjalankan secara Lokal (Node.js)
+### Opsi 2: Menjalankan secara Lokal
 ```bash
-# 1. Install dependencies
+# 1. Install dependencies server & client
 npm install
 npm --prefix client install
 
-# 2. Build frontend production
+# 2. Build bundle frontend produksi
 npm run build
 
-# 3. Jalankan backend & frontend terintegrasi
+# 3. Jalankan server
 npm start
 
-# Atau mode development hot-reload:
-# npm run dev
+# Atau jalankan mode development (hot-reload client & server):
+npm run dev
 ```
 
 ---
 
-## 🧪 Pengujian Otomatis (Automated Test Suite)
-Jalankan pengujian logika state machine, pemotongan kupon, konkurensi antrean, dan auto-bracket:
+## 🧪 Menjalankan Pengujian (Testing)
+
+Jalankan seluruh rangkaian test otomatis logika turnamen, API, tiket, scanner, dan rendering antarmuka:
 ```bash
 npm test
 ```
 
 ---
 
-## 📐 Arsitektur & Teknologi
-- **Frontend**: React 18, Vite, Tailwind CSS (Cyberpunk Theme), Lucide Icons, Canvas Confetti, Framer Motion, HTML5 QR Code.
-- **Backend**: Node.js, Express, Socket.IO (Real-time Event Engine).
-- **Database**: SQLite (Pure JS/WASM `sql.js` dengan persistensi file otomatis dan ACID transaction support).
-- **Audio & Haptics**: Web Audio API Sound Synthesizer, Indonesian Speech Synthesis, Navigator Vibration API.
-- **DevOps**: Multi-stage `Dockerfile`, `docker-compose.yml`.
+## 📚 Dokumentasi Lengkap
+
+- [Arsitektur Sistem (ARCHITECTURE.md)](docs/ARCHITECTURE.md)
+- [Panduan Mulai Cepat (GETTING-STARTED.md)](docs/GETTING-STARTED.md)
+- [Panduan Pengembangan (DEVELOPMENT.md)](docs/DEVELOPMENT.md)
+- [Spesifikasi & Panduan Testing (TESTING.md)](docs/TESTING.md)
+- [Konfigurasi & Variabel Lingkungan (CONFIGURATION.md)](docs/CONFIGURATION.md)
+- [Dokumentasi REST & WebSocket API (API.md)](docs/API.md)
+- [Panduan Deployment Sirkuit & Docker (DEPLOYMENT.md)](docs/DEPLOYMENT.md)
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dilisensikan di bawah lisensi ISC.
