@@ -6,7 +6,7 @@
 - ✅ **v1.1 UI/UX & Arena Visual Showcase Polish** — Phases 3-4 (shipped 2026-09-03) — [Archive](milestones/v1.1-ROADMAP.md)
 - ✅ **v1.2 Multi-Round 3-Lane Elimination System** — Phases 5-6 (shipped 2026-09-03) — [Archive](milestones/v1.2-ROADMAP.md)
 - ✅ **v2.0 Physical Coupon & Marshal-Driven Tournament System** — Phases 07-10 (shipped 2026-09-04) — [Archive](milestones/v2.0-ROADMAP.md)
-- 🚧 **v3.0 Alur Balap Fisik Tanpa Scan Kupon** — Phases 11-17 (in progress)
+- ✅ **v3.0 Alur Balap Fisik Tanpa Scan Kupon** — Phases 11-17 (shipped 2026-09-17) — [Archive](milestones/v3.0-ROADMAP.md)
 
 ## Phases
 
@@ -50,11 +50,11 @@
 
 - [x] **Phase 11: Event & Schema Migration Foundation** - Safe, reversible schema foundation with events and participant numbering
 - [x] **Phase 12: Participant Registration & Auto-Numbering** - Cashier registers numbered participants per active event
-- [ ] **Phase 13: Manual BTO Backend & Leaderboard** - Manual best-time entry, personal-best replacement, realtime leaderboard
-- [ ] **Phase 14: Winner Registration & Bracket Execution** - Number→name winner seeding + manual heat winner auto-advance
-- [ ] **Phase 15: State Contract Switch & Backend Decoupling/Removal** - New state payload, coupon query de-coupling, delete race/ticket/coupon modules
-- [ ] **Phase 16: Frontend Rewrite & Monitoring Screens** - RD & TV display bracket/BTO; delete obsolete screens/routes
-- [ ] **Phase 17: Destructive Cleanup, Tests & Seed** - Gated table drops, dependency prune, green test suite
+- [x] **Phase 13: Manual BTO Backend & Leaderboard** - Manual best-time entry, personal-best replacement, realtime leaderboard
+- [x] **Phase 14: Winner Registration & Bracket Execution** - Number→name winner seeding + manual heat winner auto-advance
+- [x] **Phase 15: State Contract Switch & Backend Decoupling/Removal** - New state payload, coupon query de-coupling, delete race/ticket/coupon modules
+- [x] **Phase 16: Frontend Rewrite & Monitoring Screens** - RD & TV display bracket/BTO; delete obsolete screens/routes
+- [x] **Phase 17: Destructive Cleanup, Tests & Seed** - Gated table drops, dependency prune, green test suite
 
 ## Phase Details
 
@@ -189,9 +189,9 @@ Phases execute in numeric order: 11 → 12 → 13 → 14 → 15 → 16 → 17
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 11. Event & Schema Migration Foundation | v3.0 | 3/3 | Complete    | 2026-09-17 |
-| 12. Participant Registration & Auto-Numbering | v3.0 | 0/0 | Not started | - |
-| 13. Manual BTO Backend & Leaderboard | v3.0 | 0/0 | Not started | - |
-| 14. Winner Registration & Bracket Execution | v3.0 | 0/0 | Not started | - |
-| 15. State Contract Switch & Backend Decoupling/Removal | v3.0 | 0/0 | Not started | - |
-| 16. Frontend Rewrite & Monitoring Screens | v3.0 | 0/0 | Not started | - |
-| 17. Destructive Cleanup, Tests & Seed | v3.0 | 0/0 | Not started | - |
+| 12. Participant Registration & Auto-Numbering | v3.0 | 2/2 | Complete    | 2026-09-17 |
+| 13. Manual BTO Backend & Leaderboard | v3.0 | 1/1 | Complete    | 2026-09-17 |
+| 14. Winner Registration & Bracket Execution | v3.0 | 1/1 | Complete    | 2026-09-17 |
+| 15. State Contract Switch & Backend Decoupling/Removal | v3.0 | 1/1 | Complete    | 2026-09-17 |
+| 16. Frontend Rewrite & Monitoring Screens | v3.0 | 1/1 | Complete    | 2026-09-17 |
+| 17. Destructive Cleanup, Tests & Seed | v3.0 | 1/1 | Complete    | 2026-09-17 |

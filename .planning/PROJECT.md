@@ -53,15 +53,17 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **TKET-03**: Mobil Klontang/CO menghanguskan kupon tanpa menerbitkan tiket babak berikutnya — Shipped in v2.0
 - ✓ **TV-HUD-01**: Layar TV Sirkuit 16:9 (`/tv`) menampilkan running ticker real-time tiket Babak Berikutnya — Shipped in v2.0
 - ✓ **TV-HUD-02**: Layar TV Sirkuit menampilkan total sisa kuota tiket Babak 2 yang diperebutkan — Shipped in v2.0
+- ✓ **EVNT-01..04**: Manajemen multi-event dan isolasi data per event aktif — Shipped in v3.0
+- ✓ **PARN-01..05**: Registrasi peserta bernomor urut (#1, #2..) & impor CSV — Shipped in v3.0
+- ✓ **BTO-01..04**: Input manual BTO & personal-best replacement — Shipped in v3.0
+- ✓ **WREG-01..06**: Registrasi pemenang Babak 2 via nomor & auto-slotting (A→B→C) — Shipped in v3.0
+- ✓ **BRKT-01..03**: Eksekusi bracket eliminasi 3-jalur manual advance — Shipped in v3.0
+- ✓ **MON-01..05**: TV sirkuit HUD & race director monitoring dari state v3.0 — Shipped in v3.0
+- ✓ **REM-01..04 & MIG-01..04**: Pembersihan modul/layar scanning & skema data safety — Shipped in v3.0
 
 ### Active
 
-- [ ] Registrasi peserta di Kasir dengan nomor unik otomatis (tanpa serial kupon, tanpa saldo digital) — *v3.0*
-- [ ] Panel Registrasi pemenang: input nomor peserta → nama otomatis terdaftar ke Babak 2 — *v3.0*
-- [ ] Bracket eliminasi 3-jalur Babak 2+ tanpa lock/start/countdown (pilih pemenang manual + auto-advance) — *v3.0*
-- [ ] Race Director memantau peserta Babak 2 dan input/monitor BTO manual — *v3.0*
-- [ ] TV Sirkuit menampilkan bracket/peserta Babak 2 + BTO — *v3.0*
-- [ ] Penghapusan modul kupon digital, scanning QR, Marshal, Scrutineer, Peserta HP, QR stencil, countdown & race engine — *v3.0*
+None (Milestone v3.0 complete)
 
 ## Current Milestone: v3.0 Alur Balap Fisik Tanpa Scan Kupon
 
