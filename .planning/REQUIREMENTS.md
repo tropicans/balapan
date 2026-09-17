@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EVNT-01 | Phase 11 | Pending |
-| EVNT-02 | Phase 11 | Pending |
+| EVNT-01 | Phase 11 | Complete |
+| EVNT-02 | Phase 11 | Complete |
 | EVNT-03 | Phase 12 | Pending |
 | EVNT-04 | Phase 11 | Complete |
 | PARN-01 | Phase 12 | Pending |

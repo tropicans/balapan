@@ -6,7 +6,7 @@
     {
       "number": "11",
       "name": "Event & Schema Migration Foundation",
-      "status": "in_progress"
+      "status": "complete"
     },
     {
       "number": "12",
@@ -41,8 +41,8 @@
   ],
   "next": {
     "command": "/gsd-progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 11 of 7 · 0% · executing"
+    "label": "Advance to the next step (plan phase 12)",
+    "reason": "Phase 12 of 7 — needs a plan"
   },
-  "updated_at": "2026-09-17T10:47:44.593Z"
+  "updated_at": "2026-09-17T10:58:40.765Z"
 }
