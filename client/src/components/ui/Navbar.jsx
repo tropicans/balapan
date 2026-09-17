@@ -44,16 +44,12 @@ export function Navbar({ activeScreen, setActiveScreen }) {
   }, []);
 
   const screens = [
-    { id: 'cashier', label: 'Kasir Kupon', icon: CreditCard, color: 'amber', path: '/cashier' },
-    { id: 'marshal', label: 'Marshal Finish', icon: Flag, color: 'amber', path: '/marshal' },
+    { id: 'cashier', label: 'Registrasi Kasir', icon: CreditCard, color: 'amber', path: '/cashier' },
     { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director' },
-    { id: 'scrutineer', label: 'Scrutineer', icon: ShieldCheck, color: 'green', path: '/scrutineer' },
-    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
     { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket' },
     { id: 'winners', label: 'Pemenang Babak 2', icon: UserCheck, color: 'cyan', path: '/winners' },
+    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
     { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events' },
-    { id: 'participant', label: 'Peserta (HP)', icon: Smartphone, color: 'cyan', path: '/participant' },
-    { id: 'qr-codes', label: 'QR Jalur Fisik', icon: QrCode, color: 'cyan', path: '/qr-codes' },
   ];
 
   const handleSelectScreen = (screen) => {
