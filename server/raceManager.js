@@ -2,6 +2,7 @@ import db from './db.js';
 import { v4 as uuidv4 } from 'uuid';
 import { TicketEngine } from './ticketEngine.js';
 import { getActiveEvent, getActiveEventId } from './services/eventService.js';
+import { getBtoLeaderboard } from './services/btoService.js';
 
 export class RaceManager {
   // Get currently active race (draft, pre-start, locked) or latest race
@@ -48,19 +49,22 @@ export class RaceManager {
   static getFullState() {
     const activeRace = this.getActiveRace();
 
-    // Top 5 Best Time Overall (BTO) - Only verified PASS scrutineer status
-    const btoLeaderboard = db.prepare(`
-      SELECT 
-        rr.id, rr.finish_time, rr.lane, rr.race_id,
-        u.id as user_id, u.name as user_name, u.team_name,
-        r.race_number
-      FROM race_registrations rr
-      JOIN users u ON rr.user_id = u.id
-      JOIN races r ON rr.race_id = r.id
-      WHERE rr.scrutineer_status = 'pass' AND rr.finish_time IS NOT NULL AND rr.finish_time > 0
-      ORDER BY rr.finish_time ASC
-      LIMIT 5
-    `).all();
+    // Top 5 Best Time Overall (BTO) - Sourced from bto_records (Phase 13), fallback to legacy race_registrations
+    let btoLeaderboard = getBtoLeaderboard({ limit: 5 });
+    if (!btoLeaderboard || btoLeaderboard.length === 0) {
+      btoLeaderboard = db.prepare(`
+        SELECT 
+          rr.id, rr.finish_time, rr.lane, rr.race_id,
+          u.id as user_id, u.name as user_name, u.team_name,
+          r.race_number
+        FROM race_registrations rr
+        JOIN users u ON rr.user_id = u.id
+        JOIN races r ON rr.race_id = r.id
+        WHERE rr.scrutineer_status = 'pass' AND rr.finish_time IS NOT NULL AND rr.finish_time > 0
+        ORDER BY rr.finish_time ASC
+        LIMIT 5
+      `).all();
+    }
 
     // Upcoming queue (races after active race or pending registrations)
     const upcomingRaces = db.prepare(`

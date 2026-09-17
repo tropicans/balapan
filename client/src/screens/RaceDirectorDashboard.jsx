@@ -16,9 +16,12 @@ import {
   AlertCircle,
   Clock,
   Search,
-  ShieldAlert
+  ShieldAlert,
+  Trophy,
+  LayoutDashboard
 } from 'lucide-react';
 import clsx from 'clsx';
+import { BtoManager } from '../components/director/BtoManager.jsx';
 
 export function RaceDirectorDashboard() {
   const {
@@ -40,6 +43,7 @@ export function RaceDirectorDashboard() {
   const [successMsg, setSuccessMsg] = useState(null);
   const [qualifyingLocked, setQualifyingLocked] = useState(false);
   const [lockQualifyingModalOpen, setLockQualifyingModalOpen] = useState(false);
+  const [rdTab, setRdTab] = useState('race'); // 'race' or 'bto'
 
   // Finish times input state
   const [finishTimes, setFinishTimes] = useState({ A: '', B: '', C: '' });
@@ -363,7 +367,40 @@ export function RaceDirectorDashboard() {
         </div>
       )}
 
-      {/* 2. Lanes Grid & Lock Control Panel */}
+      {/* Navigation Tabs (v3.0 BTO Management Integration) */}
+      <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
+        <button
+          onClick={() => setRdTab('race')}
+          className={clsx(
+            "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
+            rdTab === 'race'
+              ? "bg-neonCyan text-black shadow-glowCyan"
+              : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
+          )}
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span>KONTROL HEAT BALAPAN</span>
+        </button>
+
+        <button
+          onClick={() => setRdTab('bto')}
+          className={clsx(
+            "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
+            rdTab === 'bto'
+              ? "bg-neonAmber text-black shadow-glowAmber"
+              : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
+          )}
+        >
+          <Trophy className="w-4 h-4" />
+          <span>MANAJEMEN BTO MANUAL (v3.0)</span>
+        </button>
+      </div>
+
+      {rdTab === 'bto' ? (
+        <BtoManager />
+      ) : (
+        <>
+          {/* 2. Lanes Grid & Lock Control Panel */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {renderLaneCard('A', laneA, {
           bg: 'bg-neonPink/15',
@@ -817,6 +854,8 @@ export function RaceDirectorDashboard() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

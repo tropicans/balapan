@@ -10,6 +10,7 @@ import { RaceManager } from './raceManager.js';
 import { TicketEngine } from './ticketEngine.js';
 import { createEvent, listEvents, getActiveEvent, setActiveEvent, archiveEvent } from './services/eventService.js';
 import { registerParticipant, getParticipants, updateParticipant, importParticipants } from './services/participantService.js';
+import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -1274,6 +1275,66 @@ app.post('/api/participants/import', (req, res) => {
     res.status(201).json({ success: true, data: result });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// ====================================================
+// Phase 13: Manual BTO Backend & Leaderboard (BTO-01 to BTO-04)
+// ====================================================
+
+// 21a. Record or update manual BTO time (personal best policy)
+app.post('/api/bto', (req, res) => {
+  try {
+    const { participant_number, user_id, finish_time, recorded_by, event_id } = req.body || {};
+    const result = recordBtoTime({ participant_number, user_id, finish_time, recorded_by, event_id });
+
+    if (result.is_new_overall_record) {
+      io.emit('NEW_BTO_RECORD', {
+        userName: result.participant.name,
+        teamName: result.participant.team_name,
+        time: result.record.finish_time,
+        participantNumber: result.participant.participant_number,
+        rank: 1
+      });
+    }
+
+    if (result.updated) {
+      io.emit('bto:updated', {
+        type: 'record_updated',
+        record: result.record,
+        participant: result.participant,
+        is_new_overall_record: result.is_new_overall_record
+      });
+    }
+
+    broadcastFullState();
+    res.status(result.updated ? 201 : 200).json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 21b. Get BTO Leaderboard for active event
+app.get('/api/bto/leaderboard', (req, res) => {
+  try {
+    const { event_id, limit } = req.query;
+    const leaderboard = getBtoLeaderboard({ event_id, limit });
+    res.json({ success: true, data: leaderboard });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 21c. Delete BTO record (official correction)
+app.delete('/api/bto/:id', (req, res) => {
+  try {
+    const result = deleteBtoRecord(req.params.id);
+    io.emit('bto:updated', { type: 'record_deleted', id: req.params.id });
+    broadcastFullState();
+    res.json({ success: true, data: result });
+  } catch (err) {
+    const status = err.message === 'Catatan BTO tidak ditemukan' ? 404 : 400;
+    res.status(status).json({ success: false, error: err.message });
   }
 });
 
