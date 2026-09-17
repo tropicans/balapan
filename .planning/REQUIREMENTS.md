@@ -11,16 +11,16 @@ Requirements for milestone v3.0 (Alur Balap Fisik Tanpa Scan Kupon). Each maps t
 
 - [x] **EVNT-01**: Panitia dapat membuat event/turnamen baru (nama, tanggal)
 - [x] **EVNT-02**: Panitia dapat memilih event aktif
-- [ ] **EVNT-03**: Nomor peserta reset dari 1 pada event baru
+- [x] **EVNT-03**: Nomor peserta reset dari 1 pada event baru
 - [x] **EVNT-04**: Data peserta/bracket/BTO terpisah per event
 
 ### Participant Registry & Numbering
 
-- [ ] **PARN-01**: Kasir dapat mendaftarkan peserta (nama, tim) tanpa kupon/serial/saldo
-- [ ] **PARN-02**: App otomatis memberi nomor peserta unik berurutan dalam event aktif
-- [ ] **PARN-03**: Panitia dapat mencari peserta via nomor atau nama
-- [ ] **PARN-04**: Nomor peserta ditampilkan untuk ditulis panitia di kupon fisik
-- [ ] **PARN-05**: Import roster CSV mendaftarkan peserta + nomor ke event aktif
+- [x] **PARN-01**: Kasir dapat mendaftarkan peserta (nama, tim) tanpa kupon/serial/saldo
+- [x] **PARN-02**: App otomatis memberi nomor peserta unik berurutan dalam event aktif
+- [x] **PARN-03**: Panitia dapat mencari peserta via nomor atau nama
+- [x] **PARN-04**: Nomor peserta ditampilkan untuk ditulis panitia di kupon fisik
+- [x] **PARN-05**: Import roster CSV mendaftarkan peserta + nomor ke event aktif
 
 ### Winner Registration (Panel Registrasi)
 
@@ -98,13 +98,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | EVNT-01 | Phase 11 | Complete |
 | EVNT-02 | Phase 11 | Complete |
-| EVNT-03 | Phase 12 | Pending |
+| EVNT-03 | Phase 12 | Complete |
 | EVNT-04 | Phase 11 | Complete |
-| PARN-01 | Phase 12 | Pending |
-| PARN-02 | Phase 12 | Pending |
-| PARN-03 | Phase 12 | Pending |
-| PARN-04 | Phase 12 | Pending |
-| PARN-05 | Phase 12 | Pending |
+| PARN-01 | Phase 12 | Complete |
+| PARN-02 | Phase 12 | Complete |
+| PARN-03 | Phase 12 | Complete |
+| PARN-04 | Phase 12 | Complete |
+| PARN-05 | Phase 12 | Complete |
 | WREG-01 | Phase 14 | Pending |
 | WREG-02 | Phase 14 | Pending |
 | WREG-03 | Phase 14 | Pending |

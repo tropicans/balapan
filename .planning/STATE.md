@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Alur Balap Fisik Tanpa Scan Kupon
-current_phase: 12
-current_phase_name: Participant Registration & Auto-Numbering
-status: ready_to_execute
-stopped_at: Phase 12 planned (2 plans)
-last_updated: "2026-09-17T11:19:30.000Z"
+current_phase: 13
+current_phase_name: Manual BTO Backend & Leaderboard
+status: planning
+stopped_at: Phase 12 complete, ready to plan Phase 13
+last_updated: "2026-09-17T11:29:00.000Z"
 last_activity: 2026-09-17
-last_activity_desc: Phase 12 planned, ready for execution
-state_head: 29befb1a43fd0a21ce34609ae778b2b55ac28e9b
+last_activity_desc: Phase 12 complete, transitioned to Phase 13
+state_head: 33bd7d3
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 3
-  percent: 20
+  completed_plans: 5
+  percent: 28
 ---
 
 # Project State
@@ -25,22 +25,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-17)
 
 **Core value:** Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi.
-**Current focus:** Phase 12 — Participant Registration & Auto-Numbering (Ready to Execute)
+**Current focus:** Phase 12 — Participant Registration & Auto-Numbering (Completed)
 
 ## Current Position
 
-Phase: 12 — Participant Registration & Auto-Numbering
-Plan: 2 plans ready (Wave 1: 12-01, Wave 2: 12-02)
-Status: Ready to execute
-Last activity: 2026-09-17 — Phase 12 planned, ready for execution
+Phase: 13 — Manual BTO Backend & Leaderboard
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-09-17 — Phase 12 complete, transitioned to Phase 13
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 28%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3 (v3.0)
+- Total plans completed: 5 (v3.0)
 - Average duration: —
 - Total execution time: —
 
@@ -49,6 +49,7 @@ Progress: [██░░░░░░░░] 20%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 11 | 3 | - | - |
+| 12 | 2 | - | - |
 
 **Recent Trend:**
 
@@ -90,6 +91,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-09-17T11:08:30.000Z
-Stopped at: Phase 12 context gathered, ready to plan Phase 12
-Resume file: .planning/phases/12-participant-registration-auto-numbering/12-CONTEXT.md
+Last session: 2026-09-17T11:29:00.000Z
+Stopped at: Phase 12 complete, ready to plan Phase 13
+Resume file: .planning/phases/12-participant-registration-auto-numbering/12-VERIFICATION.md

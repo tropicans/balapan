@@ -49,7 +49,7 @@
 **Milestone Goal:** Hilangkan seluruh proses scanning (kupon & QR jalur) serta modul kupon digital; aplikasi fokus pada registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor, dan manajemen bracket eliminasi. Strict **add → switch → remove** order: migration/data-safety and backend de-coupling land before UI removal; manual BTO replacement before deleting race engine; destructive drops last.
 
 - [x] **Phase 11: Event & Schema Migration Foundation** - Safe, reversible schema foundation with events and participant numbering
-- [ ] **Phase 12: Participant Registration & Auto-Numbering** - Cashier registers numbered participants per active event
+- [x] **Phase 12: Participant Registration & Auto-Numbering** - Cashier registers numbered participants per active event
 - [ ] **Phase 13: Manual BTO Backend & Leaderboard** - Manual best-time entry, personal-best replacement, realtime leaderboard
 - [ ] **Phase 14: Winner Registration & Bracket Execution** - Number→name winner seeding + manual heat winner auto-advance
 - [ ] **Phase 15: State Contract Switch & Backend Decoupling/Removal** - New state payload, coupon query de-coupling, delete race/ticket/coupon modules
@@ -98,14 +98,14 @@ Plans:
   4. Nomor peserta ditampilkan jelas untuk ditulis panitia di kupon fisik
   5. Import roster CSV mendaftarkan peserta + nomor ke event aktif
 
-**Plans**: 2 plans
+**Plans**: 2/2 plans complete
 **UI hint**: yes
 
 **Wave 1**
-- [ ] 12-01-PLAN.md — Backend Domain Service, REST API, WebSocket, CLI Roster Import, and Test Suite
+- [x] 12-01-PLAN.md — Backend Domain Service, REST API, WebSocket, CLI Roster Import, and Test Suite
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 12-02-PLAN.md — Cashier UI Sub-components, High-Contrast Modal #42, Omni-Search, and Cashier Dashboard Integration
+- [x] 12-02-PLAN.md — Cashier UI Sub-components, High-Contrast Modal #42, Omni-Search, and Cashier Dashboard Integration
 
 ### Phase 13: Manual BTO Backend & Leaderboard
 
