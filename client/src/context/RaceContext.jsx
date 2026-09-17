@@ -21,14 +21,7 @@ export function RaceProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('tamiya_user');
-      return saved ? JSON.parse(saved) : {
-        id: 'user-andi',
-        name: 'Andi Pratama',
-        email: 'andi@gmail.com',
-        team_name: 'ANDI [RRT]',
-        role: 'participant',
-        coupon_balance: 25
-      };
+      return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }

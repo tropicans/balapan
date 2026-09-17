@@ -590,19 +590,19 @@ Order matters: archive the old active **before** promoting the new one, otherwis
 | A5 | `ALLOW_DESTRUCTIVE_MIGRATION` gate has no destructive step to guard in Phase 11 (all steps additive); it is infrastructure for Phases 15/17 | Pattern 2, Security | Low — criterion 3 is still met by wiring + documenting the flag |
 | A6 | Event-scoping of `users`/`bracket_matches` reads is applied minimally in this phase; legacy `races`/`race_registrations`/coupon queries are left untouched until MIG-03 (Phase 15) | Pitfall 9 | Medium — if the planner over-scopes here, `STATE_UPDATE` can break |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should `/api/events` mutations also emit a dedicated socket event (e.g. `event_updated`), or is `broadcastFullState()` enough?**
+1. **RESOLVED — Should `/api/events` mutations also emit a dedicated socket event (e.g. `event_updated`), or is `broadcastFullState()` enough?**
    - What we know: `broadcastFullState()` already fires on every mutation and clients render `raceState`.
    - What's unclear: whether Phase 15's scoped state will need a distinct signal.
    - Recommendation: emit `broadcastFullState()` only; add `event_updated` in Phase 15 if a consumer needs it.
 
-2. **How much of `getFullState()` should expose the active event now?**
+2. **RESOLVED — How much of `getFullState()` should expose the active event now?**
    - What we know: criterion 5 only requires "v2.0 DB still readable + server boots".
    - What's unclear: whether the Manajemen Event screen should read events from `STATE_UPDATE` or from `GET /api/events`.
    - Recommendation: screen uses `GET /api/events` (independent of the Phase 15 state-contract change); add `activeEvent` to `getFullState()` as an *additive* field.
 
-3. **Backfill ordering for `users.created_at` ties.**
+3. **RESOLVED — Backfill ordering for `users.created_at` ties.**
    - What we know: `ROW_NUMBER() OVER (PARTITION BY event_id ORDER BY created_at, rowid)` is deterministic (verified).
    - What's unclear: whether organizers expect numbering to follow roster/import order.
    - Recommendation: use `ORDER BY created_at, rowid`; Phase 12 imports can allocate fresh numbers anyway.

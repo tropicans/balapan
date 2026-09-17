@@ -106,8 +106,8 @@ app.post('/api/users/login', (req, res) => {
         VALUES (?, ?, ?, ?, ?, 'participant', 0)
       `).run(uId, name, email || `${name.toLowerCase().replace(/\s+/g, '')}@tamiya.local`, googleSubId || null, tag);
 
-      // Default coupons for new user
-      db.prepare('INSERT INTO coupons (id, user_id, balance) VALUES (?, ?, 10)').run(uuidv4(), uId);
+      // New participants start with an empty coupon balance; coupons are issued by the cashier.
+      db.prepare('INSERT INTO coupons (id, user_id, balance) VALUES (?, ?, 0)').run(uuidv4(), uId);
 
       user = db.prepare('SELECT * FROM users WHERE id = ?').get(uId);
     } else if (teamName && teamName !== user.team_name) {

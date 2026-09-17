@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const uniqueTestDb = path.join(__dirname, `../../data/test_cp_${Date.now()}.sqlite`);
 process.env.DB_PATH = uniqueTestDb;
+process.env.SEED_DEMO_DATA = 'true';
 process.env.PORT = '0'; // use ephemeral port for test server
 
 // Import db and server after setting env

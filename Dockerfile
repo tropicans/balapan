@@ -36,6 +36,11 @@ RUN npm ci --omit=dev --no-audit
 # Copy backend application
 COPY server/ ./server/
 
+# Copy maintenance scripts and the roster seed file (kept outside /app/data so the
+# volume mount does not shadow it)
+COPY scripts/ ./scripts/
+COPY data/stc-vol8-roster.csv ./seed/stc-vol8-roster.csv
+
 # Copy compiled frontend assets from Stage 1
 COPY --from=client-builder /app/client/dist ./client/dist
 

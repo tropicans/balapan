@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 
 const uniqueTestDb = path.join(__dirname, `../../data/test_${Date.now()}.sqlite`);
 process.env.DB_PATH = uniqueTestDb;
+process.env.SEED_DEMO_DATA = 'true';
 
 async function runTests() {
   console.log('🧪 RUNNING DGDASH RACING SYSTEM TEST SUITE...\n');

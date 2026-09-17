@@ -129,6 +129,7 @@ export async function initDatabase() {
       team_name TEXT,
       role TEXT DEFAULT 'participant',
       is_virtual INTEGER DEFAULT 0,
+      side_event_gta INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -191,6 +192,7 @@ export async function initDatabase() {
       remaining_quota INTEGER NOT NULL DEFAULT 50,
       price_paid INTEGER DEFAULT 0,
       payment_method TEXT DEFAULT 'cash',
+      package_type TEXT DEFAULT 'standard',
       status TEXT CHECK(status IN ('active', 'completed', 'void')) DEFAULT 'active',
       void_from_id TEXT DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -261,7 +263,15 @@ export async function initDatabase() {
   try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN is_auto_advanced INTEGER DEFAULT 0;`); } catch (e) {}
   try { db.exec(`ALTER TABLE marshal_winner_logs ADD COLUMN ticket_id TEXT;`); } catch (e) {}
 
-  seedInitialData();
+  // Roster import migrations (STC Vol. 8): package category + side event flag
+  try { db.exec(`ALTER TABLE users ADD COLUMN side_event_gta INTEGER DEFAULT 0;`); } catch (e) {}
+  try { db.exec(`ALTER TABLE coupon_packages ADD COLUMN package_type TEXT DEFAULT 'standard';`); } catch (e) {}
+
+  // Demo/dummy data is opt-in only. Production and normal local runs start clean.
+  // Enable with SEED_DEMO_DATA=true (the test suite sets this).
+  if (process.env.SEED_DEMO_DATA === 'true') {
+    seedInitialData();
+  }
 }
 
 function seedInitialData() {

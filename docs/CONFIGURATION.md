@@ -11,6 +11,7 @@ Panduan lengkap mengenai variabel lingkungan (*environment variables*), format b
 | `NODE_ENV` | Optional | `development` | Mode eksekusi aplikasi (`development` atau `production`). Pada mode produksi, Express melayani bundel statis dari `client/dist`. |
 | `DB_PATH` | Optional | `./tamiya.sqlite` (lokal) / `/app/data/tamiya.sqlite` (Docker) | Lokasi berkas penyimpanan persisten database SQLite di filesystem. |
 | `HOST_PORT` | Optional | `3050` | Port TCP mesin host yang di-mapping ke port internal container pada `docker-compose.yml`. |
+| `SEED_DEMO_DATA` | Optional | `false` | Bila `true`, database mengisi data dummy (pembalap demo, Race #1, bracket contoh) saat pertama kali dibuat. Biarkan `false`/kosong di produksi. Hanya dipakai untuk demo lokal dan test otomatis. |
 
 ## Config File Format
 
@@ -34,6 +35,9 @@ PORT=3000
 
 # SQLite Database Storage Filepath
 DB_PATH=/app/data/tamiya.sqlite
+
+# Demo seed data (dummy). Kosongkan/false di produksi.
+SEED_DEMO_DATA=false
 ```
 
 ## Required vs Optional Settings
@@ -52,6 +56,7 @@ DB_PATH=/app/data/tamiya.sqlite
 | `process.env.PORT` | `server/index.js:20` | `3000` |
 | `process.env.DB_PATH` | `server/db.js:15` | `path.join(__dirname, '../tamiya.sqlite')` |
 | `process.env.NODE_ENV` | `server/index.js:19` | `'development'` |
+| `SEED_DEMO_DATA` | `server/db.js` | tidak diisi (data demo nonaktif) |
 | `HOST_PORT` | `docker-compose.yml:10` | `3050` |
 
 ## Per-Environment Overrides
@@ -80,3 +85,39 @@ Ketika sistem dioperasikan di arena sirkuit menggunakan router Wi-Fi lokal:
 - Cukup hubungkan perangkat juri, marshal, kasir, dan HP peserta ke subnet Wi-Fi yang sama (misal `192.168.1.x`).
 - Buka alamat IP host laptop server dari browser perangkat manapun:
   `http://<IP-LAPTOP-SERVER>:3050`
+
+## Roster Import (STC Vol. 8)
+
+Daftar pembalap hasil penjualan kupon dapat diimport dari CSV:
+
+```bash
+# Lokal (DB default data/tamiya.sqlite)
+npm run import:roster
+
+# Preview tanpa menulis database
+node scripts/import-roster.js --dry
+
+# Target database tertentu
+node scripts/import-roster.js --db path/ke/tamiya.sqlite
+```
+
+CSV default: `data/stc-vol8-roster.csv`. Format kolom:
+`No., Nama Racer, Jumlah Kupon, Pembayaran, Status, Side Event (GTA), Best Race`
+
+Pemetaan ke database:
+- Setiap nama → satu baris `users` (unik, idempotent). Nama yang muncul lagi → paket kupon tambahan.
+- `Presale (40 Runs)` → `coupon_packages.package_type='presale'`, kuota 40, harga `Rp175.000`.
+- `OTS (40 Runs)` → `package_type='ots'`, kuota 40, harga `Rp200.000`.
+- `Top Up (20 Runs)` → `package_type='topup'`, kuota 20, harga `Rp80.000`.
+- Baris bernama tanpa `Status` (mis. Unyil/Organic/Ryu) → `package_type='comp'`, kuota 40, harga 0.
+- `Side Event (GTA) = 1` → `users.side_event_gta = 1`.
+- `coupons.balance` disinkronkan = total `remaining_quota` paket aktif user.
+- Nomor seri digenerate: `STC8-{PRE|OTS|TOP|COMP}-{no}-{set}`.
+
+**Penting (Docker):** server menyimpan snapshot database di memori dan menulis ulang saat shutdown. Jalankan import saat server **berhenti**, lalu start ulang:
+
+```bash
+docker compose stop
+docker compose run --rm dgdash-app node scripts/import-roster.js --csv /app/seed/stc-vol8-roster.csv
+docker compose start
+```

@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const uniqueTestDb = path.join(__dirname, `../../data/test_bracket_${Date.now()}.sqlite`);
 process.env.DB_PATH = uniqueTestDb;
+process.env.SEED_DEMO_DATA = 'true';
 
 async function runBracketTests() {
   console.log('🧪 RUNNING 3-LANE ELIMINATION BRACKET TEST SUITE...\n');

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRace } from '../../context/RaceContext.jsx';
 import { CyberButton } from './CyberButton.jsx';
 import { 
@@ -20,15 +20,26 @@ import clsx from 'clsx';
 export function Navbar({ activeScreen, setActiveScreen }) {
   const { connected, currentUser, switchUser, raceState } = useRace();
   const [userDropdown, setUserDropdown] = useState(false);
+  const [users, setUsers] = useState([]);
 
-  const demoUsers = [
-    { id: 'user-andi', name: 'Andi Pratama', email: 'andi@gmail.com', team_name: 'ANDI [RRT]', role: 'participant', coupon_balance: 25 },
-    { id: 'user-budi', name: 'Budi Santoso', email: 'budi@gmail.com', team_name: 'BUDI [GTR]', role: 'participant', coupon_balance: 18 },
-    { id: 'user-chan', name: 'Chandra Wijaya', email: 'chandra@gmail.com', team_name: 'CHAN [M4D]', role: 'participant', coupon_balance: 30 },
-    { id: 'user-doni', name: 'Doni Kurniawan', email: 'doni@gmail.com', team_name: 'DONI [SPD]', role: 'participant', coupon_balance: 15 },
-    { id: 'user-rd', name: 'Race Director (Head)', email: 'rd@tamiya.local', team_name: 'HQ', role: 'admin', coupon_balance: 999 },
-    { id: 'user-scrut', name: 'Juri Scrutineer', email: 'scrutineer@tamiya.local', team_name: 'QC', role: 'scrutineer', coupon_balance: 999 },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/users')
+      .then((res) => res.json())
+      .then((res) => {
+        if (cancelled || !res?.success || !Array.isArray(res.data)) return;
+        setUsers(res.data.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          team_name: u.team_name,
+          role: u.role,
+          coupon_balance: u.coupon_balance ?? 0
+        })));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   const screens = [
     { id: 'cashier', label: 'Kasir Kupon', icon: CreditCard, color: 'amber', path: '/cashier' },
@@ -104,10 +115,15 @@ export function Navbar({ activeScreen, setActiveScreen }) {
           {userDropdown && (
             <div className="absolute right-0 mt-2 w-64 bg-obsidian border border-neonCyan/50 shadow-glowCyan clip-cyber p-2 z-50">
               <div className="text-[10px] font-orbitron font-bold text-neonCyan px-2 py-1 uppercase tracking-wider border-b border-gray-800">
-                Ganti Akun Demo / Peserta
+                Pilih Peserta / Akun
               </div>
               <div className="mt-1 space-y-1 max-h-60 overflow-y-auto">
-                {demoUsers.map(u => (
+                {users.length === 0 && (
+                  <div className="px-2.5 py-2 text-[10px] font-mono text-cyberSilver/60">
+                    Belum ada peserta terdaftar.
+                  </div>
+                )}
+                {users.map(u => (
                   <button
                     key={u.id}
                     onClick={() => {

@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const uniqueTestDb = path.join(__dirname, `../../data/test_marshal_${Date.now()}.sqlite`);
 process.env.DB_PATH = uniqueTestDb;
+process.env.SEED_DEMO_DATA = 'true';
 process.env.PORT = '0'; // ephemeral port
 
 const { initDatabase, default: db } = await import('../db.js');
