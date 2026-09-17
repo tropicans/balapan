@@ -6,7 +6,7 @@
     {
       "number": "11",
       "name": "Event & Schema Migration Foundation",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "12",
@@ -44,5 +44,5 @@
     "label": "Advance to the next step",
     "reason": "Phase 11 of 7 · 0% · executing"
   },
-  "updated_at": "2026-09-17T10:45:15.465Z"
+  "updated_at": "2026-09-17T10:47:44.593Z"
 }

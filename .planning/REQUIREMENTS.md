@@ -12,7 +12,7 @@ Requirements for milestone v3.0 (Alur Balap Fisik Tanpa Scan Kupon). Each maps t
 - [ ] **EVNT-01**: Panitia dapat membuat event/turnamen baru (nama, tanggal)
 - [ ] **EVNT-02**: Panitia dapat memilih event aktif
 - [ ] **EVNT-03**: Nomor peserta reset dari 1 pada event baru
-- [ ] **EVNT-04**: Data peserta/bracket/BTO terpisah per event
+- [x] **EVNT-04**: Data peserta/bracket/BTO terpisah per event
 
 ### Participant Registry & Numbering
 
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVNT-01 | Phase 11 | Pending |
 | EVNT-02 | Phase 11 | Pending |
 | EVNT-03 | Phase 12 | Pending |
-| EVNT-04 | Phase 11 | Pending |
+| EVNT-04 | Phase 11 | Complete |
 | PARN-01 | Phase 12 | Pending |
 | PARN-02 | Phase 12 | Pending |
 | PARN-03 | Phase 12 | Pending |

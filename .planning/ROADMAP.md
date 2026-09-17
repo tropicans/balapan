@@ -71,7 +71,7 @@
   4. Kolom `participant_number` (+ UNIQUE index) ada pada `users` dengan normalisasi nomor kanonik (`"7"` == `"007"`)
   5. Basis data v2.0 tetap terbaca dan server tetap boot — belum ada drop tabel
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 **Wave 1**
 
@@ -79,7 +79,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 11-02-PLAN.md — Event service + `/api/events` routes + event-scoped bracket reads
+- [x] 11-02-PLAN.md — Event service + `/api/events` routes + event-scoped bracket reads
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -182,7 +182,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14 → 15 → 16 → 17
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 11. Event & Schema Migration Foundation | v3.0 | 1/3 | In Progress|  |
+| 11. Event & Schema Migration Foundation | v3.0 | 2/3 | In Progress|  |
 | 12. Participant Registration & Auto-Numbering | v3.0 | 0/0 | Not started | - |
 | 13. Manual BTO Backend & Leaderboard | v3.0 | 0/0 | Not started | - |
 | 14. Winner Registration & Bracket Execution | v3.0 | 0/0 | Not started | - |
