@@ -98,8 +98,14 @@ Plans:
   4. Nomor peserta ditampilkan jelas untuk ditulis panitia di kupon fisik
   5. Import roster CSV mendaftarkan peserta + nomor ke event aktif
 
-**Plans**: TBD
+**Plans**: 2 plans
 **UI hint**: yes
+
+**Wave 1**
+- [ ] 12-01-PLAN.md — Backend Domain Service, REST API, WebSocket, CLI Roster Import, and Test Suite
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 12-02-PLAN.md — Cashier UI Sub-components, High-Contrast Modal #42, Omni-Search, and Cashier Dashboard Integration
 
 ### Phase 13: Manual BTO Backend & Leaderboard
 
