@@ -17,6 +17,7 @@ class SqliteWrapper {
     this.rawDb = null;
     this.saveTimeout = null;
     this.currentPath = null;
+    this._txDepth = 0;
   }
 
   async init(customPath = null) {
@@ -41,6 +42,7 @@ class SqliteWrapper {
 
   save() {
     if (!this.rawDb || !this.currentPath) return;
+    if (this._txDepth > 0) return; // CRITICAL: export() would terminate open transaction
     try {
       const targetDir = path.dirname(this.currentPath);
       if (!fs.existsSync(targetDir)) {
@@ -95,8 +97,9 @@ class SqliteWrapper {
         if (params.length > 0) stmt.bind(params);
         stmt.step();
         stmt.free();
+        const changes = self.rawDb.getRowsModified();
         self.save();
-        return { changes: 1 };
+        return { changes };
       }
     };
   }
@@ -104,11 +107,26 @@ class SqliteWrapper {
   transaction(fn) {
     const self = this;
     return (...args) => {
+      const outermost = self._txDepth === 0;
+      if (outermost) {
+        self.rawDb.exec('BEGIN');
+      }
+      self._txDepth++;
       try {
         const res = fn(...args);
-        self.save();
+        self._txDepth--;
+        if (outermost) {
+          self.rawDb.exec('COMMIT');
+          self.save();
+        }
         return res;
       } catch (err) {
+        self._txDepth--;
+        if (outermost) {
+          try {
+            self.rawDb.exec('ROLLBACK');
+          } catch (_) {}
+        }
         throw err;
       }
     };
