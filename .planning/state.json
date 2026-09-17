@@ -1,12 +1,48 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v2.0 — Physical Coupon & Marshal-Driven Tournament System",
-  "phases": [],
+  "milestone": "v3.0 — Alur Balap Fisik Tanpa Scan Kupon",
+  "phases": [
+    {
+      "number": "11",
+      "name": "Event & Schema Migration Foundation",
+      "status": "pending"
+    },
+    {
+      "number": "12",
+      "name": "Participant Registration & Auto-Numbering",
+      "status": "pending"
+    },
+    {
+      "number": "13",
+      "name": "Manual BTO Backend & Leaderboard",
+      "status": "pending"
+    },
+    {
+      "number": "14",
+      "name": "Winner Registration & Bracket Execution",
+      "status": "pending"
+    },
+    {
+      "number": "15",
+      "name": "State Contract Switch & Backend Decoupling/Removal",
+      "status": "pending"
+    },
+    {
+      "number": "16",
+      "name": "Frontend Rewrite & Monitoring Screens",
+      "status": "pending"
+    },
+    {
+      "number": "17",
+      "name": "Destructive Cleanup, Tests & Seed",
+      "status": "pending"
+    }
+  ],
   "next": {
-    "command": "/gsd-progress",
-    "label": "Show progress",
-    "reason": "Unsure of state — showing progress"
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 11 of 7 · 0% · executing"
   },
-  "updated_at": "2026-09-04T09:34:21.379Z"
+  "updated_at": "2026-09-17T10:45:15.465Z"
 }

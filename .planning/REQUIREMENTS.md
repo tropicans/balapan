@@ -54,8 +54,8 @@ Requirements for milestone v3.0 (Alur Balap Fisik Tanpa Scan Kupon). Each maps t
 
 ### Migration & Data Safety
 
-- [ ] **MIG-01**: Migrasi schema dalam transaksi nyata + backup DB sebelum langkah destruktif
-- [ ] **MIG-02**: Skema event + `participant_number` (+index) & normalisasi nomor kanonik
+- [x] **MIG-01**: Migrasi schema dalam transaksi nyata + backup DB sebelum langkah destruktif
+- [x] **MIG-02**: Skema event + `participant_number` (+index) & normalisasi nomor kanonik
 - [ ] **MIG-03**: Query state dibersihkan dari JOIN kupon sebelum drop tabel
 - [ ] **MIG-04**: Drop tabel kupon/race lama setelah arsip DB & verifikasi
 
@@ -123,8 +123,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MON-03 | Phase 16 | Pending |
 | MON-04 | Phase 16 | Pending |
 | MON-05 | Phase 15 | Pending |
-| MIG-01 | Phase 11 | Pending |
-| MIG-02 | Phase 11 | Pending |
+| MIG-01 | Phase 11 | Complete |
+| MIG-02 | Phase 11 | Complete |
 | MIG-03 | Phase 15 | Pending |
 | MIG-04 | Phase 17 | Pending |
 | REM-01 | Phase 16 | Pending |
@@ -133,11 +133,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REM-04 | Phase 17 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 35 total
 - Mapped to phases: 35
 - Unmapped: 0 ✓
 
 **Phase distribution:**
+
 - Phase 11: 5 (EVNT-01, EVNT-02, EVNT-04, MIG-01, MIG-02)
 - Phase 12: 6 (EVNT-03, PARN-01..05)
 - Phase 13: 4 (BTO-01..04)
