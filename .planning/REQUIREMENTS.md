@@ -9,8 +9,8 @@ Requirements for milestone v3.0 (Alur Balap Fisik Tanpa Scan Kupon). Each maps t
 
 ### Event Management
 
-- [ ] **EVNT-01**: Panitia dapat membuat event/turnamen baru (nama, tanggal)
-- [ ] **EVNT-02**: Panitia dapat memilih event aktif
+- [x] **EVNT-01**: Panitia dapat membuat event/turnamen baru (nama, tanggal)
+- [x] **EVNT-02**: Panitia dapat memilih event aktif
 - [ ] **EVNT-03**: Nomor peserta reset dari 1 pada event baru
 - [x] **EVNT-04**: Data peserta/bracket/BTO terpisah per event
 

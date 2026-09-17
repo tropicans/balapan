@@ -48,7 +48,7 @@
 
 **Milestone Goal:** Hilangkan seluruh proses scanning (kupon & QR jalur) serta modul kupon digital; aplikasi fokus pada registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor, dan manajemen bracket eliminasi. Strict **add → switch → remove** order: migration/data-safety and backend de-coupling land before UI removal; manual BTO replacement before deleting race engine; destructive drops last.
 
-- [ ] **Phase 11: Event & Schema Migration Foundation** - Safe, reversible schema foundation with events and participant numbering
+- [x] **Phase 11: Event & Schema Migration Foundation** - Safe, reversible schema foundation with events and participant numbering
 - [ ] **Phase 12: Participant Registration & Auto-Numbering** - Cashier registers numbered participants per active event
 - [ ] **Phase 13: Manual BTO Backend & Leaderboard** - Manual best-time entry, personal-best replacement, realtime leaderboard
 - [ ] **Phase 14: Winner Registration & Bracket Execution** - Number→name winner seeding + manual heat winner auto-advance
@@ -71,7 +71,7 @@
   4. Kolom `participant_number` (+ UNIQUE index) ada pada `users` dengan normalisasi nomor kanonik (`"7"` == `"007"`)
   5. Basis data v2.0 tetap terbaca dan server tetap boot — belum ada drop tabel
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans executed
 Plans:
 **Wave 1**
 
@@ -83,7 +83,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 11-03-PLAN.md — Manajemen Event screen + v2.0 boot-safety regression
+- [x] 11-03-PLAN.md — Manajemen Event screen + v2.0 boot-safety regression
 
 ### Phase 12: Participant Registration & Auto-Numbering
 
