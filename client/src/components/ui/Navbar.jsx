@@ -14,7 +14,8 @@ import {
   Coins, 
   ChevronDown,
   Flag,
-  Calendar
+  Calendar,
+  UserCheck
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -49,6 +50,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
     { id: 'scrutineer', label: 'Scrutineer', icon: ShieldCheck, color: 'green', path: '/scrutineer' },
     { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
     { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket' },
+    { id: 'winners', label: 'Pemenang Babak 2', icon: UserCheck, color: 'cyan', path: '/winners' },
     { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events' },
     { id: 'participant', label: 'Peserta (HP)', icon: Smartphone, color: 'cyan', path: '/participant' },
     { id: 'qr-codes', label: 'QR Jalur Fisik', icon: QrCode, color: 'cyan', path: '/qr-codes' },

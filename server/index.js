@@ -11,6 +11,7 @@ import { TicketEngine } from './ticketEngine.js';
 import { createEvent, listEvents, getActiveEvent, setActiveEvent, archiveEvent } from './services/eventService.js';
 import { registerParticipant, getParticipants, updateParticipant, importParticipants } from './services/participantService.js';
 import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
+import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners } from './services/winnerService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -1335,6 +1336,67 @@ app.delete('/api/bto/:id', (req, res) => {
   } catch (err) {
     const status = err.message === 'Catatan BTO tidak ditemukan' ? 404 : 400;
     res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+// ====================================================
+// Phase 14: Winner Registration & Bracket Execution (WREG-01 to WREG-06, BRKT-01 to BRKT-03)
+// ====================================================
+
+// 22a. Register Round 2 Winner by Participant Number (WREG-01, WREG-02, WREG-03, WREG-04, WREG-06)
+app.post('/api/winners/register', (req, res) => {
+  try {
+    const { participant_number, event_id } = req.body || {};
+    const result = registerWinner({ participant_number, event_id });
+
+    io.emit('winner_registered', result);
+    io.emit('bracket_updated');
+    broadcastFullState();
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 22b. Undo Last Winner Registration (WREG-05)
+app.post('/api/winners/undo', (req, res) => {
+  try {
+    const { event_id } = req.body || {};
+    const result = undoLastWinnerRegistration({ event_id });
+
+    io.emit('winner_undone', result);
+    io.emit('bracket_updated');
+    broadcastFullState();
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 22c. Get List of Registered Winners
+app.get('/api/winners', (req, res) => {
+  try {
+    const { event_id } = req.query;
+    const winners = getRegisteredWinners({ event_id });
+    res.json({ success: true, data: winners });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 22d. Advance Bracket Match Winner (BRKT-01, BRKT-02 - no lock required)
+app.post('/api/bracket/advance', (req, res) => {
+  try {
+    const { match_id, matchId, winner_id, winnerId, isFinal } = req.body || {};
+    const mId = match_id || matchId;
+    const wId = winner_id || winnerId;
+    const result = RaceManager.advanceBracketWinner(mId, wId, { isFinal });
+
+    io.emit('bracket_updated');
+    broadcastFullState();
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 

@@ -15,6 +15,8 @@ import { DeskQRCodes } from './screens/DeskQRCodes.jsx';
 import { MarshalDashboard } from './screens/MarshalDashboard.jsx';
 import { EventManagementDashboard } from './screens/EventManagementDashboard.jsx';
 
+import { WinnerRegistrationDashboard } from './screens/WinnerRegistrationDashboard.jsx';
+
 function AppContent() {
   const [activeScreen, setActiveScreen] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -25,6 +27,7 @@ function AppContent() {
       if (path === '/cashier' || hash === '#cashier') return 'cashier';
       if (path === '/director' || path === '/rd' || hash === '#director' || hash === '#rd') return 'rd';
       if (path === '/bracket' || hash === '#bracket') return 'bracket';
+      if (path === '/winners' || hash === '#winners') return 'winners';
       if (path === '/events' || hash === '#events') return 'events';
       if (path === '/scrutineer' || hash === '#scrutineer') return 'scrutineer';
       if (path === '/qr-codes' || hash === '#qr-codes') return 'qr-codes';
@@ -47,6 +50,7 @@ function AppContent() {
         {activeScreen === 'marshal' && <MarshalDashboard />}
         {activeScreen === 'tv' && <RealtimeTV />}
         {activeScreen === 'bracket' && <BracketDashboard />}
+        {activeScreen === 'winners' && <WinnerRegistrationDashboard />}
         {activeScreen === 'events' && <EventManagementDashboard />}
         {activeScreen === 'qr-codes' && <DeskQRCodes />}
       </main>

@@ -13,9 +13,11 @@ import {
   Clock, 
   Users, 
   X,
-  Sparkles
+  Sparkles,
+  UserCheck
 } from 'lucide-react';
 import clsx from 'clsx';
+import { WinnerRegistrationPanel } from '../components/bracket/WinnerRegistrationPanel.jsx';
 
 export function BracketDashboard() {
   const { raceState, apiAdvanceBracket } = useRace();
@@ -35,6 +37,7 @@ export function BracketDashboard() {
 
   // Round Selector State (defaults to first available round, usually Round 2)
   const [selectedRound, setSelectedRound] = useState(availableRounds[0] || 2);
+  const [activeTab, setActiveTab] = useState('bracket'); // 'bracket' or 'winners'
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
   const [currentPage, setCurrentPage] = useState(1);
@@ -328,8 +331,41 @@ export function BracketDashboard() {
         </div>
       </div>
 
-      {/* 1. Dynamic Round Selector Tabs (ELIM-04) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-800 scrollbar-none">
+      {/* Main Tab Navigation (Bracket vs Winner Registration) */}
+      <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
+        <button
+          onClick={() => setActiveTab('bracket')}
+          className={clsx(
+            "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
+            activeTab === 'bracket'
+              ? "bg-neonPink text-black shadow-glowPink"
+              : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
+          )}
+        >
+          <GitBranch className="w-4 h-4" />
+          <span>BAGAN PERTANDINGAN</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('winners')}
+          className={clsx(
+            "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
+            activeTab === 'winners'
+              ? "bg-neonCyan text-black shadow-glowCyan"
+              : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
+          )}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>REGISTRASI PEMENANG BABAK 2 (v3.0)</span>
+        </button>
+      </div>
+
+      {activeTab === 'winners' ? (
+        <WinnerRegistrationPanel />
+      ) : (
+        <>
+          {/* 1. Dynamic Round Selector Tabs (ELIM-04) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-800 scrollbar-none">
         {availableRounds.map(roundNum => {
           const roundMatches = matches.filter(m => m.round_number === roundNum);
           const totalCount = roundMatches.length;
@@ -482,6 +518,8 @@ export function BracketDashboard() {
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
+      )}
+        </>
       )}
     </div>
   );
