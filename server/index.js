@@ -76,15 +76,14 @@ app.get('/api/state', (req, res) => {
   }
 });
 
-// 2. Users list for Cashier & RD Search
+// 2. Users list for Cashier & RD Search (Decoupled from coupons table)
 app.get('/api/users', (req, res) => {
   try {
     const users = db.prepare(`
       SELECT 
         u.*, 
-        COALESCE(c.balance, 0) as coupon_balance
+        0 as coupon_balance
       FROM users u
-      LEFT JOIN coupons c ON u.id = c.user_id
       ORDER BY u.created_at DESC
     `).all();
     res.json({ success: true, data: users });

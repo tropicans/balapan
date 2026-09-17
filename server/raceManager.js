@@ -150,13 +150,31 @@ export class RaceManager {
         ORDER BY bm.round_number ASC, bm.match_number ASC
       `).all();
 
+    const activeEvent = getActiveEvent();
+    const participants = activeEventId
+      ? db.prepare(`
+          SELECT id, name, team_name, role, event_id, participant_number, created_at
+          FROM users
+          WHERE event_id = ? AND role = 'participant'
+          ORDER BY participant_number ASC
+        `).all(activeEventId)
+      : [];
+
+    const settingsRows = db.prepare('SELECT key, value FROM tournament_settings').all();
+    const settings = {};
+    for (const s of settingsRows) {
+      settings[s.key] = s.value;
+    }
+
     return {
-      activeEvent: getActiveEvent(),
+      activeEvent,
+      participants,
       activeRace,
       btoLeaderboard,
       upcomingRaces,
       scrutineerQueue,
       bracketMatches,
+      settings,
       ticketStats: TicketEngine.getTicketStats(),
       serverTime: new Date().toISOString()
     };
