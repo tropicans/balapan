@@ -9,6 +9,8 @@ import db, { initDatabase } from './db.js';
 import { RaceManager } from './raceManager.js';
 import { TicketEngine } from './ticketEngine.js';
 import { createEvent, listEvents, getActiveEvent, setActiveEvent, archiveEvent } from './services/eventService.js';
+import { registerParticipant, getParticipants, updateParticipant, importParticipants } from './services/participantService.js';
+import { parseParticipantCsv } from './utils/csvParser.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +33,7 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(cors());
 app.use(express.json());
+app.use(express.text({ type: ['text/plain', 'text/csv'] }));
 
 // Initialize database
 await initDatabase();
@@ -1179,6 +1182,98 @@ app.post('/api/events/:id/archive', (req, res) => {
   } catch (err) {
     const status = err.message === 'Event tidak ditemukan' ? 404 : 500;
     res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+// ====================================================
+// 20. PARTICIPANT REGISTRATION & AUTO-NUMBERING (PHASE 12)
+// ====================================================
+
+// 20a. Register single participant (PARN-01, PARN-02, D-01, D-02)
+app.post('/api/participants', (req, res) => {
+  try {
+    const { name, team_name, event_id } = req.body || {};
+    const participant = registerParticipant({ name, team_name, event_id });
+    io.emit('participant_registered', participant);
+    broadcastFullState();
+    res.status(201).json({ success: true, data: participant });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 20b. List participants with omni-search (PARN-03, D-06)
+app.get('/api/participants', (req, res) => {
+  try {
+    const { event_id, search, limit, offset } = req.query;
+    const result = getParticipants({
+      event_id,
+      search,
+      limit: parseInt(limit, 10) || 200,
+      offset: parseInt(offset, 10) || 0
+    });
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 20c. Update participant typo (name / team only) (D-12)
+app.put('/api/participants/:id', (req, res) => {
+  try {
+    const { name, team_name } = req.body || {};
+    const updated = updateParticipant(req.params.id, { name, team_name });
+    io.emit('participant_updated', updated);
+    broadcastFullState();
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    const status = err.message === 'Peserta tidak ditemukan' ? 404 : 400;
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+// 20d. Preview CSV import (PARN-05, D-08)
+app.post('/api/participants/import-preview', (req, res) => {
+  try {
+    const csvText = typeof req.body === 'string' ? req.body : (req.body?.csv || '');
+    if (!csvText || !csvText.trim()) {
+      return res.status(400).json({ success: false, error: 'Data CSV tidak boleh kosong' });
+    }
+    const preview = parseParticipantCsv(csvText);
+    res.json({
+      success: true,
+      data: {
+        valid: preview.valid,
+        skipped: preview.skipped,
+        totalRows: preview.valid.length + preview.skipped.length
+      }
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 20e. Batch import participants into active event (PARN-05, D-07, D-09)
+app.post('/api/participants/import', (req, res) => {
+  try {
+    const { participants, csv, event_id } = req.body || {};
+    let participantsList = participants;
+    if ((!participantsList || !participantsList.length) && csv) {
+      const preview = parseParticipantCsv(csv);
+      participantsList = preview.valid;
+    }
+    if (!Array.isArray(participantsList) || participantsList.length === 0) {
+      return res.status(400).json({ success: false, error: 'Tidak ada data peserta yang valid untuk di-import' });
+    }
+    const result = importParticipants(participantsList, { event_id });
+    io.emit('participants_imported', {
+      count: result.count,
+      event_id: result.imported[0]?.event_id || event_id
+    });
+    broadcastFullState();
+    res.status(201).json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
