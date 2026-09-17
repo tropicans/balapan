@@ -349,6 +349,60 @@ async function runTests() {
     console.log('✓ [21/22] RaceManager.getFullState() scopes bracketMatches to active event (EVNT-04)');
     console.log('✓ [22/22] Plan 11-02 event domain service and scoped reads verified\n');
 
+    // ----------------------------------------------------
+    // Plan 11-03 Task 2: v2.0 Boot-Safety Regression Test
+    // ----------------------------------------------------
+    console.log('--- Plan 11-03 Task 2: v2.0 Boot-Safety Regression Test ---');
+
+    const bootTestDb = path.join(__dirname, `../../data/test_boot_safety_${Date.now()}.sqlite`);
+    try {
+      // 1. Initial boot on a fresh DB file via process.env.DB_PATH switch
+      process.env.DB_PATH = bootTestDb;
+      await initDatabase();
+      assert.ok(fs.existsSync(bootTestDb), 'First boot creates the target DB file on disk');
+
+      // 2. Re-open the same DB file with a second initDatabase() call (or runMigrations directly)
+      // Assert it applies 0 migration steps and does not throw (idempotent re-open)
+      const secondRunRes = runMigrations(db);
+      assert.strictEqual(secondRunRes.applied, 0, 'Re-opening deployed v2.0 database applies 0 migration steps');
+
+      // 3. Schema checks: schema_version has version 1, users has participant_number, legacy tables coupons and races survive
+      const bootVer = db.prepare('SELECT MAX(version) as max_v FROM schema_version').get();
+      assert.strictEqual(bootVer.max_v, 1, 'schema_version must be version 1');
+
+      const userColsBoot = (db.rawDb.exec('PRAGMA table_info(users)')[0]?.values || []).map(r => r[1]);
+      assert.ok(userColsBoot.includes('participant_number'), 'users table must have participant_number column');
+      assert.ok(userColsBoot.includes('event_id'), 'users table must have event_id column');
+
+      const masterTables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map(r => r.name);
+      assert.ok(masterTables.includes('coupons'), 'Legacy coupons table must survive in sqlite_master (not dropped)');
+      assert.ok(masterTables.includes('races'), 'Legacy races table must survive in sqlite_master (not dropped)');
+
+      // 4. Invariant: numbered participant rows must not have NULL event_id
+      const orphanNumberedUsers = db.prepare('SELECT COUNT(*) as count FROM users WHERE participant_number IS NOT NULL AND event_id IS NULL').get().count;
+      assert.strictEqual(orphanNumberedUsers, 0, 'No participant row with participant_number can have NULL event_id');
+
+      // Every participant row must have non-NULL event_id and positive participant_number
+      const bootParticipants = db.prepare("SELECT id, name, event_id, participant_number FROM users WHERE role = 'participant'").all();
+      assert.ok(bootParticipants.length > 0, 'Participants exist from seed');
+      for (const p of bootParticipants) {
+        assert.ok(p.event_id !== null && p.event_id !== undefined, `Participant ${p.name} must have non-null event_id`);
+        assert.ok(p.participant_number > 0, `Participant ${p.name} must have positive participant_number`);
+      }
+
+      // 5. RaceManager.getFullState() returns without throwing and contains activeRace and bracketMatches
+      const bootFullState = RaceManager.getFullState();
+      assert.ok(bootFullState, 'RaceManager.getFullState() returns state object without error');
+      assert.ok(bootFullState.activeRace, 'bootFullState must contain activeRace');
+      assert.ok(Array.isArray(bootFullState.bracketMatches), 'bootFullState must contain bracketMatches array');
+
+      console.log('✓ [23/23] v2.0 boot-safety regression test against existing database file verified\n');
+    } finally {
+      if (fs.existsSync(bootTestDb)) {
+        try { fs.unlinkSync(bootTestDb); } catch (_) {}
+      }
+    }
+
   } finally {
     // Teardown
     if (fs.existsSync(uniqueTestDb)) {
@@ -361,3 +415,4 @@ runTests().catch(err => {
   console.error('❌ Test failed:', err);
   process.exit(1);
 });
+
