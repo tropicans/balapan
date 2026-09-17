@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
 import { CyberButton } from '../components/ui/CyberButton.jsx';
 import { CyberCard } from '../components/ui/CyberCard.jsx';
+import { ParticipantRegistrationTab } from '../components/cashier/ParticipantRegistrationTab.jsx';
+import { ParticipantImportModal } from '../components/cashier/ParticipantImportModal.jsx';
 import { CouponRegistrationForm } from '../components/cashier/CouponRegistrationForm.jsx';
 import { CouponPackageList } from '../components/cashier/CouponPackageList.jsx';
 import { VoidPackageModal } from '../components/cashier/VoidPackageModal.jsx';
@@ -15,7 +17,11 @@ import {
   Plus, 
   User,
   Layers,
-  Sparkles
+  Sparkles,
+  Upload,
+  RefreshCw,
+  Trophy,
+  Calendar
 } from 'lucide-react';
 import clsx from 'clsx';
 import { sound } from '../utils/audio.js';
@@ -23,8 +29,14 @@ import { sound } from '../utils/audio.js';
 export function CashierDashboard() {
   const { apiTopUp, apiRegisterGuest, socket } = useRace();
 
-  // Navigation tab state (default: 'physical')
-  const [activeTab, setActiveTab] = useState('physical'); // 'physical' | 'digital'
+  // Navigation tab state (default: 'v3_registration' per D-10)
+  const [activeTab, setActiveTab] = useState('v3_registration'); // 'v3_registration' | 'physical' | 'digital'
+
+  // Header telemetry state (D-11)
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [totalParticipants, setTotalParticipants] = useState(0);
+  const [latestNumber, setLatestNumber] = useState(0);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   // Users data for autocomplete and digital topup
   const [users, setUsers] = useState([]);
@@ -47,6 +59,20 @@ export function CashierDashboard() {
   const [guestName, setGuestName] = useState('');
   const [guestTeam, setGuestTeam] = useState('');
   const [guestBalance, setGuestBalance] = useState(10);
+
+  const fetchTelemetry = useCallback(async () => {
+    try {
+      const res = await fetch('/api/participants?limit=1');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setTotalParticipants(data.data.total || 0);
+        setLatestNumber(data.data.latest_number || 0);
+        setActiveEvent(data.data.active_event || null);
+      }
+    } catch (e) {
+      console.error('Failed to fetch participant telemetry:', e);
+    }
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -74,28 +100,43 @@ export function CashierDashboard() {
     }
   }, []);
 
-  useEffect(() => {
+  const handleFullRefresh = useCallback(() => {
+    sound.playTone(600, 'sine', 0.05, 0.1);
+    fetchTelemetry();
     fetchUsers();
     fetchPackages();
-  }, [fetchUsers, fetchPackages]);
+  }, [fetchTelemetry, fetchUsers, fetchPackages]);
+
+  useEffect(() => {
+    fetchTelemetry();
+    fetchUsers();
+    fetchPackages();
+  }, [fetchTelemetry, fetchUsers, fetchPackages]);
 
   // Real-time WebSocket synchronization
   useEffect(() => {
     if (!socket) return;
 
-    const handlePkgUpdate = () => {
+    const handleDataUpdate = () => {
+      fetchTelemetry();
       fetchPackages();
       fetchUsers();
     };
 
-    socket.on('coupon_package_updated', handlePkgUpdate);
-    socket.on('STATE_UPDATE', fetchUsers);
+    socket.on('participant_registered', fetchTelemetry);
+    socket.on('participant_updated', fetchTelemetry);
+    socket.on('participants_imported', fetchTelemetry);
+    socket.on('coupon_package_updated', handleDataUpdate);
+    socket.on('STATE_UPDATE', handleDataUpdate);
 
     return () => {
-      socket.off('coupon_package_updated', handlePkgUpdate);
-      socket.off('STATE_UPDATE', fetchUsers);
+      socket.off('participant_registered', fetchTelemetry);
+      socket.off('participant_updated', fetchTelemetry);
+      socket.off('participants_imported', fetchTelemetry);
+      socket.off('coupon_package_updated', handleDataUpdate);
+      socket.off('STATE_UPDATE', handleDataUpdate);
     };
-  }, [socket, fetchPackages, fetchUsers]);
+  }, [socket, fetchTelemetry, fetchPackages, fetchUsers]);
 
   // Legacy digital top up handler
   const handleTopUp = async (amount) => {
@@ -150,35 +191,97 @@ export function CashierDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto p-3 md:p-5 space-y-5">
-      {/* Header Banner */}
-      <div className="bg-obsidian border border-neonAmber/40 p-4 clip-cyber flex flex-wrap items-center justify-between gap-4">
+      {/* Header Banner with Comprehensive Telemetry (D-11) */}
+      <div className="bg-obsidian border border-neonCyan/40 p-4 clip-cyber flex flex-wrap items-center justify-between gap-4 shadow-[0_0_20px_rgba(0,240,255,0.1)]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-neonAmber/20 border border-neonAmber flex items-center justify-center clip-cyber">
-            <CreditCard className="w-6 h-6 text-neonAmber" />
+          <div className="w-10 h-10 bg-neonCyan/20 border border-neonCyan flex items-center justify-center clip-cyber shrink-0">
+            <CreditCard className="w-6 h-6 text-neonCyan" />
           </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-orbitron font-black text-white tracking-wider">
-              KASIR & PENDAFTARAN KUPON // ASSISTED DESK
-            </h2>
-            <p className="text-xs font-mono text-neonAmber">
-              Registrasi Lembaran Fisik 50-Kotak & Pengisian Saldo Kupon Turnamen
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl md:text-2xl font-orbitron font-black text-white tracking-wider">
+                KASIR & REGISTRASI TURNAMEN
+              </h2>
+              {/* Active Event Indicator Badge */}
+              {activeEvent ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-neonGreen/15 border border-neonGreen text-neonGreen font-orbitron font-bold text-xs tracking-wider clip-cyber">
+                  <span className="w-2 h-2 rounded-full bg-neonGreen animate-pulse" />
+                  <span>{activeEvent.nama} [ACTIVE]</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-red-950/50 border border-red-500 text-red-400 font-orbitron font-bold text-xs tracking-wider clip-cyber">
+                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                  <span>TIDAK ADA EVENT AKTIF [NO EVENT]</span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs font-mono text-neonCyan/80">
+              Registrasi Peserta Fisik v3.0 // Auto-Numbering Berurutan & Manajemen Kupon
             </p>
           </div>
         </div>
 
-        {/* Action Button */}
-        <CyberButton
-          variant="amber"
-          size="md"
-          icon={UserPlus}
-          onClick={() => setGuestModal(true)}
-        >
-          + TAMBAH PESERTA BARU (MANUAL)
-        </CyberButton>
+        {/* Telemetry Pills & Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          {/* Total Participants Pill */}
+          <div className="px-3 py-1.5 bg-black/70 border border-gray-800 clip-cyber flex items-center gap-2 text-xs font-mono">
+            <span className="text-gray-400 font-orbitron">TOTAL PESERTA:</span>
+            <span className="font-orbitron font-black text-white text-sm md:text-base">
+              {totalParticipants}
+            </span>
+          </div>
+
+          {/* Latest Issued Number Pill */}
+          <div className="px-3 py-1.5 bg-neonCyan/10 border border-neonCyan/60 clip-cyber flex items-center gap-2 text-xs font-mono">
+            <span className="text-neonCyan/80 font-orbitron">NOMOR TERAKHIR:</span>
+            <span className="font-orbitron font-black text-neonCyan text-sm md:text-base">
+              #{latestNumber}
+            </span>
+          </div>
+
+          {/* Import CSV Button */}
+          <CyberButton
+            variant="cyan"
+            size="sm"
+            icon={Upload}
+            onClick={() => setImportModalOpen(true)}
+          >
+            IMPORT CSV
+          </CyberButton>
+
+          {/* Refresh Button */}
+          <CyberButton
+            variant="dark"
+            size="sm"
+            icon={RefreshCw}
+            onClick={handleFullRefresh}
+          >
+            REFRESH
+          </CyberButton>
+        </div>
       </div>
 
-      {/* Navigation Tabs (D-13, UI-SPEC) */}
+      {/* Navigation Tabs (D-10, D-13) */}
       <div className="flex items-center gap-2 border-b border-gray-800 pb-2 overflow-x-auto">
+        {/* Tab 1: Default Primary Tab (v3.0) */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('v3_registration');
+            sound.playTone(600, 'sine', 0.04, 0.1);
+          }}
+          className={clsx(
+            "flex items-center gap-2 px-4 py-2.5 font-orbitron font-bold text-xs md:text-sm tracking-wider uppercase transition-all clip-cyber",
+            activeTab === 'v3_registration'
+              ? "bg-neonCyan/20 text-neonCyan border border-neonCyan shadow-glowCyan"
+              : "bg-black/40 text-gray-400 border border-gray-800 hover:text-white hover:border-gray-700"
+          )}
+        >
+          <Trophy className="w-4 h-4 text-neonCyan" />
+          <span>Registrasi Peserta (v3.0)</span>
+        </button>
+
+        {/* Tab 2: Secondary Legacy Physical Coupon Sheet Tab */}
         <button
           type="button"
           onClick={() => {
@@ -196,6 +299,7 @@ export function CashierDashboard() {
           <span>Paket Kupon Fisik (Pre-Printed)</span>
         </button>
 
+        {/* Tab 3: Secondary Legacy Digital Top Up Tab */}
         <button
           type="button"
           onClick={() => {
@@ -214,7 +318,22 @@ export function CashierDashboard() {
         </button>
       </div>
 
-      {/* Tab 1: Paket Kupon Fisik (Pre-Printed) - 2-Column Split Layout */}
+      {/* Tab 1: Registrasi Peserta (v3.0) Primary Tab */}
+      {activeTab === 'v3_registration' && (
+        <ParticipantRegistrationTab
+          importModalOpen={importModalOpen}
+          onCloseImportModal={() => setImportModalOpen(false)}
+          onStatsChange={(stats) => {
+            setTotalParticipants(stats.total);
+            setLatestNumber(stats.latestNumber);
+            if (stats.activeEvent !== undefined) {
+              setActiveEvent(stats.activeEvent);
+            }
+          }}
+        />
+      )}
+
+      {/* Tab 2: Paket Kupon Fisik (Pre-Printed) - 2-Column Split Layout */}
       {activeTab === 'physical' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Left Column (40% width / 5 cols): Quick Registration Form */}
@@ -242,9 +361,21 @@ export function CashierDashboard() {
         </div>
       )}
 
-      {/* Tab 2: Top Up Saldo Digital (Legacy v1.0) */}
+      {/* Tab 3: Top Up Saldo Digital (Legacy v1.0) */}
       {activeTab === 'digital' && (
         <div className="space-y-5">
+          {/* Action button to create guest */}
+          <div className="flex justify-end">
+            <CyberButton
+              variant="amber"
+              size="md"
+              icon={UserPlus}
+              onClick={() => setGuestModal(true)}
+            >
+              + TAMBAH PESERTA BARU (MANUAL)
+            </CyberButton>
+          </div>
+
           {/* Feedback Notification */}
           {feedback && (
             <div className={clsx(
@@ -477,6 +608,17 @@ export function CashierDashboard() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Standalone Import CSV Modal when opened via header button from any tab */}
+      {importModalOpen && activeTab !== 'v3_registration' && (
+        <ParticipantImportModal
+          onClose={() => setImportModalOpen(false)}
+          onSuccess={() => {
+            fetchTelemetry();
+            fetchUsers();
+          }}
+        />
       )}
     </div>
   );
