@@ -134,6 +134,21 @@ export const MIGRATIONS = [
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_event_participant_number ON users(event_id, participant_number);
       `);
     }
+  },
+  {
+    version: 2,
+    name: 'drop_legacy_tables',
+    destructive: true,
+    up(db) {
+      db.exec(`
+        DROP TABLE IF EXISTS next_round_tickets;
+        DROP TABLE IF EXISTS marshal_winner_logs;
+        DROP TABLE IF EXISTS coupon_packages;
+        DROP TABLE IF EXISTS race_registrations;
+        DROP TABLE IF EXISTS races;
+        DROP TABLE IF EXISTS coupons;
+      `);
+    }
   }
 ];
 

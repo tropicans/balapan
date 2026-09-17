@@ -4,9 +4,22 @@ import { TicketEngine } from './ticketEngine.js';
 import { getActiveEvent, getActiveEventId } from './services/eventService.js';
 import { getBtoLeaderboard } from './services/btoService.js';
 
+function checkTableExists(name) {
+  try {
+    const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name);
+    return Boolean(row);
+  } catch (_) {
+    return false;
+  }
+}
+
 export class RaceManager {
   // Get currently active race (draft, pre-start, locked) or latest race
   static getActiveRace() {
+    if (!checkTableExists('races')) {
+      return { id: 'v3-manual', race_number: 1, status: 'completed', registrations: [] };
+    }
+
     let race = db.prepare(`
       SELECT * FROM races 
       WHERE status IN ('draft', 'pre-start', 'locked') 
@@ -27,17 +40,35 @@ export class RaceManager {
     }
 
     // Fetch registrations with user details
-    const registrations = db.prepare(`
-      SELECT 
-        rr.id, rr.race_id, rr.user_id, rr.lane, rr.status, rr.finish_time, rr.scrutineer_status,
-        u.name as user_name, u.team_name, u.email, u.is_virtual,
-        c.balance as coupon_balance
-      FROM race_registrations rr
-      JOIN users u ON rr.user_id = u.id
-      LEFT JOIN coupons c ON c.user_id = u.id
-      WHERE rr.race_id = ?
-      ORDER BY rr.lane ASC
-    `).all(race.id);
+    const hasRegistrations = checkTableExists('race_registrations');
+    const hasCoupons = checkTableExists('coupons');
+    let registrations = [];
+    if (hasRegistrations) {
+      if (hasCoupons) {
+        registrations = db.prepare(`
+          SELECT 
+            rr.id, rr.race_id, rr.user_id, rr.lane, rr.status, rr.finish_time, rr.scrutineer_status,
+            u.name as user_name, u.team_name, u.email, u.is_virtual,
+            c.balance as coupon_balance
+          FROM race_registrations rr
+          JOIN users u ON rr.user_id = u.id
+          LEFT JOIN coupons c ON c.user_id = u.id
+          WHERE rr.race_id = ?
+          ORDER BY rr.lane ASC
+        `).all(race.id);
+      } else {
+        registrations = db.prepare(`
+          SELECT 
+            rr.id, rr.race_id, rr.user_id, rr.lane, rr.status, rr.finish_time, rr.scrutineer_status,
+            u.name as user_name, u.team_name, u.email, u.is_virtual,
+            0 as coupon_balance
+          FROM race_registrations rr
+          JOIN users u ON rr.user_id = u.id
+          WHERE rr.race_id = ?
+          ORDER BY rr.lane ASC
+        `).all(race.id);
+      }
+    }
 
     return {
       ...race,
@@ -51,7 +82,7 @@ export class RaceManager {
 
     // Top 5 Best Time Overall (BTO) - Sourced from bto_records (Phase 13), fallback to legacy race_registrations
     let btoLeaderboard = getBtoLeaderboard({ limit: 5 });
-    if (!btoLeaderboard || btoLeaderboard.length === 0) {
+    if ((!btoLeaderboard || btoLeaderboard.length === 0) && checkTableExists('race_registrations') && checkTableExists('races')) {
       btoLeaderboard = db.prepare(`
         SELECT 
           rr.id, rr.finish_time, rr.lane, rr.race_id,
@@ -67,88 +98,95 @@ export class RaceManager {
     }
 
     // Upcoming queue (races after active race or pending registrations)
-    const upcomingRaces = db.prepare(`
-      SELECT 
-        r.id, r.race_number, r.status,
-        (
-          SELECT json_group_array(
-            json_object(
-              'lane', rr2.lane, 
-              'user_name', u2.name, 
-              'team_name', u2.team_name,
-              'status', rr2.status
+    let upcomingRaces = [];
+    if (checkTableExists('races') && checkTableExists('race_registrations')) {
+      upcomingRaces = db.prepare(`
+        SELECT 
+          r.id, r.race_number, r.status,
+          (
+            SELECT json_group_array(
+              json_object(
+                'lane', rr2.lane, 
+                'user_name', u2.name, 
+                'team_name', u2.team_name,
+                'status', rr2.status
+              )
             )
-          )
-          FROM race_registrations rr2
-          JOIN users u2 ON rr2.user_id = u2.id
-          WHERE rr2.race_id = r.id
-        ) as racers_json
-      FROM races r
-      WHERE r.race_number > ?
-      ORDER BY r.race_number ASC
-      LIMIT 3
-    `).all(activeRace.race_number).map(r => ({
-      ...r,
-      racers: r.racers_json ? JSON.parse(r.racers_json) : []
-    }));
+            FROM race_registrations rr2
+            JOIN users u2 ON rr2.user_id = u2.id
+            WHERE rr2.race_id = r.id
+          ) as racers_json
+        FROM races r
+        WHERE r.race_number > ?
+        ORDER BY r.race_number ASC
+        LIMIT 3
+      `).all(activeRace.race_number || 0).map(r => ({
+        ...r,
+        racers: r.racers_json ? JSON.parse(r.racers_json) : []
+      }));
+    }
 
     // Scrutineering Queue (Racers waiting for car inspection: winners or finished racers)
-    const scrutineerQueue = db.prepare(`
-      SELECT 
-        rr.id as registration_id, rr.lane, rr.finish_time, rr.scrutineer_status,
-        r.id as race_id, r.race_number, r.status as race_status,
-        u.id as user_id, u.name as user_name, u.team_name, u.email
-      FROM race_registrations rr
-      JOIN races r ON rr.race_id = r.id
-      JOIN users u ON rr.user_id = u.id
-      WHERE rr.scrutineer_status = 'pending'
-      ORDER BY r.race_number DESC, rr.finish_time ASC
-    `).all();
+    let scrutineerQueue = [];
+    if (checkTableExists('races') && checkTableExists('race_registrations')) {
+      scrutineerQueue = db.prepare(`
+        SELECT 
+          rr.id as registration_id, rr.lane, rr.finish_time, rr.scrutineer_status,
+          r.id as race_id, r.race_number, r.status as race_status,
+          u.id as user_id, u.name as user_name, u.team_name, u.email
+        FROM race_registrations rr
+        JOIN races r ON rr.race_id = r.id
+        JOIN users u ON rr.user_id = u.id
+        WHERE rr.scrutineer_status = 'pending'
+        ORDER BY r.race_number DESC, rr.finish_time ASC
+      `).all();
+    }
 
     // Bracket matches (EVNT-04: scoped to active event)
     const activeEventId = getActiveEventId();
-    const bracketMatches = activeEventId
-      ? db.prepare(`
-        SELECT 
-          bm.*,
-          u1.name as user_1_name, u1.team_name as user_1_team,
-          t1.ticket_number as ticket_number_1, t1.racer_ticket_index as ticket_index_1,
-          u2.name as user_2_name, u2.team_name as user_2_team,
-          t2.ticket_number as ticket_number_2, t2.racer_ticket_index as ticket_index_2,
-          u3.name as user_3_name, u3.team_name as user_3_team,
-          t3.ticket_number as ticket_number_3, t3.racer_ticket_index as ticket_index_3,
-          w.name as winner_name
-        FROM bracket_matches bm
-        LEFT JOIN users u1 ON bm.user_id_1 = u1.id
-        LEFT JOIN next_round_tickets t1 ON bm.ticket_id_1 = t1.id
-        LEFT JOIN users u2 ON bm.user_id_2 = u2.id
-        LEFT JOIN next_round_tickets t2 ON bm.ticket_id_2 = t2.id
-        LEFT JOIN users u3 ON bm.user_id_3 = u3.id
-        LEFT JOIN next_round_tickets t3 ON bm.ticket_id_3 = t3.id
-        LEFT JOIN users w ON bm.winner_id = w.id
-        WHERE bm.event_id = ?
-        ORDER BY bm.round_number ASC, bm.match_number ASC
-      `).all(activeEventId)
-      : db.prepare(`
-        SELECT 
-          bm.*,
-          u1.name as user_1_name, u1.team_name as user_1_team,
-          t1.ticket_number as ticket_number_1, t1.racer_ticket_index as ticket_index_1,
-          u2.name as user_2_name, u2.team_name as user_2_team,
-          t2.ticket_number as ticket_number_2, t2.racer_ticket_index as ticket_index_2,
-          u3.name as user_3_name, u3.team_name as user_3_team,
-          t3.ticket_number as ticket_number_3, t3.racer_ticket_index as ticket_index_3,
-          w.name as winner_name
-        FROM bracket_matches bm
-        LEFT JOIN users u1 ON bm.user_id_1 = u1.id
-        LEFT JOIN next_round_tickets t1 ON bm.ticket_id_1 = t1.id
-        LEFT JOIN users u2 ON bm.user_id_2 = u2.id
-        LEFT JOIN next_round_tickets t2 ON bm.ticket_id_2 = t2.id
-        LEFT JOIN users u3 ON bm.user_id_3 = u3.id
-        LEFT JOIN next_round_tickets t3 ON bm.ticket_id_3 = t3.id
-        LEFT JOIN users w ON bm.winner_id = w.id
-        ORDER BY bm.round_number ASC, bm.match_number ASC
-      `).all();
+    const hasTickets = checkTableExists('next_round_tickets');
+    let bracketMatches = [];
+    if (activeEventId) {
+      if (hasTickets) {
+        bracketMatches = db.prepare(`
+          SELECT 
+            bm.*,
+            u1.name as user_1_name, u1.team_name as user_1_team,
+            t1.ticket_number as ticket_number_1, t1.racer_ticket_index as ticket_index_1,
+            u2.name as user_2_name, u2.team_name as user_2_team,
+            t2.ticket_number as ticket_number_2, t2.racer_ticket_index as ticket_index_2,
+            u3.name as user_3_name, u3.team_name as user_3_team,
+            t3.ticket_number as ticket_number_3, t3.racer_ticket_index as ticket_index_3,
+            w.name as winner_name
+          FROM bracket_matches bm
+          LEFT JOIN users u1 ON bm.user_id_1 = u1.id
+          LEFT JOIN next_round_tickets t1 ON bm.ticket_id_1 = t1.id
+          LEFT JOIN users u2 ON bm.user_id_2 = u2.id
+          LEFT JOIN next_round_tickets t2 ON bm.ticket_id_2 = t2.id
+          LEFT JOIN users u3 ON bm.user_id_3 = u3.id
+          LEFT JOIN next_round_tickets t3 ON bm.ticket_id_3 = t3.id
+          LEFT JOIN users w ON bm.winner_id = w.id
+          WHERE bm.event_id = ?
+          ORDER BY bm.round_number ASC, bm.match_number ASC
+        `).all(activeEventId);
+      } else {
+        bracketMatches = db.prepare(`
+          SELECT 
+            bm.*,
+            u1.name as user_1_name, u1.team_name as user_1_team, u1.participant_number as participant_number_1,
+            u2.name as user_2_name, u2.team_name as user_2_team, u2.participant_number as participant_number_2,
+            u3.name as user_3_name, u3.team_name as user_3_team, u3.participant_number as participant_number_3,
+            w.name as winner_name
+          FROM bracket_matches bm
+          LEFT JOIN users u1 ON bm.user_id_1 = u1.id
+          LEFT JOIN users u2 ON bm.user_id_2 = u2.id
+          LEFT JOIN users u3 ON bm.user_id_3 = u3.id
+          LEFT JOIN users w ON bm.winner_id = w.id
+          WHERE bm.event_id = ?
+          ORDER BY bm.round_number ASC, bm.match_number ASC
+        `).all(activeEventId);
+      }
+    }
 
     const activeEvent = getActiveEvent();
     const participants = activeEventId
@@ -175,10 +213,21 @@ export class RaceManager {
       scrutineerQueue,
       bracketMatches,
       settings,
-      ticketStats: TicketEngine.getTicketStats(),
+      ticketStats: hasTickets ? TicketEngine.getTicketStats() : {
+        total_issued: 0,
+        total_void: 0,
+        target_quota: 24,
+        remaining_quota: 24,
+        is_locked: false,
+        is_critical: false,
+        racers: [],
+        tickets: []
+      },
       serverTime: new Date().toISOString()
     };
   }
+
+
 
   // Participant scans a lane QR (A, B, C)
   static registerLane(userId, lane) {
@@ -936,3 +985,4 @@ export class RaceManager {
     };
   }
 }
+

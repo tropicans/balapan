@@ -256,7 +256,7 @@ async function runTests() {
       // With ALLOW_DESTRUCTIVE_MIGRATION = 'true':
       process.env.ALLOW_DESTRUCTIVE_MIGRATION = 'true';
       const allowRes = runMigrations(db);
-      assert.strictEqual(allowRes.applied, 1, 'Destructive probe must be applied when flag is true');
+      assert.ok(allowRes.applied >= 1, 'Destructive migrations must be applied when flag is true');
       const sentinelTableSet = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='destructive_probe_sentinel'").get();
       assert.ok(sentinelTableSet, 'Sentinel table MUST exist after destructive migration is applied');
     } finally {

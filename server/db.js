@@ -293,20 +293,33 @@ function seedInitialData() {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    const insertCoupon = db.prepare(`
+    const tableExists = (tbl) => {
+      try {
+        const r = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(tbl);
+        return Boolean(r);
+      } catch (_) {
+        return false;
+      }
+    };
+
+    const hasCoupons = tableExists('coupons');
+    const hasRaces = tableExists('races');
+    const hasRegistrations = tableExists('race_registrations');
+
+    const insertCoupon = hasCoupons ? db.prepare(`
       INSERT INTO coupons (id, user_id, balance)
       VALUES (?, ?, ?)
-    `);
+    `) : null;
 
     // 1. Race Director / Admin
     const rdId = uuidv4();
     insertUser.run(rdId, 'Race Director (Head)', 'rd@tamiya.local', null, 'HQ', 'admin', 0, null, null);
-    insertCoupon.run(uuidv4(), rdId, 999);
+    if (insertCoupon) insertCoupon.run(uuidv4(), rdId, 999);
 
     // 2. Scrutineer
     const scrutId = uuidv4();
     insertUser.run(scrutId, 'Juri Scrutineer', 'scrutineer@tamiya.local', null, 'QC', 'scrutineer', 0, null, null);
-    insertCoupon.run(uuidv4(), scrutId, 999);
+    if (insertCoupon) insertCoupon.run(uuidv4(), scrutId, 999);
 
     // 3. Demo Racers
     const racers = [
@@ -324,24 +337,25 @@ function seedInitialData() {
     racers.forEach(r => {
       const uId = uuidv4();
       insertUser.run(uId, r.name, r.email, null, r.tag, 'participant', r.is_virtual || 0, activeEventId, participantNum++);
-      insertCoupon.run(uuidv4(), uId, r.balance);
+      if (insertCoupon) insertCoupon.run(uuidv4(), uId, r.balance);
     });
 
-    // Create Initial Race 1
-    const race1Id = uuidv4();
-    db.prepare(`
-      INSERT INTO races (id, race_number, status)
-      VALUES (?, 1, 'draft')
-    `).run(race1Id);
+    // Create Initial Race 1 if table exists
+    if (hasRaces && hasRegistrations) {
+      const race1Id = uuidv4();
+      db.prepare(`
+        INSERT INTO races (id, race_number, status)
+        VALUES (?, 1, 'draft')
+      `).run(race1Id);
 
-    // Seed 2 initial registered participants for demonstration
-    const andi = db.prepare("SELECT id FROM users WHERE email = 'andi@gmail.com'").get();
-    const budi = db.prepare("SELECT id FROM users WHERE email = 'budi@gmail.com'").get();
-    if (andi && budi) {
-      db.prepare("INSERT INTO race_registrations (id, race_id, user_id, lane, status) VALUES (?, ?, ?, 'A', 'ready')")
-        .run(uuidv4(), race1Id, andi.id);
-      db.prepare("INSERT INTO race_registrations (id, race_id, user_id, lane, status) VALUES (?, ?, ?, 'B', 'pending')")
-        .run(uuidv4(), race1Id, budi.id);
+      const andi = db.prepare("SELECT id FROM users WHERE email = 'andi@gmail.com'").get();
+      const budi = db.prepare("SELECT id FROM users WHERE email = 'budi@gmail.com'").get();
+      if (andi && budi) {
+        db.prepare("INSERT INTO race_registrations (id, race_id, user_id, lane, status) VALUES (?, ?, ?, 'A', 'ready')")
+          .run(uuidv4(), race1Id, andi.id);
+        db.prepare("INSERT INTO race_registrations (id, race_id, user_id, lane, status) VALUES (?, ?, ?, 'B', 'pending')")
+          .run(uuidv4(), race1Id, budi.id);
+      }
     }
 
     // Create Initial Tournament Bracket (3-Lane Elimination: 3 Heats in Round 2 -> 1 Grand Final in Round 3)
