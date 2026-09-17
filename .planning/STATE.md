@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Alur Balap Fisik Tanpa Scan Kupon
 status: planning
-last_updated: "2026-09-17T08:29:16.108Z"
+last_updated: "2026-09-17T00:00:00.000Z"
 last_activity: 2026-09-17
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,43 +17,72 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-04)
+See: .planning/PROJECT.md (updated 2026-09-17)
 
-**Core value:** Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi yang diselaraskan dengan sistem kupon fisik di lapangan.  
-**Current focus:** Planning next milestone via `/gsd-new-milestone`
+**Core value:** Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi.
+**Current focus:** v3.0 Alur Balap Fisik Tanpa Scan Kupon — Phase 11 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-09-17 — Milestone v3.0 started
+Phase: 11 of 17 (Event & Schema Migration Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-09-17 — Roadmap created for v3.0 (Phases 11-17)
 
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260907-b5c | Fix ReferenceError cfg is not defined in BracketDashboard | 2026-09-07 | 7490376 | [260907-b5c-cek-http-localhost-3050-bracket](./quick/260907-b5c-cek-http-localhost-3050-bracket/) |
-
-## Shipped Milestones
-
-- **v2.0**: Physical Coupon & Marshal-Driven Tournament System (Shipped 2026-09-04)
-- **v1.2**: Multi-Round 3-Lane Elimination System (Shipped 2026-09-03)
-- **v1.1**: UI/UX & Arena Visual Showcase Polish (Shipped 2026-09-03)
-- **v1.0**: Full SRS & Blueprint Compliance (Shipped 2026-09-03)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| Phase 05 P01 | 6 min | 5 tasks | 4 files |
+**Velocity:**
+- Total plans completed: 0 (v3.0)
+- Average duration: —
+- Total execution time: —
 
-## Session
+**By Phase:**
 
-**Last session:** 2026-09-04T09:34:21.255Z
-**Stopped at:** Milestone v2.0 complete — archived to .planning/milestones/
-**Resume file:** .planning/PROJECT.md
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| - | - | - | - |
 
-## Operator Next Steps
+**Recent Trend:**
+- Last 5 plans: —
+- Trend: Stable
 
-- Start the next milestone with /gsd-new-milestone
+*Updated after each plan completion*
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- [v3.0 roadmap]: Strict add → switch → remove order — migration/data-safety + backend de-coupling before any UI removal; manual BTO replacement before deleting race engine; destructive drops last
+- [v3.0 roadmap]: Zero new runtime deps — prune only (`html5-qrcode`, `qrcode.react`, dead `tailwind-merge`)
+- [v3.0 roadmap]: Bracket subsystem (`bracket_matches` + `advanceBracketWinner` + `seedIntoBracket` + `BracketDashboard.jsx`) preserved verbatim
+
+### Pending Todos
+
+None.
+
+### Blockers/Concerns
+
+- **Pitfall risk**: schema resurrection via `CREATE TABLE IF NOT EXISTS` / silent `ALTER` in `db.js` `initDatabase()` — must be removed in same commit as feature
+- **Pitfall risk**: `SqliteWrapper.transaction()` fake transactions (no BEGIN/COMMIT/ROLLBACK) + `DROP TABLE` on startup → irreversible loss of live coupon/financial data
+- **Pitfall risk**: two-way circular ESM dep `ticketEngine.js` ↔ `raceManager.js` — naive deletion = boot crash
+- **Open decision**: BTO policy personal-best-per-participant (recommended) vs every-logged-run — confirm in Phase 13
+- **Open decision**: data-retention tier (stop-storing / archive / drop) must be explicit in Phase 11 & Phase 17 release notes
+
+## Deferred Items
+
+Items acknowledged and carried forward from previous milestone close:
+
+| Category | Item | Status | Deferred At |
+|----------|------|--------|-------------|
+| *(none)* | | | |
+
+## Session Continuity
+
+Last session: 2026-09-17 00:00
+Stopped at: v3.0 roadmap created — 7 phases (11-17)
+Resume file: None

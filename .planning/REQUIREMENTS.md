@@ -96,47 +96,56 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EVNT-01 | TBD | Pending |
-| EVNT-02 | TBD | Pending |
-| EVNT-03 | TBD | Pending |
-| EVNT-04 | TBD | Pending |
-| PARN-01 | TBD | Pending |
-| PARN-02 | TBD | Pending |
-| PARN-03 | TBD | Pending |
-| PARN-04 | TBD | Pending |
-| PARN-05 | TBD | Pending |
-| WREG-01 | TBD | Pending |
-| WREG-02 | TBD | Pending |
-| WREG-03 | TBD | Pending |
-| WREG-04 | TBD | Pending |
-| WREG-05 | TBD | Pending |
-| WREG-06 | TBD | Pending |
-| BRKT-01 | TBD | Pending |
-| BRKT-02 | TBD | Pending |
-| BRKT-03 | TBD | Pending |
-| BTO-01 | TBD | Pending |
-| BTO-02 | TBD | Pending |
-| BTO-03 | TBD | Pending |
-| BTO-04 | TBD | Pending |
-| MON-01 | TBD | Pending |
-| MON-02 | TBD | Pending |
-| MON-03 | TBD | Pending |
-| MON-04 | TBD | Pending |
-| MON-05 | TBD | Pending |
-| MIG-01 | TBD | Pending |
-| MIG-02 | TBD | Pending |
-| MIG-03 | TBD | Pending |
-| MIG-04 | TBD | Pending |
-| REM-01 | TBD | Pending |
-| REM-02 | TBD | Pending |
-| REM-03 | TBD | Pending |
-| REM-04 | TBD | Pending |
+| EVNT-01 | Phase 11 | Pending |
+| EVNT-02 | Phase 11 | Pending |
+| EVNT-03 | Phase 12 | Pending |
+| EVNT-04 | Phase 11 | Pending |
+| PARN-01 | Phase 12 | Pending |
+| PARN-02 | Phase 12 | Pending |
+| PARN-03 | Phase 12 | Pending |
+| PARN-04 | Phase 12 | Pending |
+| PARN-05 | Phase 12 | Pending |
+| WREG-01 | Phase 14 | Pending |
+| WREG-02 | Phase 14 | Pending |
+| WREG-03 | Phase 14 | Pending |
+| WREG-04 | Phase 14 | Pending |
+| WREG-05 | Phase 14 | Pending |
+| WREG-06 | Phase 14 | Pending |
+| BRKT-01 | Phase 14 | Pending |
+| BRKT-02 | Phase 14 | Pending |
+| BRKT-03 | Phase 14 | Pending |
+| BTO-01 | Phase 13 | Pending |
+| BTO-02 | Phase 13 | Pending |
+| BTO-03 | Phase 13 | Pending |
+| BTO-04 | Phase 13 | Pending |
+| MON-01 | Phase 16 | Pending |
+| MON-02 | Phase 16 | Pending |
+| MON-03 | Phase 16 | Pending |
+| MON-04 | Phase 16 | Pending |
+| MON-05 | Phase 15 | Pending |
+| MIG-01 | Phase 11 | Pending |
+| MIG-02 | Phase 11 | Pending |
+| MIG-03 | Phase 15 | Pending |
+| MIG-04 | Phase 17 | Pending |
+| REM-01 | Phase 16 | Pending |
+| REM-02 | Phase 15 | Pending |
+| REM-03 | Phase 17 | Pending |
+| REM-04 | Phase 17 | Pending |
 
 **Coverage:**
-- v1 requirements: 34 total
-- Mapped to phases: 0
-- Unmapped: 34 ⚠️ (to be mapped during roadmap creation)
+- v1 requirements: 35 total
+- Mapped to phases: 35
+- Unmapped: 0 ✓
+
+**Phase distribution:**
+- Phase 11: 5 (EVNT-01, EVNT-02, EVNT-04, MIG-01, MIG-02)
+- Phase 12: 6 (EVNT-03, PARN-01..05)
+- Phase 13: 4 (BTO-01..04)
+- Phase 14: 9 (WREG-01..06, BRKT-01..03)
+- Phase 15: 3 (MIG-03, MON-05, REM-02)
+- Phase 16: 5 (MON-01..04, REM-01)
+- Phase 17: 3 (MIG-04, REM-03, REM-04)
 
 ---
 *Requirements defined: 2026-09-17*
-*Last updated: 2026-09-17 after initial definition*
+*Last updated: 2026-09-17 after v3.0 roadmap creation (Phases 11-17)*
