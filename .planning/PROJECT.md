@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Sistem manajemen turnamen balap Tamiya digital berbasis 100% web yang dirancang secara *paperless* dan *frictionless*, menghilangkan 100% ketergantungan pada hardware RFID/NFC fisik dengan memanfaatkan QR Code dinamis, pemetaan jalur otomatis, kontrol pusat Race Director, serta siaran klasemen HUD real-time.
+Sistem manajemen turnamen balap Tamiya Mini 4WD berbasis 100% web, ringan, dan bebas scanning: registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor kupon fisik, manajemen bracket eliminasi 3-jalur, kontrol pusat Race Director, serta siaran HUD real-time ke layar TV sirkuit. Seluruh alur Babak 1, verifikasi fisik, dan kupon berjalan manual di lapangan tanpa pemindaian.
 
 ## Core Value
 
@@ -56,11 +56,26 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-*(None currently active — run `/gsd-new-milestone` to define next milestone)*
+- [ ] Registrasi peserta di Kasir dengan nomor unik otomatis (tanpa serial kupon, tanpa saldo digital) — *v3.0*
+- [ ] Panel Registrasi pemenang: input nomor peserta → nama otomatis terdaftar ke Babak 2 — *v3.0*
+- [ ] Bracket eliminasi 3-jalur Babak 2+ tanpa lock/start/countdown (pilih pemenang manual + auto-advance) — *v3.0*
+- [ ] Race Director memantau peserta Babak 2 dan input/monitor BTO manual — *v3.0*
+- [ ] TV Sirkuit menampilkan bracket/peserta Babak 2 + BTO — *v3.0*
+- [ ] Penghapusan modul kupon digital, scanning QR, Marshal, Scrutineer, Peserta HP, QR stencil, countdown & race engine — *v3.0*
 
-## Current Milestone: Complete (v2.0 Shipped)
+## Current Milestone: v3.0 Alur Balap Fisik Tanpa Scan Kupon
 
-**Milestone v2.0 Shipped:** Sistem kupon fisik pre-printed (50 kotak) dan operasional berbasis Marshal Start Box telah beroperasi penuh, terintegrasi dengan Race Director, Bracket Eliminasi 3-jalur, serta TV Sirkuit Realtime HUD.
+**Goal:** Hilangkan seluruh proses scanning (kupon & QR jalur) serta modul kupon digital; aplikasi fokus pada registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor, dan manajemen bracket eliminasi.
+
+**Target features:**
+- Kasir: registrasi peserta (nama/tim) dengan nomor unik otomatis — tanpa serial kupon, tanpa saldo digital.
+- Panel Registrasi baru: input nomor peserta/kupon → nama otomatis terdaftar ke Babak 2.
+- Bracket: kelola Babak 2+ (3-jalur, pilih pemenang, auto-advance) tanpa lock/start/countdown.
+- Race Director: pantau peserta Babak 2 + input/monitor BTO manual.
+- TV Sirkuit: tampilkan bracket/peserta Babak 2 + BTO.
+- Hapus: modul kupon digital (`coupons`, `coupon_packages`, serial, tiket), scan QR jalur, layar Marshal, Scrutineer, Peserta HP, QR stencil, countdown/race lock/timing engine, Ticket Engine.
+
+**Key context:** Babak 1 sepenuhnya manual di lintasan. Identitas Babak 2 = nama pembalap; nomor hanya untuk memudahkan panitia input pemenang. BTO diinput manual oleh panitia.
 
 ### Out of Scope
 
@@ -99,6 +114,9 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 | Atomic Coupon Debit & 60s Undo Window | Menjamin integritas pemotongan kupon fisik dan toleransi salah klik panitia | ✓ Shipped v2.0 |
 | Automatic Sequential Ticket Seeding | Menempatkan pemenang tiket Babak 2 secara adil dan otomatis tanpa manipulasi | ✓ Shipped v2.0 |
 | Realtime Neon TV Ticker & Progress HUD | Memacu atmosfer kompetitif dan transparansi sisa tiket turnamen | ✓ Shipped v2.0 |
+| Physical-Only Race Flow (Tanpa Scan Kupon) | Panitia di lapangan lebih cepat mencatat manual; scanning kupon & QR jalur dinilai memperlambat antrean dan tak diperlukan | — Pending v3.0 |
+| Panel Registrasi Berbasis Nomor | Kupon Babak 2 fisik diberi nomor agar panitia cukup memasukkan angka, nama pembalap otomatis terdaftar | — Pending v3.0 |
+| BTO Input Manual | Waktu terbaik dicatat panitia secara manual, menghilangkan ketergantungan stopwatch digital terintegrasi | — Pending v3.0 |
 
 ## Shipped Milestones
 
@@ -125,4 +143,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-04 after v2.0 milestone completion*
+*Last updated: 2026-09-17 after v3.0 milestone started*

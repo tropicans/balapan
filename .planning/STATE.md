@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Physical Coupon & Marshal-Driven Tournament System
-status: Awaiting next milestone
-stopped_at: Phase 10 complete — all phases complete
-last_updated: "2026-09-04T09:34:21.255Z"
-last_activity: 2026-09-04
-last_activity_desc: Milestone v2.0 completed and archived
-state_head: c5ff0d284fbfedc4e37217b8b5572eb1812f779e
+milestone: v3.0
+milestone_name: Alur Balap Fisik Tanpa Scan Kupon
+status: planning
+last_updated: "2026-09-17T08:29:16.108Z"
+last_activity: 2026-09-17
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
-current_phase: 10
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -28,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-09-04)
 
 ## Current Position
 
-Phase: Milestone v2.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-09-04 — Milestone v2.0 completed and archived
+Status: Defining requirements
+Last activity: 2026-09-17 — Milestone v3.0 started
 
 ### Quick Tasks Completed
 
