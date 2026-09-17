@@ -68,7 +68,12 @@
   3. Migrasi berjalan dalam transaksi nyata (BEGIN/COMMIT/ROLLBACK) dengan baris `schema_version` dan backup `data/tamiya.sqlite` bertimestamp sebelum langkah destruktif
   4. Kolom `participant_number` (+ UNIQUE index) ada pada `users` dengan normalisasi nomor kanonik (`"7"` == `"007"`)
   5. Basis data v2.0 tetap terbaca dan server tetap boot — belum ada drop tabel
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Real transactions, timestamped backup, versioned migration runner, event schema + participant_number backfill
+- [ ] 11-02-PLAN.md — Event service + `/api/events` routes + event-scoped bracket reads
+- [ ] 11-03-PLAN.md — Manajemen Event screen + v2.0 boot-safety regression
 
 ### Phase 12: Participant Registration & Auto-Numbering
 **Goal**: Kasir dapat mendaftarkan peserta (nama, tim) tanpa kupon/serial/saldo dan aplikasi otomatis memberi nomor peserta unik berurutan per event aktif.
@@ -149,7 +154,7 @@ Phases execute in numeric order: 11 → 12 → 13 → 14 → 15 → 16 → 17
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 11. Event & Schema Migration Foundation | v3.0 | 0/0 | Not started | - |
+| 11. Event & Schema Migration Foundation | v3.0 | 0/3 | Planning complete | - |
 | 12. Participant Registration & Auto-Numbering | v3.0 | 0/0 | Not started | - |
 | 13. Manual BTO Backend & Leaderboard | v3.0 | 0/0 | Not started | - |
 | 14. Winner Registration & Bracket Execution | v3.0 | 0/0 | Not started | - |
