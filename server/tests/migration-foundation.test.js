@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { normalizeParticipantNumber } from '../utils/participantNumber.js';
 import { timestampTag, createTimestampedBackup } from '../backup.js';
+import { MIGRATIONS, runMigrations, DEFAULT_EVENT_ID } from '../migrations.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -137,6 +138,132 @@ async function runTests() {
     assert.strictEqual(db.prepare("SELECT * FROM users WHERE id = 'nested-user-outer'").get(), null);
     assert.strictEqual(db.prepare("SELECT * FROM users WHERE id = 'nested-user-inner'").get(), null);
     console.log('✓ [9/9] Nested transaction rolls back entirely if outermost fails\n');
+
+    // ----------------------------------------------------
+    // Task 3: Versioned Migration Runner, Event Schema, Backfill (D-01..D-11)
+    // ----------------------------------------------------
+    console.log('--- Task 3: Versioned Migration Runner, Event Schema & Backfill ---');
+
+    // 3.1 PRAGMA table_info assertions
+    const getCols = (t) => (db.rawDb.exec(`PRAGMA table_info(${t})`)[0]?.values || []).map(r => r[1]);
+    const userCols = getCols('users');
+    assert.ok(userCols.includes('event_id'), 'users must have event_id');
+    assert.ok(userCols.includes('participant_number'), 'users must have participant_number');
+    assert.ok(userCols.includes('side_event_gta'), 'users must have side_event_gta');
+
+    const bracketCols = getCols('bracket_matches');
+    assert.ok(bracketCols.includes('event_id'), 'bracket_matches must have event_id');
+    assert.ok(bracketCols.includes('is_final'), 'bracket_matches must have is_final');
+    assert.ok(bracketCols.includes('ticket_id_1'), 'bracket_matches must have ticket_id_1');
+    assert.ok(bracketCols.includes('ticket_id_2'), 'bracket_matches must have ticket_id_2');
+    assert.ok(bracketCols.includes('ticket_id_3'), 'bracket_matches must have ticket_id_3');
+    assert.ok(bracketCols.includes('is_auto_advanced'), 'bracket_matches must have is_auto_advanced');
+
+    const marshalCols = getCols('marshal_winner_logs');
+    assert.ok(marshalCols.includes('ticket_id'), 'marshal_winner_logs must have ticket_id');
+    console.log('✓ [10/16] Schema columns present on users, bracket_matches, and marshal_winner_logs');
+
+    // 3.2 Index existence in sqlite_master
+    const indexes = db.prepare("SELECT name FROM sqlite_master WHERE type = 'index'").all().map(r => r.name);
+    assert.ok(indexes.includes('idx_users_event_participant_number'), 'idx_users_event_participant_number must exist');
+    assert.ok(indexes.includes('idx_events_single_active'), 'idx_events_single_active must exist');
+    assert.ok(indexes.includes('idx_bto_event_time'), 'idx_bto_event_time must exist');
+    assert.ok(indexes.includes('idx_bracket_matches_event'), 'idx_bracket_matches_event must exist');
+    console.log('✓ [11/16] Required indexes exist in sqlite_master');
+
+    // 3.3 Single active event constraint & multiple archived events
+    assert.throws(
+      () => {
+        db.prepare("INSERT INTO events (id, nama, status) VALUES ('event-active-2', 'Event 2', 'active')").run();
+      },
+      /UNIQUE constraint failed/,
+      'Inserting second active event must violate idx_events_single_active partial unique index'
+    );
+
+    // Inserting multiple archived events must succeed
+    db.prepare("INSERT INTO events (id, nama, status) VALUES ('event-archived-1', 'Event Past 1', 'archived')").run();
+    db.prepare("INSERT INTO events (id, nama, status) VALUES ('event-archived-2', 'Event Past 2', 'archived')").run();
+    const archivedCount = db.prepare("SELECT COUNT(*) as count FROM events WHERE status = 'archived'").get().count;
+    assert.strictEqual(archivedCount, 2, 'Multiple archived events must be permitted');
+    console.log('✓ [12/16] Single active event partial unique index and multi-archived events verified');
+
+    // 3.4 schema_version row verification & idempotency
+    const maxVer = db.prepare('SELECT MAX(version) as max_v, COUNT(*) as cnt FROM schema_version').get();
+    assert.strictEqual(maxVer.max_v, 1, 'Max version in schema_version must be 1');
+    assert.strictEqual(maxVer.cnt, 1, 'schema_version must have exactly 1 row');
+
+    const rerunRes = runMigrations(db);
+    assert.strictEqual(rerunRes.applied, 0, 'Re-running migrations on up-to-date schema returns applied: 0');
+    assert.strictEqual(db.prepare('SELECT COUNT(*) as cnt FROM schema_version').get().cnt, 1, 'schema_version count remains 1');
+
+    // Delete schema_version and re-run (should re-apply version 1)
+    db.exec('DELETE FROM schema_version;');
+    const reapplyRes = runMigrations(db);
+    assert.strictEqual(reapplyRes.applied, 1, 'Re-running migrations after deleting schema_version returns applied: 1');
+    console.log('✓ [13/16] Versioned migration runner idempotency and schema_version tracking verified');
+
+    // 3.5 Backfill assertions (participants and bracket_matches)
+    const activeEventRow = db.prepare("SELECT id FROM events WHERE status = 'active'").get();
+    assert.ok(activeEventRow, 'Active event must exist');
+    const participants = db.prepare("SELECT id, name, event_id, participant_number FROM users WHERE role = 'participant'").all();
+    assert.ok(participants.length > 0, 'Participants should be seeded');
+    for (const p of participants) {
+      assert.strictEqual(p.event_id, activeEventRow.id, `Participant ${p.name} must have active event_id`);
+      assert.ok(p.participant_number > 0, `Participant ${p.name} must have positive participant_number`);
+    }
+
+    const invalidParticipants = db.prepare('SELECT COUNT(*) as count FROM users WHERE participant_number IS NOT NULL AND event_id IS NULL').get().count;
+    assert.strictEqual(invalidParticipants, 0, 'No user with participant_number and NULL event_id permitted');
+
+    const bracketMatches = db.prepare('SELECT id, event_id FROM bracket_matches').all();
+    assert.ok(bracketMatches.length > 0, 'Seeded bracket matches must exist');
+    for (const bm of bracketMatches) {
+      assert.strictEqual(bm.event_id, activeEventRow.id, `Bracket match ${bm.id} must be scoped to active event_id`);
+    }
+    console.log('✓ [14/16] Participant numbering and bracket match event_id backfill verified');
+
+    // 3.6 Backup written before pending migrations run on existing DB
+    // Save DB to disk, delete schema_version, and re-run runMigrations -> backup should be produced
+    db.save();
+    db.exec('DELETE FROM schema_version;');
+    runMigrations(db);
+    const backupsDir = path.join(path.dirname(uniqueTestDb), 'backups');
+    const backupsAfter = fs.existsSync(backupsDir) ? fs.readdirSync(backupsDir).filter(f => f.startsWith('tamiya-')) : [];
+    assert.ok(backupsAfter.length > 0, 'A backup file matching tamiya-*.sqlite must exist');
+    console.log('✓ [15/16] Timestamped backup created before pending migrations run on existing DB file');
+
+    // 3.7 Destructive migration gate with injected probe
+    const probe = {
+      version: 999,
+      name: 'destructive_probe',
+      destructive: true,
+      up(targetDb) {
+        targetDb.exec('CREATE TABLE destructive_probe_sentinel (x INTEGER);');
+      }
+    };
+
+    MIGRATIONS.push(probe);
+    try {
+      // With ALLOW_DESTRUCTIVE_MIGRATION unset/false:
+      delete process.env.ALLOW_DESTRUCTIVE_MIGRATION;
+      const skipRes = runMigrations(db);
+      assert.strictEqual(skipRes.applied, 0, 'Destructive probe must be skipped when flag is unset');
+      const sentinelTableUnset = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='destructive_probe_sentinel'").get();
+      assert.strictEqual(sentinelTableUnset, null, 'Sentinel table must NOT exist when destructive migration is skipped');
+
+      // With ALLOW_DESTRUCTIVE_MIGRATION = 'true':
+      process.env.ALLOW_DESTRUCTIVE_MIGRATION = 'true';
+      const allowRes = runMigrations(db);
+      assert.strictEqual(allowRes.applied, 1, 'Destructive probe must be applied when flag is true');
+      const sentinelTableSet = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='destructive_probe_sentinel'").get();
+      assert.ok(sentinelTableSet, 'Sentinel table MUST exist after destructive migration is applied');
+    } finally {
+      MIGRATIONS.pop();
+      delete process.env.ALLOW_DESTRUCTIVE_MIGRATION;
+      try { db.exec('DROP TABLE IF EXISTS destructive_probe_sentinel;'); } catch (_) {}
+      try { db.prepare('DELETE FROM schema_version WHERE version = 999;').run(); } catch (_) {}
+    }
+    console.log('✓ [16/16] Destructive migration gate (ALLOW_DESTRUCTIVE_MIGRATION) verified via injected probe\n');
 
   } finally {
     // Teardown

@@ -12,6 +12,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DB_PATH=/app/data/tamiya.sqlite
+      - ALLOW_DESTRUCTIVE_MIGRATION=false
     volumes:
       - dgdash_data:/app/data
     healthcheck:

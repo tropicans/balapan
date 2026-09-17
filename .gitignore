@@ -3,6 +3,7 @@ client/node_modules
 client/dist
 data/*.sqlite
 data/*.sqlite-journal
+data/backups/
 .env
 .DS_Store
 dist

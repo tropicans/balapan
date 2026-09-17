@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { runMigrations } from './migrations.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -269,21 +270,8 @@ export async function initDatabase() {
     );
   `);
 
-  try {
-    db.exec(`ALTER TABLE bracket_matches ADD COLUMN is_final INTEGER DEFAULT 0;`);
-  } catch (e) {
-    // Column may already exist
-  }
-
-  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN ticket_id_1 TEXT;`); } catch (e) {}
-  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN ticket_id_2 TEXT;`); } catch (e) {}
-  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN ticket_id_3 TEXT;`); } catch (e) {}
-  try { db.exec(`ALTER TABLE bracket_matches ADD COLUMN is_auto_advanced INTEGER DEFAULT 0;`); } catch (e) {}
-  try { db.exec(`ALTER TABLE marshal_winner_logs ADD COLUMN ticket_id TEXT;`); } catch (e) {}
-
-  // Roster import migrations (STC Vol. 8): package category + side event flag
-  try { db.exec(`ALTER TABLE users ADD COLUMN side_event_gta INTEGER DEFAULT 0;`); } catch (e) {}
-  try { db.exec(`ALTER TABLE coupon_packages ADD COLUMN package_type TEXT DEFAULT 'standard';`); } catch (e) {}
+  // Run versioned migrations (replaces legacy try/catch ALTER block)
+  runMigrations(db);
 
   // Demo/dummy data is opt-in only. Production and normal local runs start clean.
   // Enable with SEED_DEMO_DATA=true (the test suite sets this).
@@ -297,9 +285,12 @@ function seedInitialData() {
   if (countUsers === 0) {
     console.log('⚡ Seeding initial Cyberpunk Tamiya tournament data...');
 
+    const activeEvent = db.prepare("SELECT id FROM events WHERE status = 'active' LIMIT 1").get();
+    const activeEventId = activeEvent?.id || '00000000-0000-4000-8000-000000000001';
+
     const insertUser = db.prepare(`
-      INSERT INTO users (id, name, email, google_sub_id, team_name, role, is_virtual)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, name, email, google_sub_id, team_name, role, is_virtual, event_id, participant_number)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertCoupon = db.prepare(`
@@ -309,12 +300,12 @@ function seedInitialData() {
 
     // 1. Race Director / Admin
     const rdId = uuidv4();
-    insertUser.run(rdId, 'Race Director (Head)', 'rd@tamiya.local', null, 'HQ', 'admin', 0);
+    insertUser.run(rdId, 'Race Director (Head)', 'rd@tamiya.local', null, 'HQ', 'admin', 0, null, null);
     insertCoupon.run(uuidv4(), rdId, 999);
 
     // 2. Scrutineer
     const scrutId = uuidv4();
-    insertUser.run(scrutId, 'Juri Scrutineer', 'scrutineer@tamiya.local', null, 'QC', 'scrutineer', 0);
+    insertUser.run(scrutId, 'Juri Scrutineer', 'scrutineer@tamiya.local', null, 'QC', 'scrutineer', 0, null, null);
     insertCoupon.run(uuidv4(), scrutId, 999);
 
     // 3. Demo Racers
@@ -329,9 +320,10 @@ function seedInitialData() {
       { name: 'Hendra Gunawan', email: 'guest102@tamiya.local', tag: 'HENDRA', balance: 10, is_virtual: 1 }
     ];
 
+    let participantNum = 1;
     racers.forEach(r => {
       const uId = uuidv4();
-      insertUser.run(uId, r.name, r.email, null, r.tag, 'participant', r.is_virtual || 0);
+      insertUser.run(uId, r.name, r.email, null, r.tag, 'participant', r.is_virtual || 0, activeEventId, participantNum++);
       insertCoupon.run(uuidv4(), uId, r.balance);
     });
 
@@ -354,14 +346,14 @@ function seedInitialData() {
 
     // Create Initial Tournament Bracket (3-Lane Elimination: 3 Heats in Round 2 -> 1 Grand Final in Round 3)
     const gfId = uuidv4();
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, is_final, status) VALUES (?, 4, 3, 1, 'pending')`).run(gfId);
+    db.prepare(`INSERT INTO bracket_matches (id, event_id, match_number, round_number, is_final, status) VALUES (?, ?, 4, 3, 1, 'pending')`).run(gfId, activeEventId);
 
     const m1Id = uuidv4();
     const m2Id = uuidv4();
     const m3Id = uuidv4();
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 1, 2, ?, 'pending')`).run(m1Id, gfId);
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 2, 2, ?, 'pending')`).run(m2Id, gfId);
-    db.prepare(`INSERT INTO bracket_matches (id, match_number, round_number, parent_match_id, status) VALUES (?, 3, 2, ?, 'pending')`).run(m3Id, gfId);
+    db.prepare(`INSERT INTO bracket_matches (id, event_id, match_number, round_number, parent_match_id, status) VALUES (?, ?, 1, 2, ?, 'pending')`).run(m1Id, activeEventId, gfId);
+    db.prepare(`INSERT INTO bracket_matches (id, event_id, match_number, round_number, parent_match_id, status) VALUES (?, ?, 2, 2, ?, 'pending')`).run(m2Id, activeEventId, gfId);
+    db.prepare(`INSERT INTO bracket_matches (id, event_id, match_number, round_number, parent_match_id, status) VALUES (?, ?, 3, 2, ?, 'pending')`).run(m3Id, activeEventId, gfId);
 
     console.log('✅ Tournament database seeded successfully!');
   }
