@@ -5,6 +5,8 @@ import { fileURLToPath } from 'url';
 import { normalizeParticipantNumber } from '../utils/participantNumber.js';
 import { timestampTag, createTimestampedBackup } from '../backup.js';
 import { MIGRATIONS, runMigrations, DEFAULT_EVENT_ID } from '../migrations.js';
+import { createEvent, listEvents, getActiveEvent, getActiveEventId, setActiveEvent, archiveEvent } from '../services/eventService.js';
+import { RaceManager } from '../raceManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -264,6 +266,88 @@ async function runTests() {
       try { db.prepare('DELETE FROM schema_version WHERE version = 999;').run(); } catch (_) {}
     }
     console.log('✓ [16/16] Destructive migration gate (ALLOW_DESTRUCTIVE_MIGRATION) verified via injected probe\n');
+
+    // ----------------------------------------------------
+    // Plan 11-02: Event Domain Service & Scoped Bracket Reads
+    // ----------------------------------------------------
+    console.log('--- Plan 11-02: Event Domain Service & Scoped Reads ---');
+
+    // 4.1 createEvent validations
+    assert.throws(() => createEvent({ nama: '' }), /Nama event wajib diisi/);
+    assert.throws(() => createEvent({ nama: '   ' }), /Nama event wajib diisi/);
+    assert.throws(() => createEvent({ nama: 'a'.repeat(101) }), /Nama event maksimal 100 karakter/);
+    assert.throws(() => createEvent({ nama: 'Valid', catatan: 'c'.repeat(501) }), /Catatan event maksimal 500 karakter/);
+    assert.throws(() => createEvent({ nama: 'Valid', jumlah_lap: 0 }), /Jumlah lap harus bilangan bulat positif/);
+    assert.throws(() => createEvent({ nama: 'Valid', jumlah_lap: -2 }), /Jumlah lap harus bilangan bulat positif/);
+    assert.throws(() => createEvent({ nama: 'Valid', jumlah_lap: 1.5 }), /Jumlah lap harus bilangan bulat positif/);
+    console.log('✓ [17/22] createEvent parameter validation (nama, catatan, jumlah_lap) verified');
+
+    // 4.2 createEvent creation
+    const eventA = createEvent({ nama: 'Turnamen A', tanggal: '2026-10-01', catatan: 'Testing turnamen A', jumlah_lap: 3 });
+    assert.ok(eventA.id, 'Created event must have uuid id');
+    assert.strictEqual(eventA.nama, 'Turnamen A');
+    assert.strictEqual(eventA.tanggal, '2026-10-01');
+    assert.strictEqual(eventA.status, 'archived', 'Since Event 1 is already active, Turnamen A starts archived');
+    assert.strictEqual(eventA.jumlah_lap, 3);
+    assert.strictEqual(eventA.catatan, 'Testing turnamen A');
+    console.log('✓ [18/22] createEvent creates archived event when active event already exists');
+
+    // 4.3 setActiveEvent (archive previous active and activate target in one transaction)
+    const prevActive = getActiveEvent();
+    assert.ok(prevActive, 'Previous active event must exist');
+    const activatedA = setActiveEvent(eventA.id);
+    assert.strictEqual(activatedA.id, eventA.id);
+    assert.strictEqual(activatedA.status, 'active');
+
+    // Check that previous active is now archived
+    const checkPrev = db.prepare('SELECT status FROM events WHERE id = ?').get(prevActive.id);
+    assert.strictEqual(checkPrev.status, 'archived');
+
+    // Exactly one active event in DB
+    const activeRows = db.prepare("SELECT COUNT(*) as count FROM events WHERE status = 'active'").get().count;
+    assert.strictEqual(activeRows, 1, 'Exactly one event must be active');
+    console.log('✓ [19/22] setActiveEvent switches active event and archives previous in one transaction');
+
+    // 4.4 archiveEvent & error cases
+    assert.throws(() => setActiveEvent('non-existent-event-id'), /Event tidak ditemukan/);
+    assert.throws(() => archiveEvent('non-existent-event-id'), /Event tidak ditemukan/);
+
+    const archivedA = archiveEvent(eventA.id);
+    assert.strictEqual(archivedA.id, eventA.id);
+    assert.strictEqual(archivedA.status, 'archived');
+    assert.strictEqual(getActiveEvent(), null, 'No active event exists after archiving active');
+
+    // Reactivate Event 1 so subsequent tests have an active event
+    setActiveEvent(DEFAULT_EVENT_ID);
+    assert.strictEqual(getActiveEventId(), DEFAULT_EVENT_ID);
+
+    // 4.5 listEvents returns all events
+    const allEvents = listEvents();
+    assert.ok(allEvents.length >= 2, 'listEvents returns all events');
+    console.log('✓ [20/22] archiveEvent, getActiveEventId, listEvents, and error handling verified');
+
+    // 4.6 Scoped bracket reads in RaceManager.getFullState() (EVNT-04)
+    // Insert a dummy bracket match on eventA (which is not active)
+    db.prepare(`
+      INSERT INTO bracket_matches (id, event_id, match_number, round_number, status)
+      VALUES ('bm-eventA-match', ?, 99, 2, 'pending')
+    `).run(eventA.id);
+
+    const fullState = RaceManager.getFullState();
+    assert.ok(fullState.activeEvent, 'fullState.activeEvent must be present additively');
+    assert.strictEqual(fullState.activeEvent.id, DEFAULT_EVENT_ID);
+    assert.ok(fullState.activeRace, 'fullState.activeRace must still be present');
+    assert.ok(fullState.ticketStats, 'fullState.ticketStats must still be present');
+    assert.ok(Array.isArray(fullState.bracketMatches), 'fullState.bracketMatches must be an array');
+
+    const foreignMatch = fullState.bracketMatches.find(m => m.id === 'bm-eventA-match');
+    assert.strictEqual(foreignMatch, undefined, 'bracketMatches must NOT contain matches from foreign events (scoped read)');
+
+    for (const m of fullState.bracketMatches) {
+      assert.strictEqual(m.event_id, DEFAULT_EVENT_ID, 'Every returned match must belong to active event');
+    }
+    console.log('✓ [21/22] RaceManager.getFullState() scopes bracketMatches to active event (EVNT-04)');
+    console.log('✓ [22/22] Plan 11-02 event domain service and scoped reads verified\n');
 
   } finally {
     // Teardown

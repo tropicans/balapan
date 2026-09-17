@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import db, { initDatabase } from './db.js';
 import { RaceManager } from './raceManager.js';
 import { TicketEngine } from './ticketEngine.js';
+import { createEvent, listEvents, getActiveEvent, setActiveEvent, archiveEvent } from './services/eventService.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1134,6 +1135,52 @@ app.post('/api/tickets/unlock-qualifying', (req, res) => {
   }
 });
 
+// 19. Event Management Endpoints (Phase 11: EVNT-01, EVNT-02)
+// 19a. List all events
+app.get('/api/events', (req, res) => {
+  try {
+    const events = listEvents();
+    res.json({ success: true, data: events });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 19b. Create event
+app.post('/api/events', (req, res) => {
+  try {
+    const { nama, tanggal, catatan, jumlah_lap } = req.body || {};
+    const created = createEvent({ nama, tanggal, catatan, jumlah_lap });
+    broadcastFullState();
+    res.status(201).json({ success: true, data: created });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 19c. Activate event
+app.post('/api/events/:id/activate', (req, res) => {
+  try {
+    const activated = setActiveEvent(req.params.id);
+    broadcastFullState();
+    res.json({ success: true, data: activated });
+  } catch (err) {
+    const status = err.message === 'Event tidak ditemukan' ? 404 : 500;
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
+
+// 19d. Archive event
+app.post('/api/events/:id/archive', (req, res) => {
+  try {
+    const archived = archiveEvent(req.params.id);
+    broadcastFullState();
+    res.json({ success: true, data: archived });
+  } catch (err) {
+    const status = err.message === 'Event tidak ditemukan' ? 404 : 500;
+    res.status(status).json({ success: false, error: err.message });
+  }
+});
 
 // Serve frontend static files in production
 const clientDistPath = path.join(__dirname, '../client/dist');
