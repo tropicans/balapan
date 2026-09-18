@@ -1,43 +1,8 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v3.1 — Race Director Elimination Command Center",
+  "milestone": "v3.3",
   "phases": [
-    {
-      "number": "11",
-      "name": "Event & Schema Migration Foundation",
-      "status": "complete"
-    },
-    {
-      "number": "12",
-      "name": "Participant Registration & Auto-Numbering",
-      "status": "complete"
-    },
-    {
-      "number": "13",
-      "name": "Manual BTO Backend & Leaderboard",
-      "status": "complete"
-    },
-    {
-      "number": "14",
-      "name": "Winner Registration & Bracket Execution",
-      "status": "complete"
-    },
-    {
-      "number": "15",
-      "name": "State Contract Switch & Backend Decoupling/Removal",
-      "status": "complete"
-    },
-    {
-      "number": "16",
-      "name": "Frontend Rewrite & Monitoring Screens",
-      "status": "complete"
-    },
-    {
-      "number": "17",
-      "name": "Destructive Cleanup, Tests & Seed",
-      "status": "complete"
-    },
     {
       "number": "18",
       "name": "Backend Services, Round 2 Finalization & State Contract",
@@ -46,13 +11,33 @@
     {
       "number": "19",
       "name": "Race Director Elimination Command Center UI",
-      "status": "pending"
+      "status": "complete"
+    },
+    {
+      "number": "20",
+      "name": "Database Schema, Google Auth Verification & Session Backend",
+      "status": "complete"
+    },
+    {
+      "number": "21",
+      "name": "Admin Approval Engine & RBAC Middleware",
+      "status": "complete"
+    },
+    {
+      "number": "22",
+      "name": "Frontend Google Login, Pending Gate & Public Route Bypass",
+      "status": "complete"
+    },
+    {
+      "number": "23",
+      "name": "Admin Approval Dashboard UI & Role-Based UI Controls",
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd-discuss-phase 19",
-    "label": "Discuss Phase 19",
-    "reason": "Phase 18 complete · Ready for Phase 19"
+    "command": "/gsd-discuss-phase",
+    "label": "Discuss the first phase",
+    "reason": "Project initialized — plan your first phase"
   },
-  "updated_at": "2026-09-18T01:23:00.000Z"
+  "updated_at": "2026-09-18T04:32:46.776Z"
 }
