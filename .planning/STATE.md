@@ -79,7 +79,11 @@ None.
 - **Pitfall risk**: `SqliteWrapper.transaction()` fake transactions (no BEGIN/COMMIT/ROLLBACK) + `DROP TABLE` on startup → irreversible loss of live coupon/financial data
 - **Pitfall risk**: two-way circular ESM dep `ticketEngine.js` ↔ `raceManager.js` — naive deletion = boot crash
 - **Open decision**: BTO policy personal-best-per-participant (recommended) vs every-logged-run — confirm in Phase 13
-- **Open decision**: data-retention tier (stop-storing / archive / drop) must be explicit in Phase 11 & Phase 17 release notes
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260918-cicd | Implement CI/CD & Auto-Rebuild Pipeline (GitHub Actions + Compose Watch + Git Hooks) | 2026-09-18 | 4581d3b | [260918-cicd-auto-rebuild](./quick/260918-cicd-auto-rebuild/) |
 
 ## Deferred Items
 
