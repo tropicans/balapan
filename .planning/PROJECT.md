@@ -59,30 +59,21 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **WREG-01..06**: Registrasi pemenang Babak 2 via nomor & auto-slotting (A→B→C) — Shipped in v3.0
 - ✓ **BRKT-01..03**: Eksekusi bracket eliminasi 3-jalur manual advance — Shipped in v3.0
 - ✓ **MON-01..05**: TV sirkuit HUD & race director monitoring dari state v3.0 — Shipped in v3.0
-- ✓ **RDELIM-01..05**: Race Director Elimination Command Center (Babak 2+ bracket control, 1-klik winner, finalisasi/kunci babak 2, WebSocket sync) — Shipped in v3.1
-## Current Milestone: v3.3 Google Sheets Racer Sync & Admin Integration
-
-**Goal:** Mengintegrasikan sinkronisasi data peserta/pembalap langsung dari Google Sheets ke event aktif dengan satu kali klik melalui tombol Sync di dasbor Kasir dan Admin.
-
-**Target features:**
-- Integrasi parser Google Sheets CSV export live fetch dari URL spreadsheet kustom/default
-- Logika sinkronisasi cerdas idempotence (anti-duplikat: peserta baru ditambahkan dengan nomor urut berikutnya, peserta lama dilewati)
-- Endpoint backend `/api/participants/sync-sheet` yang diproteksi hak akses (RBAC cashier/admin)
-- Tombol aksi "SYNC GOOGLE SHEET" terintegrasi dengan modal konfirmasi dan notifikasi real-time di Dasbor Kasir (`/cashier`) dan Panel Admin (`/admin`)
+- ✓ **AUTH-01..06, APPR-01..06**: Google OAuth 2.0 Sign-In, `tropicans@gmail.com` Super Admin auto-provisioning & immunity, Pending Approval Gate, Dasbor Manajemen Pengguna (`/admin`), RBAC middleware, dan public route bypass (`/tv`, `/bracket`) — Shipped in v3.2
+- ✓ **SYNC-01..10**: Google Sheets Live Fetch, Idempotent Racer Deduplication, Sequential Numbering, Protected Endpoints, dan Tombol Sync di Kasir & Admin — Shipped in v3.3
 
 ### Active
 
-- [ ] **SYNC-01**: Service backend untuk fetch dan parse CSV dari Google Sheets live URL (mendukung sheet ID + gid)
-- [ ] **SYNC-02**: Logika sinkronisasi cerdas (idempotent duplicate detection berdasarkan nama peserta per active event)
-- [ ] **SYNC-03**: Endpoint API `/api/participants/sync-sheet` dengan broadcast Socket.IO dan revalidasi active event
-- [ ] **SYNC-04**: Tombol dan modal konfirmasi Sync Google Sheet di Dasbor Kasir (`CashierDashboard.jsx`)
-- [ ] **SYNC-05**: Tombol dan visual status Sync Google Sheet di Panel Admin (`AdminUserDashboard.jsx`)
+*Tidak ada milestone aktif. Siap untuk milestone berikutnya via `/gsd-new-milestone`.*
 
-## Current State: v3.2 Shipped (2026-09-18)
+## Current State: v3.3 Shipped (2026-09-18)
 
-Sistem telah dilengkapi dengan autentikasi Google OAuth 2.0 penuh dan sistem otorisasi berbasis approval admin:
-1. **Google OAuth & Auto Super Admin**: Tombol resmi Google Identity Services di web, verifikasi ID Token di backend, dan penugasan otomatis akun `tropicans@gmail.com` sebagai Super Admin dengan kekebalan sistem.
-2. **Pending Approval Gate**: Pengguna Google baru selain super admin otomatis ditahan di layar pending dan menunggu persetujuan `tropicans@gmail.com`.
+Sistem telah dilengkapi dengan integrasi langsung ke Google Spreadsheet untuk sinkronisasi pembalap secara otomatis:
+1. **Google Sheets Live Sync**: Normalisasi URL spreadsheet instan dan download CSV live langsung dari Google Sheets.
+2. **Idempotence & Anti-Duplikasi**: Deteksi pembalap yang sudah terdaftar di event aktif agar tidak ada nomor ganda atau duplikasi data saat sync berulang kali.
+3. **Penomoran Berurutan Atomik**: Pembalap baru otomatis mendapatkan nomor urut berikutnya (`MAX(participant_number) + 1`).
+4. **Tombol Kasir & Admin**: Dasbor Kasir (`/cashier`) dan Panel Admin (`/admin`) dilengkapi tombol "SYNC GOOGLE SHEET" dan modal interaktif dengan ringkasan status real-time.
+5. **Real-time Live Sync**: Notifikasi Socket.IO `participants_imported` yang memperbarui daftar peserta dan TV sirkuit seketika.
 3. **Dasbor Manajemen Pengguna (`/admin`)**: Super Admin dapat melihat antrean pending, menyetujui akun dengan memilih role operasional (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`), mengubah role, atau menangguhkan akun (suspend) secara real-time.
 4. **Public Route Exemption**: Layar TV Sirkuit (`/tv`) dan Bagan Turnamen (`/bracket`) tetap bebas diakses tanpa login untuk kemudahan display sirkuit.
 
@@ -129,6 +120,8 @@ Sistem telah dilengkapi dengan autentikasi Google OAuth 2.0 penuh dan sistem oto
 
 ## Shipped Milestones
 
+- **v3.3**: Google Sheets Racer Sync & Admin Integration (Shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
+- **v3.2**: Google OAuth Authentication & Admin Approval System (Shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
 - **v3.1**: Race Director Elimination Command Center (Shipped 2026-09-18) — [Archive](milestones/v3.1-ROADMAP.md)
 - **v3.0**: Alur Balap Fisik Tanpa Scan Kupon (Shipped 2026-09-17) — [Archive](milestones/v3.0-ROADMAP.md)
 - **v2.0**: Physical Coupon & Marshal-Driven Tournament System (Shipped 2026-09-04) — [Archive](milestones/v2.0-ROADMAP.md)

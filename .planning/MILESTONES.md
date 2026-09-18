@@ -1,5 +1,24 @@
 # Project Milestones
 
+## v3.3: Google Sheets Racer Sync & Admin Integration
+- **Shipped:** 2026-09-18
+- **Phases:** 2 (Phases 24-25)
+- **Plans:** 2
+- **Requirements Satisfied:** 10/10 (`SYNC-01`..`10`)
+- **Key Accomplishments:**
+  - Service backend live fetch & URL normalizer yang otomatis mengonversi link Google Sheets ke format export CSV (dengan deteksi tab `gid`).
+  - Logika sinkronisasi idempotent (anti-duplikat pembalap aktif) dan penomoran otomatis berurutan atomik (`MAX + 1`).
+  - Endpoint REST `/api/participants/sync-sheet` dan `/api/participants/sync-sheet/status` diproteksi role panitia (`cashier`/`admin`).
+  - Komponen modal interaktif `GoogleSheetSyncModal.jsx` dengan umpan balik visual instan (jumlah baru vs dilewati, detail pembalap).
+  - Tombol "SYNC GOOGLE SHEET" terpasang di header Dasbor Kasir (`/cashier`) dan Panel Manajemen Admin (`/admin`).
+  - Broadcast real-time Socket.IO `participants_imported` dan `STATE_UPDATE` yang memicu pembaruan otomatis di seluruh layar tanpa refresh manual.
+- **Verification:** 20/20 test suites passing (100% green), Vite client build clean (0 errors), Docker auto-rebuild verified.
+- **Roadmap Archive:** [milestones/v3.3-ROADMAP.md](milestones/v3.3-ROADMAP.md)
+- **Requirements Archive:** [milestones/v3.3-REQUIREMENTS.md](milestones/v3.3-REQUIREMENTS.md)
+- **Audit Report:** [milestones/v3.3-MILESTONE-AUDIT.md](milestones/v3.3-MILESTONE-AUDIT.md)
+
+---
+
 ## v3.2: Google OAuth Authentication & Admin Approval System
 - **Shipped:** 2026-09-18
 - **Phases:** 4 (Phases 20-23)
