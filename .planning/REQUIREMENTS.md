@@ -20,10 +20,10 @@ Mengamankan akses operasional sistem balap dengan autentikasi Google OAuth 2.0, 
 
 - [x] **APPR-01**: User Google baru selain super admin otomatis tercatat dengan status `pending` (menunggu persetujuan)
 - [x] **APPR-02**: User dengan status `pending` melihat layar penahan "Menunggu Persetujuan Admin" dan dicegah mengakses dasbor operasional (`/cashier`, `/director`, `/winners`, `/events`, `/admin`)
-- [ ] **APPR-03**: Super Admin (`tropicans@gmail.com`) memiliki akses ke Dasbor Manajemen Pengguna (`/admin`) untuk melihat daftar akun pending, approved, dan rejected/suspended
-- [ ] **APPR-04**: Super Admin dapat menyetujui (approve) akun pending serta menentukan Peran/Role (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`)
-- [ ] **APPR-05**: Super Admin dapat mengubah role atau mencabut (revoke/suspend) akses pengguna terdaftar sewaktu-waktu
-- [ ] **APPR-06**: Dasbor operasional dan API backend memvalidasi hak akses berdasarkan role pengguna yang disetujui (Role-Based Access Control / RBAC) dan menolak request tanpa otorisasi yang sah
+- [x] **APPR-03**: Super Admin (`tropicans@gmail.com`) memiliki akses ke Dasbor Manajemen Pengguna (`/admin`) untuk melihat daftar akun pending, approved, dan rejected/suspended
+- [x] **APPR-04**: Super Admin dapat menyetujui (approve) akun pending serta menentukan Peran/Role (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`)
+- [x] **APPR-05**: Super Admin dapat mengubah role atau mencabut (revoke/suspend) akses pengguna terdaftar sewaktu-waktu
+- [x] **APPR-06**: Dasbor operasional dan API backend memvalidasi hak akses berdasarkan role pengguna yang disetujui (Role-Based Access Control / RBAC) dan menolak request tanpa otorisasi yang sah
 
 ---
 
@@ -54,10 +54,10 @@ Mengamankan akses operasional sistem balap dengan autentikasi Google OAuth 2.0, 
 | AUTH-06 | Phase 22 | Satisfied |
 | APPR-01 | Phase 20 | Satisfied |
 | APPR-02 | Phase 22 | Satisfied |
-| APPR-03 | Phase 21, 23 | In Progress |
-| APPR-04 | Phase 21, 23 | In Progress |
-| APPR-05 | Phase 21, 23 | In Progress |
-| APPR-06 | Phase 21, 23 | In Progress |
+| APPR-03 | Phase 21, 23 | Satisfied |
+| APPR-04 | Phase 21, 23 | Satisfied |
+| APPR-05 | Phase 21, 23 | Satisfied |
+| APPR-06 | Phase 21, 23 | Satisfied |
 
 ---
 

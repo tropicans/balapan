@@ -48,7 +48,7 @@
 - [x] **Phase 20: Database Schema, Google Auth Verification & Session Backend** - SQLite users table, token verification, tropicans@gmail auto-admin, and session tokens (completed 2026-09-18)
 - [x] **Phase 21: Admin Approval Engine & RBAC Middleware** - Approval status management, role assignment, admin endpoints, and route protection middleware (completed 2026-09-18)
 - [x] **Phase 22: Frontend Google Login, Pending Gate & Public Route Bypass** - Google Sign-In button, AuthContext, pending approval gate, and /tv & /bracket public bypass (completed 2026-09-18)
-- [ ] **Phase 23: Admin Approval Dashboard UI & Role-Based UI Controls** - /admin user management page, approve modal with role picker, and role-scoped navigation
+- [x] **Phase 23: Admin Approval Dashboard UI & Role-Based UI Controls** - /admin user management page, approve modal with role picker, and role-scoped navigation (completed 2026-09-18)
 
 ---
 
@@ -118,7 +118,7 @@
 5. Verifikasi end-to-end menyeluruh (semua test suite lulus dan Vite build clean).
 
 **Plans**: 1 plan
-- 23-01-PLAN.md — AdminUserDashboard component, role selector modal, dynamic Navbar navigation, and production build verification.
+- [x] 23-01-PLAN.md — AdminUserDashboard component, role selector modal, dynamic Navbar navigation, and production build verification. (completed 2026-09-18)
 
 ---
 
@@ -132,9 +132,9 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 | 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 1/1 | Complete | 2026-09-18 |
 | 19. Race Director Elimination Command Center UI | v3.1 | 1/1 | Complete | 2026-09-18 |
 | 20. Database Schema, Google Auth Verification & Session Backend | v3.2 | 1/1 | Complete | 2026-09-18 |
-| 21. Admin Approval Engine & RBAC Middleware | v3.2 | 0/1 | Not Started | — |
-| 22. Frontend Google Login, Pending Gate & Public Route Bypass | v3.2 | 0/1 | Not Started | — |
-| 23. Admin Approval Dashboard UI & Role-Based UI Controls | v3.2 | 0/1 | Not Started | — |
+| 21. Admin Approval Engine & RBAC Middleware | v3.2 | 1/1 | Complete | 2026-09-18 |
+| 22. Frontend Google Login, Pending Gate & Public Route Bypass | v3.2 | 1/1 | Complete | 2026-09-18 |
+| 23. Admin Approval Dashboard UI & Role-Based UI Controls | v3.2 | 1/1 | Complete | 2026-09-18 |
 
 ---
-*Roadmap updated: 2026-09-18 for Milestone v3.2*
+*Roadmap updated: 2026-09-18 for Milestone v3.2 (All phases completed)*
