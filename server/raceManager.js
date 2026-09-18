@@ -882,8 +882,9 @@ export class RaceManager {
       throw new Error('Pemenang harus salah satu dari kontestan pertandingan');
     }
 
-    if (match.round_number === 2 && RaceManager.getRoundStatus(2) === 'locked') {
-      throw new Error('Babak 2 telah difinalisasi dan dikunci. Buka kunci Babak 2 terlebih dahulu jika ingin merevisi hasil.');
+    // ENH-02: Dynamically check lock status for any round (round >= 2)
+    if (match.round_number >= 2 && RaceManager.getRoundStatus(match.round_number) === 'locked') {
+      throw new Error(`Babak ${match.round_number} telah difinalisasi dan dikunci. Buka kunci Babak ${match.round_number} terlebih dahulu jika ingin merevisi hasil.`);
     }
 
     db.prepare(`
@@ -1001,8 +1002,9 @@ export class RaceManager {
     const match = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(matchId);
     if (!match) throw new Error('Pertandingan bracket tidak ditemukan');
 
-    if (match.round_number === 2 && RaceManager.getRoundStatus(2) === 'locked') {
-      throw new Error('Babak 2 telah difinalisasi dan dikunci. Buka kunci Babak 2 terlebih dahulu jika ingin mereset heat.');
+    // ENH-02: Dynamically check lock status for any round (round >= 2)
+    if (match.round_number >= 2 && RaceManager.getRoundStatus(match.round_number) === 'locked') {
+      throw new Error(`Babak ${match.round_number} telah difinalisasi dan dikunci. Buka kunci Babak ${match.round_number} terlebih dahulu jika ingin mereset heat.`);
     }
 
     if (match.winner_id) {

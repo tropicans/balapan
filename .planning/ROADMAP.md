@@ -87,9 +87,9 @@ Phases execute in numeric order: 26 → 27 → 28
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 26. Critical Bug Fixes & Public Bracket Security Gate | v3.4 | 0/1 | Not started | — |
-| 27. End-to-End RBAC Backend Protection & Frontend Role Guarding | v3.4 | 0/1 | Not started | — |
-| 28. Multi-Round Lock Hardening, Event Isolation & Offline Capabilities | v3.4 | 0/1 | Not started | — |
+| 26. Critical Bug Fixes & Public Bracket Security Gate | v3.4 | 1/1 | Complete | 2026-09-18 |
+| 27. End-to-End RBAC Backend Protection & Frontend Role Guarding | v3.4 | 1/1 | Complete | 2026-09-18 |
+| 28. Multi-Round Lock Hardening, Event Isolation & Offline Capabilities | v3.4 | 1/1 | Complete | 2026-09-18 |
 
 ---
-*Roadmap updated: 2026-09-18 for Milestone v3.4 start*
+*Roadmap updated: 2026-09-18 for Milestone v3.4 completion*

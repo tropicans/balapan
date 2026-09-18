@@ -1417,8 +1417,13 @@ app.get('/api/participants/sync-sheet/status', (req, res) => {
 // 20g. Sync participants directly from Google Sheets (SYNC-01 to SYNC-07)
 app.post('/api/participants/sync-sheet', requireRole('cashier', 'admin', 'super_admin'), async (req, res) => {
   try {
-    const { sheet_url, event_id, csv_override } = req.body || {};
-    const result = await syncParticipantsFromSheet({ sheet_url, event_id, csv_override });
+    const { sheet_url, event_id, csv_override, allow_multi_entry } = req.body || {};
+    const result = await syncParticipantsFromSheet({
+      sheet_url,
+      event_id,
+      csv_override,
+      allow_multi_entry: Boolean(allow_multi_entry)
+    });
 
     if (result.addedCount > 0) {
       io.emit('participants_imported', {

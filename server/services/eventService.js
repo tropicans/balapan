@@ -99,6 +99,21 @@ export function setActiveEvent(id) {
       WHERE id = ?
     `).run(id);
 
+    // ENH-01: Reset dynamic tournament operational lock settings so new event starts clean
+    const dynamicKeys = [
+      'qualifying_status',
+      'round2_status',
+      'round3_status',
+      'round4_status',
+      'round5_status'
+    ];
+    for (const key of dynamicKeys) {
+      db.prepare(`
+        INSERT OR REPLACE INTO tournament_settings (key, value, updated_at)
+        VALUES (?, 'open', CURRENT_TIMESTAMP)
+      `).run(key);
+    }
+
     return db.prepare('SELECT * FROM events WHERE id = ?').get(id);
   })();
 }

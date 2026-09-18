@@ -105,7 +105,7 @@ export function getSheetSyncConfig() {
  * @param {string} [options.csv_override] - Optional CSV string (for offline testing or custom override)
  * @returns {Promise<Object>}
  */
-export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_override } = {}) {
+export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_override, allow_multi_entry = false } = {}) {
   const targetEventId = event_id || getActiveEventId();
   if (!targetEventId) {
     throw new Error('Tidak ada event aktif. Aktifkan atau buat event terlebih dahulu di Manajemen Event.');
@@ -152,13 +152,13 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
       ) VALUES (?, ?, NULL, NULL, ?, 'participant', 0, ?, ?)
     `);
 
-    // 3. Process candidate participants with idempotent deduplication
+    // 3. Process candidate participants with optional multi-entry support (ENH-04)
     for (const candidate of candidateParticipants) {
       const trimmedName = String(candidate.name || '').trim();
       if (!trimmedName) continue;
 
       const normName = trimmedName.toLowerCase();
-      if (existingNamesSet.has(normName)) {
+      if (!allow_multi_entry && existingNamesSet.has(normName)) {
         skipped.push({
           name: trimmedName,
           reason: 'Sudah terdaftar di event aktif (dilewati untuk cegah duplikasi)'
@@ -171,7 +171,9 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
       const team = candidate.team_name ? String(candidate.team_name).trim().substring(0, 50) : null;
 
       insertStmt.run(uId, trimmedName, team, targetEventId, nextNum);
-      existingNamesSet.add(normName);
+      if (!allow_multi_entry) {
+        existingNamesSet.add(normName);
+      }
 
       added.push({
         id: uId,

@@ -22,6 +22,7 @@ export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState(null);
   const [syncResult, setSyncResult] = useState(null);
   const [lastSyncInfo, setLastSyncInfo] = useState(null);
+  const [allowMultiEntry, setAllowMultiEntry] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +65,10 @@ export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
       const res = await fetchWithAuth('/api/participants/sync-sheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sheet_url: sheetUrl.trim() })
+        body: JSON.stringify({
+          sheet_url: sheetUrl.trim(),
+          allow_multi_entry: allowMultiEntry
+        })
       });
 
       const data = await res.json();
@@ -144,6 +148,26 @@ export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
             <p className="text-[11px] font-mono text-gray-500 mt-1">
               *Mendukung link sharing publik atau viewer dengan tab <code className="text-cyberSilver">gid</code> spesifik.
             </p>
+          </div>
+
+          {/* ENH-04: Multi-Entry Option Toggle */}
+          <div className="p-3 bg-obsidian/80 border border-gray-800 clip-cyber flex items-start gap-2.5">
+            <input
+              type="checkbox"
+              id="multiEntryToggle"
+              checked={allowMultiEntry}
+              onChange={(e) => setAllowMultiEntry(e.target.checked)}
+              disabled={loading || fetchingConfig}
+              className="mt-0.5 rounded border-gray-700 text-neonCyan focus:ring-neonCyan bg-gray-900 cursor-pointer"
+            />
+            <label htmlFor="multiEntryToggle" className="cursor-pointer text-xs font-mono select-none">
+              <span className="text-white font-semibold flex items-center gap-1.5">
+                Izinkan Multi-Entry (Pembalap dengan Banyak Mobil)
+              </span>
+              <span className="text-cyberSilver/65 text-[11px] block mt-0.5">
+                Jika diaktifkan, nama pembalap yang sama akan didaftarkan sebagai nomor peserta baru (cocok jika 1 pembalap mendaftarkan beberapa mobil).
+              </span>
+            </label>
           </div>
 
           {/* Last Sync Info Pill */}
