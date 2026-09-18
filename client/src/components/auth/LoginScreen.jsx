@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Shield, Tv, GitBranch, AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Shield, Tv, GitBranch, AlertCircle } from 'lucide-react';
 
 export function LoginScreen({ onNavigatePublic }) {
   const { loginWithGoogleToken, error: authError, loading } = useAuth();
@@ -98,22 +98,6 @@ export function LoginScreen({ onNavigatePublic }) {
               <span>Memverifikasi akun Google...</span>
             </div>
           )}
-        </div>
-
-        {/* Security & Role Policy Notice */}
-        <div className="mt-4 p-3.5 bg-midnight/80 border border-gray-800 clip-cyber text-[11px] font-mono text-cyberSilver/80 space-y-2">
-          <div className="flex items-start gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-neonCyan flex-shrink-0 mt-0.5" />
-            <span>
-              Akun <strong className="text-white">tropicans@gmail.com</strong> otomatis menjadi <strong className="text-neonCyan">Super Admin</strong>.
-            </span>
-          </div>
-          <div className="flex items-start gap-2">
-            <ShieldAlert className="w-3.5 h-3.5 text-neonAmber flex-shrink-0 mt-0.5" />
-            <span>
-              Pengguna Google lainnya berstatus <strong className="text-neonAmber">Pending</strong> dan harus disetujui (approve) oleh Super Admin sebelum dapat mengakses dasbor operasional.
-            </span>
-          </div>
         </div>
 
         {/* Public Spectator Bypass Links */}
