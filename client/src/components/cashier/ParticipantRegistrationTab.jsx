@@ -19,16 +19,27 @@ export function ParticipantRegistrationTab({
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
 
+  const searchRef = useRef(search);
+  useEffect(() => {
+    searchRef.current = search;
+  }, [search]);
+
+  const onStatsChangeRef = useRef(onStatsChange);
+  useEffect(() => {
+    onStatsChangeRef.current = onStatsChange;
+  }, [onStatsChange]);
+
   // Modals state
   const [registeredModalParticipant, setRegisteredModalParticipant] = useState(null);
   const [editModalParticipant, setEditModalParticipant] = useState(null);
 
-  const fetchParticipants = useCallback(async (searchQuery = '') => {
+  const fetchParticipants = useCallback(async (searchQuery = searchRef.current) => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams();
-      if (searchQuery.trim()) {
-        queryParams.set('search', searchQuery.trim());
+      const q = typeof searchQuery === 'string' ? searchQuery.trim() : '';
+      if (q) {
+        queryParams.set('search', q);
       }
       queryParams.set('limit', '200');
 
@@ -36,8 +47,8 @@ export function ParticipantRegistrationTab({
       const data = await res.json();
       if (data.success && data.data) {
         setParticipants(data.data.participants || []);
-        if (onStatsChange) {
-          onStatsChange({
+        if (onStatsChangeRef.current) {
+          onStatsChangeRef.current({
             total: data.data.total || 0,
             latestNumber: data.data.latest_number || 0,
             activeEvent: data.data.active_event || null
@@ -49,9 +60,9 @@ export function ParticipantRegistrationTab({
     } finally {
       setLoading(false);
     }
-  }, [onStatsChange]);
+  }, []);
 
-  // Initial load
+  // Initial and search-driven load
   useEffect(() => {
     fetchParticipants(search);
   }, [fetchParticipants, search]);
@@ -61,7 +72,7 @@ export function ParticipantRegistrationTab({
     if (!socket) return;
 
     const handleParticipantChange = () => {
-      fetchParticipants(search);
+      fetchParticipants(searchRef.current);
     };
 
     socket.on('participant_registered', handleParticipantChange);
@@ -75,7 +86,7 @@ export function ParticipantRegistrationTab({
       socket.off('participants_imported', handleParticipantChange);
       socket.off('STATE_UPDATE', handleParticipantChange);
     };
-  }, [socket, fetchParticipants, search]);
+  }, [socket, fetchParticipants]);
 
   // D-03: Close giant number modal and return focus to racer name input
   const handleCloseNumberModal = () => {
@@ -85,14 +96,27 @@ export function ParticipantRegistrationTab({
     }, 50);
   };
 
-  const handleEditSuccess = (updatedParticipant) => {
-    fetchParticipants(search);
-  };
+  const handleEditSuccess = useCallback((updatedParticipant) => {
+    fetchParticipants(searchRef.current);
+  }, [fetchParticipants]);
 
-  const handleImportSuccess = () => {
-    fetchParticipants(search);
+  const handleImportSuccess = useCallback(() => {
+    fetchParticipants(searchRef.current);
     if (onCloseImportModal) onCloseImportModal();
-  };
+  }, [fetchParticipants, onCloseImportModal]);
+
+  const handleSearchChange = useCallback((q) => {
+    setSearch(q);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchParticipants(searchRef.current);
+  }, [fetchParticipants]);
+
+  const handleFormSuccess = useCallback((participant) => {
+    setRegisteredModalParticipant(participant);
+    fetchParticipants(searchRef.current);
+  }, [fetchParticipants]);
 
   return (
     <div className="space-y-4">
@@ -102,11 +126,8 @@ export function ParticipantRegistrationTab({
         <div className="lg:col-span-5 space-y-4">
           <ParticipantForm
             ref={formRef}
-            onSuccess={(participant) => {
-              setRegisteredModalParticipant(participant);
-              fetchParticipants(search);
-            }}
-            onRefreshStats={() => fetchParticipants(search)}
+            onSuccess={handleFormSuccess}
+            onRefreshStats={handleRefresh}
           />
         </div>
 
@@ -116,9 +137,9 @@ export function ParticipantRegistrationTab({
             participants={participants}
             loading={loading}
             searchQuery={search}
-            onSearchChange={(q) => setSearch(q)}
+            onSearchChange={handleSearchChange}
             onEditParticipant={(p) => setEditModalParticipant(p)}
-            onRefresh={() => fetchParticipants(search)}
+            onRefresh={handleRefresh}
           />
         </div>
       </div>

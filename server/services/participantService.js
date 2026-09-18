@@ -90,15 +90,19 @@ export function getParticipants({ event_id, search, limit = 200, offset = 0 } = 
   const params = [targetEventId];
 
   if (search && search.trim()) {
-    const q = search.trim();
-    const num = normalizeParticipantNumber(q.replace(/^#/, ''));
+    const terms = search.trim().split(/\s+/).filter(Boolean);
+    for (const term of terms) {
+      const cleanTerm = term.replace(/^#/, '');
+      const num = normalizeParticipantNumber(cleanTerm);
+      const termLower = term.toLowerCase();
 
-    if (num !== null) {
-      query += ` AND (participant_number = ? OR name LIKE ? OR team_name LIKE ?)`;
-      params.push(num, `%${q}%`, `%${q}%`);
-    } else {
-      query += ` AND (name LIKE ? OR team_name LIKE ?)`;
-      params.push(`%${q}%`, `%${q}%`);
+      if (num !== null) {
+        query += ` AND (participant_number = ? OR LOWER(name) LIKE ? OR LOWER(team_name) LIKE ?)`;
+        params.push(num, `%${termLower}%`, `%${termLower}%`);
+      } else {
+        query += ` AND (LOWER(name) LIKE ? OR LOWER(team_name) LIKE ?)`;
+        params.push(`%${termLower}%`, `%${termLower}%`);
+      }
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Edit3, X, RefreshCw, Loader2, Users } from 'lucide-react';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { sound } from '../../utils/audio.js';
@@ -12,6 +12,11 @@ export function ParticipantList({
   onRefresh
 }) {
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const onSearchChangeRef = useRef(onSearchChange);
+
+  useEffect(() => {
+    onSearchChangeRef.current = onSearchChange;
+  }, [onSearchChange]);
 
   // Sync prop changes
   useEffect(() => {
@@ -21,17 +26,33 @@ export function ParticipantList({
   // 200ms debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (onSearchChange && localSearch !== searchQuery) {
-        onSearchChange(localSearch);
+      if (onSearchChangeRef.current && localSearch !== searchQuery) {
+        onSearchChangeRef.current(localSearch);
       }
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [localSearch, searchQuery, onSearchChange]);
+  }, [localSearch, searchQuery]);
+
+  // Instant client-side filtering via useMemo on participants using localSearch
+  const filteredParticipants = useMemo(() => {
+    const q = (localSearch || '').trim().toLowerCase();
+    if (!q) return participants;
+    const terms = q.split(/\s+/).filter(Boolean);
+    return participants.filter((p) => {
+      const numStr = String(p.participant_number ?? '');
+      const nameStr = String(p.name ?? '').toLowerCase();
+      const teamStr = String(p.team_name ?? '').toLowerCase();
+      return terms.every((term) => {
+        const cleanTerm = term.replace(/^#/, '');
+        return numStr === cleanTerm || nameStr.includes(term) || teamStr.includes(term);
+      });
+    });
+  }, [participants, localSearch]);
 
   const handleClear = () => {
     setLocalSearch('');
-    if (onSearchChange) onSearchChange('');
+    if (onSearchChangeRef.current) onSearchChangeRef.current('');
   };
 
   const formatTime = (dateStr) => {
@@ -110,7 +131,7 @@ export function ParticipantList({
                     <div>Memuat daftar peserta...</div>
                   </td>
                 </tr>
-              ) : participants.length === 0 ? (
+              ) : filteredParticipants.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-8 text-center text-gray-400 space-y-1">
                     <div className="font-orbitron text-gray-300">TIDAK ADA DATA PESERTA</div>
@@ -120,7 +141,7 @@ export function ParticipantList({
                   </td>
                 </tr>
               ) : (
-                participants.map((p) => (
+                filteredParticipants.map((p) => (
                   <tr
                     key={p.id}
                     className="hover:bg-neonCyan/5 transition-colors group"
