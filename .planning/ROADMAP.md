@@ -82,7 +82,10 @@
   4. Backend menyediakan status progres per ronde (total heat, heat selesai, heat pending) dan validasi kelayakan finalisasi.
   5. Automated test suite hijau memverifikasi alur lock/unlock Babak 2, pencegahan mutasi saat locked, dan broadcast WebSocket.
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+**Wave 1**
+- [ ] 18-01-PLAN.md — Round lock & unlock logic, mutation protection, progress calculations, REST API endpoints, and automated tests
 
 ---
 
@@ -118,7 +121,7 @@ Phases execute in numeric order: 18 → 19
 | 15. State Contract Switch & Backend Decoupling/Removal | v3.0 | 1/1 | Complete    | 2026-09-17 |
 | 16. Frontend Rewrite & Monitoring Screens | v3.0 | 1/1 | Complete    | 2026-09-17 |
 | 17. Destructive Cleanup, Tests & Seed | v3.0 | 1/1 | Complete    | 2026-09-17 |
-| 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 0/0 | Pending | — |
+| 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 0/1 | Ready | — |
 | 19. Race Director Elimination Command Center UI | v3.1 | 0/0 | Pending | — |
 
 ---
