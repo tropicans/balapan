@@ -13,8 +13,10 @@ import {
   Search, 
   Clock, 
   ShieldAlert,
-  Sparkles
+  Sparkles,
+  FileSpreadsheet
 } from 'lucide-react';
+import { GoogleSheetSyncModal } from '../components/sync/GoogleSheetSyncModal.jsx';
 import clsx from 'clsx';
 
 export function AdminUserDashboard() {
@@ -30,6 +32,7 @@ export function AdminUserDashboard() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [targetRole, setTargetRole] = useState('cashier');
   const [actionLoading, setActionLoading] = useState(false);
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -209,8 +212,17 @@ export function AdminUserDashboard() {
           </p>
         </div>
 
-        {/* Global Refresh Button */}
+        {/* Global Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* Sync Google Sheet (SYNC-09) */}
+          <button
+            onClick={() => setSyncModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-950/40 border border-emerald-500/60 hover:border-emerald-400 text-emerald-300 hover:text-emerald-200 text-xs font-orbitron font-bold clip-cyber transition shadow"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+            <span>SYNC GOOGLE SHEET</span>
+          </button>
+
           <button
             onClick={fetchUsers}
             disabled={loading}
@@ -517,6 +529,16 @@ export function AdminUserDashboard() {
           </div>
         </div>
       )}
+
+      {/* Google Sheet Sync Modal (SYNC-09, SYNC-10) */}
+      <GoogleSheetSyncModal
+        isOpen={syncModalOpen}
+        onClose={() => setSyncModalOpen(false)}
+        onSuccess={() => {
+          setSuccessMsg('Sinkronisasi pembalap dari Google Sheets berhasil!');
+          setTimeout(() => setSuccessMsg(null), 4000);
+        }}
+      />
     </div>
   );
 }

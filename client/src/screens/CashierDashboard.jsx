@@ -4,6 +4,7 @@ import { CyberButton } from '../components/ui/CyberButton.jsx';
 import { CyberCard } from '../components/ui/CyberCard.jsx';
 import { ParticipantRegistrationTab } from '../components/cashier/ParticipantRegistrationTab.jsx';
 import { ParticipantImportModal } from '../components/cashier/ParticipantImportModal.jsx';
+import { GoogleSheetSyncModal } from '../components/sync/GoogleSheetSyncModal.jsx';
 import { CouponRegistrationForm } from '../components/cashier/CouponRegistrationForm.jsx';
 import { CouponPackageList } from '../components/cashier/CouponPackageList.jsx';
 import { VoidPackageModal } from '../components/cashier/VoidPackageModal.jsx';
@@ -21,7 +22,8 @@ import {
   Upload,
   RefreshCw,
   Trophy,
-  Calendar
+  Calendar,
+  FileSpreadsheet
 } from 'lucide-react';
 import clsx from 'clsx';
 import { sound } from '../utils/audio.js';
@@ -37,6 +39,7 @@ export function CashierDashboard() {
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [latestNumber, setLatestNumber] = useState(0);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
 
   // Users data for autocomplete and digital topup
   const [users, setUsers] = useState([]);
@@ -243,6 +246,16 @@ export function CashierDashboard() {
               #{latestNumber}
             </span>
           </div>
+
+          {/* Sync Google Sheet Button (SYNC-08) */}
+          <CyberButton
+            variant="green"
+            size="sm"
+            icon={FileSpreadsheet}
+            onClick={() => setSyncModalOpen(true)}
+          >
+            SYNC GOOGLE SHEET
+          </CyberButton>
 
           {/* Import CSV Button */}
           <CyberButton
@@ -628,6 +641,16 @@ export function CashierDashboard() {
           }}
         />
       )}
+
+      {/* Google Sheet Sync Modal (SYNC-08) */}
+      <GoogleSheetSyncModal
+        isOpen={syncModalOpen}
+        onClose={() => setSyncModalOpen(false)}
+        onSuccess={() => {
+          fetchTelemetry();
+          fetchUsers();
+        }}
+      />
     </div>
   );
 }
