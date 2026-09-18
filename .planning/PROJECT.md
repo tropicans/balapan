@@ -64,7 +64,23 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-*Tidak ada milestone aktif. Siap untuk milestone berikutnya via `/gsd-new-milestone`.*
+## Current Milestone: v3.4 System Hardening, Security & Operational Reliability
+
+**Goal:** Memperkuat keamanan sistem, memperbaiki celah keamanan rute publik & kredensial OAuth, mengeliminasi memory leak pada modul BTO, memperbaiki sinkronisasi nama event pada TV sirkuit, menerapkan proteksi RBAC menyeluruh pada endpoint mutasi backend, serta meningkatkan fitur operasional turnamen (mode offline darurat & penanganan multi-entry sheet sync).
+
+**Target features:**
+- **FIX-01**: Perbaikan `.env` & penghapusan Google Client Secret dari frontend; sinkronisasi Client ID valid untuk GIS SDK.
+- **FIX-02**: Perbaikan memory leak dan request berulang pada `BtoManager.jsx` (unmount socket cleanup & langsung konsumsi state btoLeaderboard).
+- **FIX-03**: Perbaikan display nama event di TV sirkuit (`activeEvent.nama` bukan `name`) pada `RealtimeTV.jsx`.
+- **FIX-04**: Penambahan test suite Google Sheet Sync (`google-sheet-sync.test.js`) ke script `"test"` di `package.json`.
+- **SEC-01**: Pengamanan rute publik `/bracket` (mode read-only untuk spektator publik: sembunyikan tombol `MENANG` dan tab pendaftaran pemenang).
+- **SEC-02**: Proteksi RBAC pada backend API mutasi (`/api/participants`, `/api/events`, `/api/bto`, `/api/winners`, `/api/bracket`) dengan role-based check.
+- **SEC-03**: Otomatisasi penyertaan token Bearer pada frontend API helper (`fetchWithAuth`) untuk seluruh request mutasi.
+- **SEC-04**: Role-based view filtering pada navigasi frontend (hanya tampilkan menu yang sesuai dengan peran user).
+- **ENH-01**: Isolasi `tournament_settings` per event atau reset setting saat pergantian event aktif untuk mencegah kebocoran status kunci antar event.
+- **ENH-02**: Penguncian putaran dinamis (`RaceManager.advanceBracketWinner` & `resetBracketMatch` memvalidasi status kunci untuk semua babak >= 2, bukan hanya Babak 2).
+- **ENH-03**: Mode Login Darurat Offline di `LoginScreen.jsx` untuk venue turnamen tanpa akses internet.
+- **ENH-04**: Opsi multi-entry pembalap pada Google Sheet Sync modal.
 
 ## Current State: v3.3 Shipped (2026-09-18)
 
@@ -147,4 +163,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-18 for Milestone v3.3*
+*Last updated: 2026-09-18 for Milestone v3.4*

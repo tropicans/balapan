@@ -1,36 +1,16 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v3.3",
+  "milestone": "v3.4",
   "phases": [
     {
-      "number": "18",
-      "name": "Backend Services, Round 2 Finalization & State Contract",
+      "number": "24",
+      "name": "Google Sheets Live Fetch, Idempotent Sync Service & API Endpoints",
       "status": "complete"
     },
     {
-      "number": "19",
-      "name": "Race Director Elimination Command Center UI",
-      "status": "complete"
-    },
-    {
-      "number": "20",
-      "name": "Database Schema, Google Auth Verification & Session Backend",
-      "status": "complete"
-    },
-    {
-      "number": "21",
-      "name": "Admin Approval Engine & RBAC Middleware",
-      "status": "complete"
-    },
-    {
-      "number": "22",
-      "name": "Frontend Google Login, Pending Gate & Public Route Bypass",
-      "status": "complete"
-    },
-    {
-      "number": "23",
-      "name": "Admin Approval Dashboard UI & Role-Based UI Controls",
+      "number": "25",
+      "name": "Cashier & Admin Dashboard UI Integration",
       "status": "complete"
     }
   ],
@@ -39,5 +19,5 @@
     "label": "Discuss the first phase",
     "reason": "Project initialized — plan your first phase"
   },
-  "updated_at": "2026-09-18T04:32:46.776Z"
+  "updated_at": "2026-09-18T05:52:18.188Z"
 }
