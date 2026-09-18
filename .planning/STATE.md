@@ -1,21 +1,21 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.1
-milestone_name: Race Director Elimination Command Center
-current_phase: 19
-current_phase_name: Race Director Elimination Command Center UI
-status: complete
-stopped_at: Milestone v3.1 complete (Phases 18 & 19 verified)
-last_updated: "2026-09-18T01:43:00.000Z"
+milestone: v3.2
+milestone_name: Google OAuth Authentication & Admin Approval System
+current_phase: 20
+current_phase_name: Database Schema, Google Auth Verification & Session Backend
+status: planning
+stopped_at: Milestone v3.2 initialized (defining requirements & roadmap)
+last_updated: "2026-09-18T03:38:00.000Z"
 last_activity: 2026-09-18
-last_activity_desc: Phase 19 execution and verification completed (Milestone v3.1 complete)
-state_head: 1ab0f4985f58d64b5db51f487235ef7c68f9234f
+last_activity_desc: Milestone v3.2 started - Google OAuth Authentication & Admin Approval System
+state_head: 404fdbe
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,14 +25,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-09-18)
 
 **Core value:** Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi.
-**Current focus:** Milestone v3.1 — Race Director Elimination Command Center (Complete)
+**Current focus:** Milestone v3.2 — Google OAuth Authentication & Admin Approval System
 
 ## Current Position
 
-Phase: 19 (Race Director Elimination Command Center UI) — COMPLETE
-Plan: 1 of 1 complete
-Status: Milestone v3.1 complete (100% verified)
-Last activity: 2026-09-18 — Phase 19 executed, verified, and committed
+Phase: 20 (Database Schema, Google Auth Verification & Session Backend) — NOT STARTED
+Plan: —
+Status: Defining requirements and roadmap
+Last activity: 2026-09-18 — Milestone v3.2 started
 
 ## Performance Metrics
 

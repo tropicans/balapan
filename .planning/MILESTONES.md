@@ -1,5 +1,38 @@
 # Project Milestones
 
+## v3.1: Race Director Elimination Command Center
+- **Shipped:** 2026-09-18
+- **Phases:** 2 (Phases 18-19)
+- **Plans:** 2
+- **Requirements Satisfied:** 5/5 (`RDELIM-01`..`05`)
+- **Key Accomplishments:**
+  - Kontrol Eliminasi Terpadu di `/director` menggantikan digital race control lama dengan panel eliminasi Babak 2 ke atas.
+  - Penandaan pemenang 1-klik di heat Babak 2+ dengan mahkota visual instan dan kemajuan otomatis ke babak berikutnya.
+  - Progress bar status heat selesai vs pending secara reaktif.
+  - Mekanisme "Finalisasi / Kunci Babak 2" saat seluruh heat Babak 2 selesai untuk mengamankan bagan babak berikutnya.
+  - Sinkronisasi real-time via WebSocket ke `/director`, `/tv`, dan `/bracket`.
+- **Verification:** 17/17 test suites passing, Vite production build clean (0 errors).
+- **Roadmap Archive:** [milestones/v3.1-ROADMAP.md](milestones/v3.1-ROADMAP.md)
+- **Requirements Archive:** [milestones/v3.1-REQUIREMENTS.md](milestones/v3.1-REQUIREMENTS.md)
+
+---
+
+## v3.0: Alur Balap Fisik Tanpa Scan Kupon
+- **Shipped:** 2026-09-17
+- **Phases:** 7 (Phases 11-17)
+- **Plans:** 10
+- **Requirements Satisfied:** 35/35 (`EVNT-01`..`04`, `PARN-01`..`05`, `WREG-01`..`06`, `BRKT-01`..`03`, `BTO-01`..`04`, `MON-01`..`05`, `REM-01`..`04`, `MIG-01`..`04`)
+- **Key Accomplishments:**
+  - Alur turnamen bebas scanning barcode/QR dengan nomor urut peserta (#1, #2...) otomatis per event.
+  - Sistem pencatatan personal-best BTO (Best Time Overall) manual dengan leaderboard real-time.
+  - Registrasi pemenang Babak 2 kilat (nomor ke nama) dengan penempatan otomatis slot 3-jalur (A->B->C).
+  - Isolasi data turnamen multi-event dan penghapusan aman modul scanning lama.
+- **Verification:** 13/13 test suites passing, Vite production build clean.
+- **Roadmap Archive:** [milestones/v3.0-ROADMAP.md](milestones/v3.0-ROADMAP.md)
+- **Audit Report:** [v3.0-MILESTONE-AUDIT.md](v3.0-MILESTONE-AUDIT.md)
+
+---
+
 ## v2.0: Physical Coupon & Marshal-Driven Tournament System
 - **Shipped:** 2026-09-04
 - **Phases:** 4 (Phases 07-10)

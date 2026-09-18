@@ -59,27 +59,30 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **WREG-01..06**: Registrasi pemenang Babak 2 via nomor & auto-slotting (A→B→C) — Shipped in v3.0
 - ✓ **BRKT-01..03**: Eksekusi bracket eliminasi 3-jalur manual advance — Shipped in v3.0
 - ✓ **MON-01..05**: TV sirkuit HUD & race director monitoring dari state v3.0 — Shipped in v3.0
-- ✓ **REM-01..04 & MIG-01..04**: Pembersihan modul/layar scanning & skema data safety — Shipped in v3.0
+- ✓ **RDELIM-01..05**: Race Director Elimination Command Center (Babak 2+ bracket control, 1-klik winner, finalisasi/kunci babak 2, WebSocket sync) — Shipped in v3.1
 
 ### Active
 
-- [ ] Integrasi Bracket Eliminasi di Dasbor Race Director (`/director`)
-- [ ] Penandaan Pemenang & Heat Selesai 1-Klik di Babak 2+
-- [ ] Tombol Finalisasi & Kunci Babak 2 sebelum melangkah ke Babak 3
-- [ ] Sinkronisasi Real-time Bracket Execution dari Race Director ke TV Sirkuit
+- [ ] Integrasi Login Google OAuth (Google Identity Services / verifyIdToken)
+- [ ] Otomatisasi Super Admin untuk tropicans@gmail.com
+- [ ] Mekanisme Pending Approval untuk pengguna Google baru
+- [ ] Dasbor Manajemen Pengguna & Persetujuan Admin (/admin)
+- [ ] Role-Based Access Control (RBAC) untuk dasbor operasional
+- [ ] Akses bebas publik untuk Layar TV Sirkuit (/tv) dan Bagan Turnamen (/bracket)
 
-## Current Milestone: v3.1 Race Director Elimination Command Center
+## Current Milestone: v3.2 Google OAuth Authentication & Admin Approval System
 
-**Goal:** Race Director fokus mengendalikan pertandingan mulai dari Babak 2 ke atas sampai Grand Final langsung di `/director`: integrasi visual bagan bracket eliminasi 3-jalur, penandaan pemenang heat secara cepat, indikator heat yang sudah selesai, serta mekanisme finalisasi/kunci Babak 2 sebelum babak berikutnya dimulai.
+**Goal:** Mengamankan akses operasional sistem balap dengan autentikasi Google OAuth 2.0, menetapkan `tropicans@gmail.com` sebagai Super Admin, memberlakukan alur persetujuan (approval) oleh admin bagi pengguna Google baru, serta menyediakan dasbor kontrol hak akses/peran (Role) dengan tetap menjaga layar publik (/tv dan /bracket) dapat diakses bebas.
 
 **Target features:**
-- Kontrol Eliminasi Terpadu di `/director`: Menggantikan antarmuka race digital lama dengan Panel Eliminasi Babak 2+ yang menampilkan heat aktif, susunan pembalap Jalur A/B/C, dan status tiap heat.
-- Pemilihan Pemenang & Penandaan Heat Selesai 1-Klik: Race Director dapat langsung memilih pemenang mobil di tiap heat Babak 2, otomatis menandai heat sebagai selesai dan memajukan pemenang ke babak berikutnya.
-- Filter & Navigasi Babak Eliminasi: Kemudahan memantau Babak 2, Babak 3, hingga Grand Final langsung di halaman Race Director.
-- Finalisasi / Kunci Babak 2: Tombol konfirmasi penguncian Babak 2 saat semua heat Babak 2 selesai guna memastikan bagan Babak 3 siap dan mencegah salah klik.
-- Sinkronisasi Real-Time: Perubahan hasil heat oleh Race Director langsung tersiar ke layar TV Sirkuit (`/tv`) dan bagan publik (`/bracket`).
+- **Google OAuth 2.0 Sign-In**: Tombol login Google aman di antarmuka web, verifikasi ID Token di backend via library resmi Google, dan penerbitan sesi JWT.
+- **Super Admin Auto-Provisioning**: Email `tropicans@gmail.com` otomatis mendapatkan peran `super_admin` dengan status `approved` saat login.
+- **Pending Approval Gate**: User Google lain yang baru login otomatis masuk status `pending` dan ditahan di layar antrean "Menunggu Persetujuan Admin" tanpa bisa mengakses dasbor operasional.
+- **Admin User Management & Approval Panel (`/admin`)**: Dasbor khusus bagi Super Admin untuk melihat daftar permintaan login pending, menyetujui (approve), memilih role pengguna (Kasir, Race Director, Scrutineer, Co-Admin, Viewer), atau mencabut akses.
+- **Role-Based Access Control (RBAC)**: Middleware backend dan pengamanan rute frontend yang membatasi aksi berdasarkan role yang telah di-approve.
+- **Public Screen Exemption**: Layar TV sirkuit (`/tv`) dan bagan publik (`/bracket`) tetap terbuka dan dapat diakses bebas tanpa login untuk kemudahan monitor sirkuit dan penonton.
 
-**Key context:** Babak 1 diselesaikan panitia di lapangan dan pemenang dimasukkan di `/winners`. Begitu Kualifikasi Babak 1 dikunci, pusat kendali turnamen beralih sepenuhnya ke Race Director di `/director` untuk memimpin eksekusi eliminasi Babak 2 sampai Grand Final.
+**Key context:** Sistem sebelumnya terbuka tanpa autentikasi. Milestone v3.2 menambahkan lapisan keamanan login Google tanpa mengubah atau memperlambat alur registrasi peserta dan eksekusi balapan di arena.
 
 ### Out of Scope
 
@@ -124,6 +127,8 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ## Shipped Milestones
 
+- **v3.1**: Race Director Elimination Command Center (Shipped 2026-09-18) — [Archive](milestones/v3.1-ROADMAP.md)
+- **v3.0**: Alur Balap Fisik Tanpa Scan Kupon (Shipped 2026-09-17) — [Archive](milestones/v3.0-ROADMAP.md)
 - **v2.0**: Physical Coupon & Marshal-Driven Tournament System (Shipped 2026-09-04) — [Archive](milestones/v2.0-ROADMAP.md)
 - **v1.2**: Multi-Round 3-Lane Elimination System (Shipped 2026-09-03) — [Archive](milestones/v1.2-ROADMAP.md)
 - **v1.1**: UI/UX & Arena Visual Showcase Polish (Shipped 2026-09-03) — [Archive](milestones/v1.1-ROADMAP.md)
@@ -147,4 +152,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-17 after v3.0 milestone started*
+*Last updated: 2026-09-18 for Milestone v3.2*
