@@ -100,8 +100,8 @@ Which phases cover which requirements.
 | RDELIM-01 | Phase 19 | Pending |
 | RDELIM-02 | Phase 19 | Pending |
 | RDELIM-03 | Phase 19 | Pending |
-| RDELIM-04 | Phase 18, Phase 19 | Pending |
-| RDELIM-05 | Phase 18, Phase 19 | Pending |
+| RDELIM-04 | Phase 18, Phase 19 | Phase 18 Complete / Phase 19 Pending |
+| RDELIM-05 | Phase 18, Phase 19 | Phase 18 Complete / Phase 19 Pending |
 | EVNT-01..04 | Phase 11 | Complete (v3.0) |
 | PARN-01..05 | Phase 12 | Complete (v3.0) |
 | BTO-01..04 | Phase 13 | Complete (v3.0) |
