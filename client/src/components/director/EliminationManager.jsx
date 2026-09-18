@@ -17,12 +17,13 @@ import {
   Unlock,
   AlertTriangle,
   ShieldAlert,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export function EliminationManager() {
-  const { raceState, apiAdvanceBracket, apiLockRound, apiUnlockRound } = useRace();
+  const { raceState, apiAdvanceBracket, apiResetBracketMatch, apiLockRound, apiUnlockRound } = useRace();
   const matches = raceState.bracketMatches || [];
   const isQualifyingLocked = raceState?.settings?.qualifying_status === 'locked' || raceState?.ticketStats?.is_locked;
 
@@ -43,6 +44,8 @@ export function EliminationManager() {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
   const [currentPage, setCurrentPage] = useState(1);
   const [advancingMatchId, setAdvancingMatchId] = useState(null);
+  const [resettingMatchId, setResettingMatchId] = useState(null);
+
 
   // Modals state
   const [lockModalOpen, setLockModalOpen] = useState(false);
@@ -141,6 +144,29 @@ export function EliminationManager() {
       setTimeout(() => setFeedbackMsg(null), 5000);
     } finally {
       setAdvancingMatchId(null);
+    }
+  };
+
+  // Reset / Reopen Bracket Match Action
+  const handleResetMatch = async (match) => {
+    if (!match || resettingMatchId) return;
+
+    if (match.round_number === 2 && round2Progress.isLocked) {
+      setFeedbackMsg({ type: 'error', text: 'Babak 2 telah dikunci. Buka kunci terlebih dahulu untuk mereset heat.' });
+      setTimeout(() => setFeedbackMsg(null), 5000);
+      return;
+    }
+
+    setResettingMatchId(match.id);
+    try {
+      const res = await apiResetBracketMatch(match.id);
+      setFeedbackMsg({ type: 'success', text: res?.message || `Heat #${match.match_number} berhasil dibuka kembali!` });
+      setTimeout(() => setFeedbackMsg(null), 3000);
+    } catch (err) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Gagal mereset heat.' });
+      setTimeout(() => setFeedbackMsg(null), 5000);
+    } finally {
+      setResettingMatchId(null);
     }
   };
 
@@ -301,6 +327,7 @@ export function EliminationManager() {
     const isFinalMatch = match.is_final === 1 || (match.round_number === highestRound && highestRound > 2);
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
+    const isR2Locked = match.round_number === 2 && round2Progress.isLocked;
 
     return (
       <div
@@ -343,10 +370,23 @@ export function EliminationManager() {
           </div>
           <div className="flex items-center gap-1.5">
             {isCompleted ? (
-              <span className="flex items-center gap-1 text-neonGreen font-bold px-2 py-0.5 bg-neonGreen/10 border border-neonGreen clip-cyber text-[10px]">
-                <CheckCircle className="w-3.5 h-3.5" />
-                SELESAI
-              </span>
+              <>
+                <span className="flex items-center gap-1 text-neonGreen font-bold px-2 py-0.5 bg-neonGreen/10 border border-neonGreen clip-cyber text-[10px]">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  SELESAI
+                </span>
+                {!isR2Locked && (
+                  <button
+                    onClick={() => handleResetMatch(match)}
+                    disabled={resettingMatchId === match.id}
+                    className="px-2 py-0.5 text-[9px] font-orbitron font-bold text-cyberSilver/70 hover:text-white bg-black/50 hover:bg-rose-500/20 border border-gray-700 hover:border-rose-500/60 clip-cyber flex items-center gap-1 transition-all cursor-pointer"
+                    title="Buka kembali heat ini untuk balap ulang (Re-Race) atau revisi pemenang"
+                  >
+                    <RotateCcw className="w-3 h-3 text-rose-400" />
+                    <span>{resettingMatchId === match.id ? '...' : 'RESET HEAT'}</span>
+                  </button>
+                )}
+              </>
             ) : (
               <span className="flex items-center gap-1 text-neonAmber font-bold px-2 py-0.5 bg-neonAmber/10 border border-neonAmber clip-cyber text-[10px]">
                 <Clock className="w-3.5 h-3.5 animate-pulse" />

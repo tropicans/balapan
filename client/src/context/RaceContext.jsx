@@ -545,6 +545,22 @@ export function RaceProvider({ children }) {
     }
   };
 
+  const apiResetBracketMatch = async (matchId) => {
+    try {
+      const res = await fetch('/api/bracket/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal mereset heat');
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      throw err;
+    }
+  };
+
   return (
     <RaceContext.Provider
       value={{
@@ -576,6 +592,7 @@ export function RaceProvider({ children }) {
         apiResetCountdown,
         apiStopCountdown,
         apiAdvanceBracket,
+        apiResetBracketMatch,
         apiLockQualifying,
         apiUnlockQualifying,
         apiLockRound,
@@ -583,6 +600,7 @@ export function RaceProvider({ children }) {
       }}
     >
       {children}
+
     </RaceContext.Provider>
   );
 }

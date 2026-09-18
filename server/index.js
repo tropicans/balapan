@@ -1440,6 +1440,25 @@ app.get('/api/bracket/progress', (req, res) => {
   }
 });
 
+// 22h. Reset / Reopen Bracket Match (Re-race / Winner Correction)
+app.post('/api/bracket/reset', (req, res) => {
+  try {
+    const { match_id, matchId } = req.body || {};
+    const mId = match_id || matchId;
+    if (!mId) {
+      return res.status(400).json({ success: false, error: 'matchId wajib diisi' });
+    }
+    const result = RaceManager.resetBracketMatch(mId);
+
+    io.emit('bracket_updated');
+    broadcastFullState();
+    res.json({ success: true, data: result, message: 'Heat berhasil dibuka kembali.' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+
 // Serve frontend static files in production
 const clientDistPath = path.join(__dirname, '../client/dist');
 app.use(express.static(clientDistPath));
