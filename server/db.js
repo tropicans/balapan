@@ -268,6 +268,33 @@ export async function initDatabase() {
       value TEXT NOT NULL,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS app_users (
+      id TEXT PRIMARY KEY,
+      google_id TEXT UNIQUE,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      avatar TEXT,
+      role TEXT NOT NULL DEFAULT 'pending',
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      approved_at DATETIME DEFAULT NULL,
+      approved_by TEXT DEFAULT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES app_users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_app_users_email ON app_users(email);
+    CREATE INDEX IF NOT EXISTS idx_app_users_status ON app_users(status);
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_token ON auth_sessions(token);
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id);
   `);
 
   // Run versioned migrations (replaces legacy try/catch ALTER block)

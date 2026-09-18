@@ -45,7 +45,7 @@
 
 ### 🟡 v3.2 Google OAuth Authentication & Admin Approval System (Phases 20-23)
 
-- [ ] **Phase 20: Database Schema, Google Auth Verification & Session Backend** - SQLite users table, token verification, tropicans@gmail auto-admin, and session tokens
+- [x] **Phase 20: Database Schema, Google Auth Verification & Session Backend** - SQLite users table, token verification, tropicans@gmail auto-admin, and session tokens (completed 2026-09-18)
 - [ ] **Phase 21: Admin Approval Engine & RBAC Middleware** - Approval status management, role assignment, admin endpoints, and route protection middleware
 - [ ] **Phase 22: Frontend Google Login, Pending Gate & Public Route Bypass** - Google Sign-In button, AuthContext, pending approval gate, and /tv & /bracket public bypass
 - [ ] **Phase 23: Admin Approval Dashboard UI & Role-Based UI Controls** - /admin user management page, approve modal with role picker, and role-scoped navigation
@@ -67,7 +67,7 @@
 5. Automated test suite hijau memverifikasi verifikasi token, auto-admin untuk tropicans@gmail, pembuatan user pending, dan penolakan token invalid.
 
 **Plans**: 1 plan
-- 20-01-PLAN.md — Schema migration, Google auth verification service, auto-super-admin logic, session token generator, and test suite.
+- [x] 20-01-PLAN.md — Schema migration, Google auth verification service, auto-super-admin logic, session token generator, and test suite. (completed 2026-09-18)
 
 ---
 
@@ -131,7 +131,7 @@ Phases execute in numeric order: 20 → 21 → 22 → 23
 |-------|-----------|----------------|--------|-----------|
 | 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 1/1 | Complete | 2026-09-18 |
 | 19. Race Director Elimination Command Center UI | v3.1 | 1/1 | Complete | 2026-09-18 |
-| 20. Database Schema, Google Auth Verification & Session Backend | v3.2 | 0/1 | Not Started | — |
+| 20. Database Schema, Google Auth Verification & Session Backend | v3.2 | 1/1 | Complete | 2026-09-18 |
 | 21. Admin Approval Engine & RBAC Middleware | v3.2 | 0/1 | Not Started | — |
 | 22. Frontend Google Login, Pending Gate & Public Route Bypass | v3.2 | 0/1 | Not Started | — |
 | 23. Admin Approval Dashboard UI & Role-Based UI Controls | v3.2 | 0/1 | Not Started | — |

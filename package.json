@@ -12,7 +12,7 @@
     "build": "npm run build:client",
     "start": "node server/index.js",
     "import:roster": "node scripts/import-roster.js",
-    "test": "node server/tests/race-flow.test.js && node server/tests/camera-scanner.test.js && node server/tests/coupon-package.test.js && node server/tests/marshal-flow.test.js && node server/tests/ticket-engine-flow.test.js && node server/tests/bracket-dashboard-render.test.js && node server/tests/bracket-3lane.test.js && node server/tests/e2e-tournament-lifecycle.test.js && node server/tests/migration-foundation.test.js && node server/tests/participant-registration.test.js && node server/tests/bto-service.test.js && node server/tests/winner-registration.test.js && node server/tests/state-contract.test.js && node server/tests/round-lock.test.js && node server/tests/multi-round-winner-registration.test.js && node server/tests/qualifying-lock-manual-solo-run.test.js && node server/tests/bracket-reset-heat.test.js",
+    "test": "node server/tests/race-flow.test.js && node server/tests/camera-scanner.test.js && node server/tests/coupon-package.test.js && node server/tests/marshal-flow.test.js && node server/tests/ticket-engine-flow.test.js && node server/tests/bracket-dashboard-render.test.js && node server/tests/bracket-3lane.test.js && node server/tests/e2e-tournament-lifecycle.test.js && node server/tests/migration-foundation.test.js && node server/tests/participant-registration.test.js && node server/tests/bto-service.test.js && node server/tests/winner-registration.test.js && node server/tests/state-contract.test.js && node server/tests/round-lock.test.js && node server/tests/multi-round-winner-registration.test.js && node server/tests/qualifying-lock-manual-solo-run.test.js && node server/tests/bracket-reset-heat.test.js && node server/tests/auth-service.test.js",
     "docker:build": "docker compose build",
     "docker:rebuild": "docker compose up -d --build",
     "docker:watch": "docker compose watch",
@@ -26,6 +26,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "google-auth-library": "^11.1.0",
     "socket.io": "^4.8.1",
     "sql.js": "^1.14.2",
     "uuid": "^11.0.5"

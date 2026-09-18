@@ -13,6 +13,7 @@ import { registerParticipant, getParticipants, updateParticipant, importParticip
 import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
 import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners, checkWinnerEligibility } from './services/winnerService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
+import { authenticateGoogleUser, getUserByToken, invalidateSession } from './services/authService.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -66,6 +67,52 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// 0.1 Authentication Endpoints (Google OAuth & Session)
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ success: false, error: 'Google credential/token wajib dikirim' });
+    }
+    const result = await authenticateGoogleUser(credential);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('Google auth error:', err);
+    res.status(401).json({ success: false, error: err.message || 'Autentikasi Google gagal' });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+    if (!token) {
+      return res.status(401).json({ success: false, error: 'Sesi tidak ditemukan atau token tidak valid' });
+    }
+    const user = getUserByToken(token);
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Sesi telah kedaluwarsa atau tidak valid' });
+    }
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : (req.body?.token || null);
+    if (token) {
+      invalidateSession(token);
+    }
+    res.json({ success: true, message: 'Berhasil keluar' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 1. Full State Snapshot
 app.get('/api/state', (req, res) => {
   try {
