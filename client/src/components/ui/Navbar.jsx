@@ -47,7 +47,7 @@ export function Navbar({ activeScreen, setActiveScreen }) {
     { id: 'cashier', label: 'Registrasi Kasir', icon: CreditCard, color: 'amber', path: '/cashier' },
     { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director' },
     { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket' },
-    { id: 'winners', label: 'Pemenang Babak 2', icon: UserCheck, color: 'cyan', path: '/winners' },
+    { id: 'winners', label: 'Registrasi Pemenang', icon: UserCheck, color: 'cyan', path: '/winners' },
     { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
     { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events' },
   ];

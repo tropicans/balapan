@@ -177,17 +177,19 @@ export function EliminationManager() {
 
   // Tab label helper
   const getRoundLabel = (roundNum) => {
-    if (roundNum === highestRound && highestRound > 2) {
+    const roundMatches = matches.filter(m => m.round_number === roundNum);
+    const isSingleFinalHeat = roundMatches.length === 1 && Boolean(roundMatches[0].is_final);
+    if (isSingleFinalHeat) {
       return `GRAND FINAL (BABAK ${roundNum})`;
     }
     if (roundNum === 2) {
       return `BABAK 2 // PENYISIHAN 3-JALUR`;
     }
-    if (roundNum === 3 && highestRound > 3) {
+    if (roundNum === 3) {
       return `BABAK 3 // PEREMPAT FINAL`;
     }
-    if (roundNum === 3 && highestRound === 3) {
-      return `GRAND FINAL (BABAK 3)`;
+    if (roundNum === 4) {
+      return `BABAK 4 // SEMIFINAL`;
     }
     return `BABAK ${roundNum} // ELIMINASI`;
   };
