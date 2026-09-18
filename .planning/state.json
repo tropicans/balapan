@@ -1,7 +1,7 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v3.1",
+  "milestone": "v3.1 — Race Director Elimination Command Center",
   "phases": [
     {
       "number": "11",
@@ -37,12 +37,22 @@
       "number": "17",
       "name": "Destructive Cleanup, Tests & Seed",
       "status": "complete"
+    },
+    {
+      "number": "18",
+      "name": "Backend Services, Round 2 Finalization & State Contract",
+      "status": "complete"
+    },
+    {
+      "number": "19",
+      "name": "Race Director Elimination Command Center UI",
+      "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd-discuss-phase",
-    "label": "Discuss the first phase",
-    "reason": "Project initialized — plan your first phase"
+    "command": "/gsd-discuss-phase 19",
+    "label": "Discuss Phase 19",
+    "reason": "Phase 18 complete · Ready for Phase 19"
   },
-  "updated_at": "2026-09-18T01:12:22.429Z"
+  "updated_at": "2026-09-18T01:23:00.000Z"
 }

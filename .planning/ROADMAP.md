@@ -60,9 +60,7 @@
 
 ### 🚧 v3.1 Race Director Elimination Command Center (In Progress)
 
-**Milestone Goal:** Race Director fokus mengendalikan pertandingan mulai dari Babak 2 ke atas sampai Grand Final langsung di `/director`: integrasi visual bagan bracket eliminasi 3-jalur, penandaan pemenang heat secara cepat, indikator heat yang sudah selesai, serta mekanisme finalisasi/kunci Babak 2 sebelum babak berikutnya dimulai.
-
-- [ ] **Phase 18: Backend Services, Round 2 Finalization & State Contract** - Endpoints, round locking logic, bracket protections, and WebSocket events
+- [x] **Phase 18: Backend Services, Round 2 Finalization & State Contract** - Endpoints, round locking logic, bracket protections, and WebSocket events (completed 2026-09-18)
 - [ ] **Phase 19: Race Director Elimination Command Center UI** - Modern elimination dashboard at `/director`, 1-click winner selection, progress indicators, and lock modal
 
 ---
@@ -85,7 +83,7 @@
 **Plans**: 1 plan
 
 **Wave 1**
-- [ ] 18-01-PLAN.md — Round lock & unlock logic, mutation protection, progress calculations, REST API endpoints, and automated tests
+- [x] 18-01-PLAN.md — Round lock & unlock logic, mutation protection, progress calculations, REST API endpoints, and automated tests (completed 2026-09-18)
 
 ---
 
@@ -121,7 +119,7 @@ Phases execute in numeric order: 18 → 19
 | 15. State Contract Switch & Backend Decoupling/Removal | v3.0 | 1/1 | Complete    | 2026-09-17 |
 | 16. Frontend Rewrite & Monitoring Screens | v3.0 | 1/1 | Complete    | 2026-09-17 |
 | 17. Destructive Cleanup, Tests & Seed | v3.0 | 1/1 | Complete    | 2026-09-17 |
-| 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 0/1 | Ready | — |
+| 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 1/1 | Complete | 2026-09-18 |
 | 19. Race Director Elimination Command Center UI | v3.1 | 0/0 | Pending | — |
 
 ---
