@@ -15,6 +15,8 @@ export function RaceProvider({ children }) {
     upcomingRaces: [],
     scrutineerQueue: [],
     bracketMatches: [],
+    round2_status: 'open',
+    round2_progress: null,
   });
 
   // Current User Session
@@ -206,6 +208,39 @@ export function RaceProvider({ children }) {
         message: '🔒 KUALIFIKASI BABAK 1 RESMI DIKUNCI! BAGAN BABAK 2 TELAH DIFINALISASI.'
       });
       setTimeout(() => setBannerAlert(null), 8000);
+    });
+
+    // Phase 18 & 19: Round 2 Lock / Finalization Events
+    socketInstance.on('round2:locked', (data) => {
+      sound.playLockSound();
+      hapticLock();
+      setRaceState(prev => ({
+        ...prev,
+        round2_status: 'locked',
+        round2_progress: prev.round2_progress
+          ? { ...prev.round2_progress, is_locked: true, can_finalize: false }
+          : prev.round2_progress
+      }));
+      setBannerAlert({
+        type: 'warning',
+        message: '🔒 BABAK 2 RESMI DIKUNCI! BAGAN BABAK 3 TELAH DIAMANKAN.'
+      });
+      setTimeout(() => setBannerAlert(null), 7000);
+    });
+
+    socketInstance.on('round2:unlocked', (data) => {
+      setRaceState(prev => ({
+        ...prev,
+        round2_status: 'open',
+        round2_progress: prev.round2_progress
+          ? { ...prev.round2_progress, is_locked: false }
+          : prev.round2_progress
+      }));
+      setBannerAlert({
+        type: 'success',
+        message: '🔓 KUNCI BABAK 2 DIBUKA KEMBALI UNTUK REVISI.'
+      });
+      setTimeout(() => setBannerAlert(null), 7000);
     });
 
     setSocket(socketInstance);
@@ -475,6 +510,41 @@ export function RaceProvider({ children }) {
     }
   };
 
+  const apiLockRound = async (round = 2) => {
+    try {
+      const res = await fetch('/api/bracket/lock-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal mengunci babak');
+      sound.playLockSound();
+      hapticLock();
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      hapticError();
+      throw err;
+    }
+  };
+
+  const apiUnlockRound = async (round = 2) => {
+    try {
+      const res = await fetch('/api/bracket/unlock-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ round })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal membuka kunci babak');
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      throw err;
+    }
+  };
+
   return (
     <RaceContext.Provider
       value={{
@@ -507,7 +577,9 @@ export function RaceProvider({ children }) {
         apiStopCountdown,
         apiAdvanceBracket,
         apiLockQualifying,
-        apiUnlockQualifying
+        apiUnlockQualifying,
+        apiLockRound,
+        apiUnlockRound
       }}
     >
       {children}
