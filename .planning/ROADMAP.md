@@ -2,7 +2,8 @@
 
 ## Milestones
 
-- ✅ **v3.3 Google Sheets Racer Sync & Admin Integration** — Phases 24-25 (shipped 2026-09-18)
+- 🔲 **v3.4 System Hardening, Security & Operational Reliability** — Phases 26-28
+- ✅ **v3.3 Google Sheets Racer Sync & Admin Integration** — Phases 24-25 (shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
 - ✅ **v3.2 Google OAuth Authentication & Admin Approval System** — Phases 20-23 (shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
 - ✅ **v3.1 Race Director Elimination Command Center** — Phases 18-19 (shipped 2026-09-18) — [Archive](milestones/v3.1-ROADMAP.md)
 - ✅ **v3.0 Alur Balap Fisik Tanpa Scan Kupon** — Phases 11-17 (shipped 2026-09-17) — [Archive](milestones/v3.0-ROADMAP.md)
@@ -14,6 +15,21 @@
 ## Phases
 
 <details open>
+<summary>🔲 v3.4 System Hardening, Security & Operational Reliability (Phases 26-28)</summary>
+
+- [ ] **Phase 26: Critical Bug Fixes & Public Bracket Security Gate** (0/1 plan)
+  - Goal: Resolve immediate security leak, memory leak, TV display bug, public bracket mutation vulnerability, and test coverage gap.
+  - Requirements: FIX-01, FIX-02, FIX-03, FIX-04, SEC-01
+- [ ] **Phase 27: End-to-End RBAC Backend Protection & Frontend Role Guarding** (0/1 plan)
+  - Goal: Secure all backend mutation endpoints with role middleware, integrate token forwarding across all frontend fetch requests, and enforce role-based UI access control.
+  - Requirements: SEC-02, SEC-03, SEC-04
+- [ ] **Phase 28: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities** (0/1 plan)
+  - Goal: Prevent cross-event settings leakage, generalize dynamic round locks to all elimination rounds, enable local offline admin login, and enhance Google Sheets multi-entry support.
+  - Requirements: ENH-01, ENH-02, ENH-03, ENH-04
+
+</details>
+
+<details>
 <summary>✅ v3.3 Google Sheets Racer Sync & Admin Integration (Phases 24-25) — SHIPPED 2026-09-18</summary>
 
 - [x] Phase 24: Google Sheets Live Fetch, Idempotent Sync Service & API Endpoints (1/1 plan) — completed 2026-09-18
@@ -67,12 +83,13 @@
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 24 → 25
+Phases execute in numeric order: 26 → 27 → 28
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 24. Google Sheets Live Fetch, Idempotent Sync Service & API Endpoints | v3.3 | 1/1 | Complete | 2026-09-18 |
-| 25. Cashier & Admin Dashboard UI Integration | v3.3 | 1/1 | Complete | 2026-09-18 |
+| 26. Critical Bug Fixes & Public Bracket Security Gate | v3.4 | 0/1 | Not started | — |
+| 27. End-to-End RBAC Backend Protection & Frontend Role Guarding | v3.4 | 0/1 | Not started | — |
+| 28. Multi-Round Lock Hardening, Event Isolation & Offline Capabilities | v3.4 | 0/1 | Not started | — |
 
 ---
-*Roadmap updated: 2026-09-18 for Milestone v3.3 completion*
+*Roadmap updated: 2026-09-18 for Milestone v3.4 start*
