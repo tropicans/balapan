@@ -30,8 +30,11 @@ export async function verifyGoogleToken(idToken) {
     throw new Error('Google ID token is required');
   }
 
-  // Fast offline mock support for test suites
+  // Fast offline mock support strictly for test runner / local testing
   if (idToken.startsWith('mock-google-token:')) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Mock authentication is strictly forbidden in production');
+    }
     const parts = idToken.split(':');
     const email = normalizeEmail(parts[1] || 'user@gmail.com');
     const name = parts[2] || 'Test User';

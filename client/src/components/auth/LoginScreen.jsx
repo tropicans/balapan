@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { Shield, Tv, GitBranch, AlertCircle } from 'lucide-react';
 
 export function LoginScreen({ onNavigatePublic }) {
-  const { loginWithGoogleToken, loginWithMock, error: authError, loading } = useAuth();
+  const { loginWithGoogleToken, error: authError, loading } = useAuth();
   const googleBtnRef = useRef(null);
   const isGsiInitializedRef = useRef(false);
   const [localError, setLocalError] = useState(null);
@@ -98,61 +98,6 @@ export function LoginScreen({ onNavigatePublic }) {
               <span>Memverifikasi akun Google...</span>
             </div>
           )}
-        </div>
-
-        {/* ENH-03: Emergency Local / Offline Mode for Venues without Internet */}
-        <div className="mt-4 pt-4 border-t border-gray-800/80">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono text-yellow-400/90 font-semibold flex items-center gap-1">
-              ⚡ Akses Darurat / Sirkuit Offline
-            </span>
-            <span className="text-[10px] font-mono text-cyberSilver/50">Tanpa Internet</span>
-          </div>
-          <p className="text-[10px] font-mono text-cyberSilver/60 mb-3 leading-relaxed">
-            Gunakan mode ini jika sirkuit mengalami gangguan jaringan internet / Google API.
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={async () => {
-                try {
-                  setLocalError(null);
-                  await loginWithMock({
-                    name: 'Super Admin (Offline)',
-                    email: 'tropicans@gmail.com',
-                    role: 'super_admin'
-                  });
-                } catch (err) {
-                  setLocalError(err.message || 'Gagal masuk mode offline');
-                }
-              }}
-              className="px-2.5 py-2 bg-yellow-950/30 border border-yellow-500/40 hover:border-yellow-400 text-yellow-300 text-xs font-mono clip-cyber transition flex flex-col items-center justify-center gap-1"
-            >
-              <span className="font-bold">Super Admin</span>
-              <span className="text-[9px] text-yellow-500/70">Akses Penuh</span>
-            </button>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={async () => {
-                try {
-                  setLocalError(null);
-                  await loginWithMock({
-                    name: 'Race Director (Offline)',
-                    email: 'rd.offline@balapan.local',
-                    role: 'race_director'
-                  });
-                } catch (err) {
-                  setLocalError(err.message || 'Gagal masuk mode offline');
-                }
-              }}
-              className="px-2.5 py-2 bg-cyan-950/30 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-xs font-mono clip-cyber transition flex flex-col items-center justify-center gap-1"
-            >
-              <span className="font-bold">Race Director</span>
-              <span className="text-[9px] text-cyan-500/70">Kontrol Balap</span>
-            </button>
-          </div>
         </div>
 
         {/* Public Spectator Bypass Links */}
