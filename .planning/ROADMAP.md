@@ -100,7 +100,10 @@
   4. Tombol "Finalisasi / Kunci Babak 2" aktif ketika seluruh heat Babak 2 selesai, membuka modal konfirmasi penguncian dan mengubah state menjadi Terkunci.
   5. Perubahan pemenang atau penguncian babak tersinkronisasi real-time ke layar `/tv` dan `/bracket` tanpa perlu refresh halaman.
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+**Wave 1**
+- [ ] 19-01-PLAN.md — RaceContext extensions, EliminationManager component, RaceDirectorDashboard refactor, and build verification
 **UI hint**: yes
 
 ---
@@ -120,7 +123,7 @@ Phases execute in numeric order: 18 → 19
 | 16. Frontend Rewrite & Monitoring Screens | v3.0 | 1/1 | Complete    | 2026-09-17 |
 | 17. Destructive Cleanup, Tests & Seed | v3.0 | 1/1 | Complete    | 2026-09-17 |
 | 18. Backend Services, Round 2 Finalization & State Contract | v3.1 | 1/1 | Complete | 2026-09-18 |
-| 19. Race Director Elimination Command Center UI | v3.1 | 0/0 | Pending | — |
+| 19. Race Director Elimination Command Center UI | v3.1 | 0/1 | In Progress | — |
 
 ---
 *Roadmap updated: 2026-09-18 for Milestone v3.1*
