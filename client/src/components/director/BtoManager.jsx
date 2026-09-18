@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRace } from '../../context/RaceContext.jsx';
+import { fetchWithAuth } from '../../utils/api.js';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { CyberCard } from '../ui/CyberCard.jsx';
 import {
@@ -37,7 +38,7 @@ export function BtoManager() {
   // Fetch BTO leaderboard
   const fetchLeaderboard = useCallback(async () => {
     try {
-      const res = await fetch('/api/bto/leaderboard?limit=15');
+      const res = await fetchWithAuth('/api/bto/leaderboard?limit=15');
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setLeaderboard(data.data);
@@ -97,7 +98,7 @@ export function BtoManager() {
       setSearchingParticipant(true);
       try {
         const cleanQuery = query.replace(/^#/, '');
-        const res = await fetch(`/api/participants?search=${encodeURIComponent(cleanQuery)}&limit=8`);
+        const res = await fetchWithAuth(`/api/participants?search=${encodeURIComponent(cleanQuery)}&limit=8`);
         const data = await res.json();
         if (data.success && Array.isArray(data.data?.participants)) {
           const list = data.data.participants;
@@ -172,7 +173,7 @@ export function BtoManager() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/bto', {
+      const res = await fetchWithAuth('/api/bto', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -206,7 +207,7 @@ export function BtoManager() {
   const handleDeleteRecord = async (recordId, racerName) => {
     if (!window.confirm(`Hapus catatan BTO untuk ${racerName}?`)) return;
     try {
-      const res = await fetch(`/api/bto/${recordId}`, { method: 'DELETE' });
+      const res = await fetchWithAuth(`/api/bto/${recordId}`, { method: 'DELETE' });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Gagal menghapus');
       setFeedbackMsg(`Catatan BTO untuk ${racerName} telah dihapus.`);

@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import confetti from 'canvas-confetti';
 import { sound } from '../utils/audio.js';
 import { useHaptic } from '../hooks/useHaptic.js';
+import { fetchWithAuth } from '../utils/api.js';
 
 const RaceContext = createContext();
 
@@ -263,7 +264,7 @@ export function RaceProvider({ children }) {
   // API Call Helpers
   const apiScanLane = async (userId, lane) => {
     try {
-      const res = await fetch('/api/race/scan', {
+      const res = await fetchWithAuth('/api/race/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, lane })
@@ -282,7 +283,7 @@ export function RaceProvider({ children }) {
 
   const apiSetReady = async (userId, raceId) => {
     try {
-      const res = await fetch('/api/race/ready', {
+      const res = await fetchWithAuth('/api/race/ready', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, raceId })
@@ -301,7 +302,7 @@ export function RaceProvider({ children }) {
 
   const apiCancelRegistration = async (userId) => {
     try {
-      const res = await fetch('/api/race/cancel', {
+      const res = await fetchWithAuth('/api/race/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
@@ -319,7 +320,7 @@ export function RaceProvider({ children }) {
 
   const apiLockRace = async (raceId) => {
     try {
-      const res = await fetch('/api/race/lock', {
+      const res = await fetchWithAuth('/api/race/lock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raceId })
@@ -334,7 +335,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiStartRace = async (raceId) => {
-    const res = await fetch('/api/race/start', {
+    const res = await fetchWithAuth('/api/race/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ raceId })
@@ -345,7 +346,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiSubmitFinish = async (raceId, times) => {
-    const res = await fetch('/api/race/finish', {
+    const res = await fetchWithAuth('/api/race/finish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ raceId, times })
@@ -357,7 +358,7 @@ export function RaceProvider({ children }) {
 
   const apiDeclareAllCO = async (raceId) => {
     try {
-      const res = await fetch('/api/race/all-co', {
+      const res = await fetchWithAuth('/api/race/all-co', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raceId })
@@ -374,7 +375,7 @@ export function RaceProvider({ children }) {
 
   const apiDeclareReRace = async (raceId, lanes) => {
     try {
-      const res = await fetch('/api/race/re-race', {
+      const res = await fetchWithAuth('/api/race/re-race', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raceId, lanes })
@@ -390,7 +391,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiScrutineerAction = async (registrationId, action) => {
-    const res = await fetch('/api/race/scrutineer', {
+    const res = await fetchWithAuth('/api/race/scrutineer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registrationId, action })
@@ -401,7 +402,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiScrutineerOverride = async ({ raceId, lane, finishTime, action }) => {
-    const res = await fetch('/api/race/scrutineer-override', {
+    const res = await fetchWithAuth('/api/race/scrutineer-override', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ raceId, lane, finishTime, action })
@@ -417,7 +418,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiAdminOverride = async (action, payload) => {
-    const res = await fetch('/api/race/override', {
+    const res = await fetchWithAuth('/api/race/override', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, ...payload })
@@ -428,7 +429,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiTopUp = async (userId, amount) => {
-    const res = await fetch('/api/coupons/topup', {
+    const res = await fetchWithAuth('/api/coupons/topup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, amount })
@@ -439,7 +440,7 @@ export function RaceProvider({ children }) {
   };
 
   const apiRegisterGuest = async (name, teamName, initialBalance) => {
-    const res = await fetch('/api/users/guest', {
+    const res = await fetchWithAuth('/api/users/guest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, teamName, initialBalance })
@@ -450,24 +451,24 @@ export function RaceProvider({ children }) {
   };
 
   const apiStartCountdown = async () => {
-    const res = await fetch('/api/countdown/start', { method: 'POST' });
+    const res = await fetchWithAuth('/api/countdown/start', { method: 'POST' });
     return await res.json();
   };
 
   const apiResetCountdown = async () => {
-    const res = await fetch('/api/countdown/reset', { method: 'POST' });
+    const res = await fetchWithAuth('/api/countdown/reset', { method: 'POST' });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Reset gagal');
     return data;
   };
 
   const apiStopCountdown = async () => {
-    const res = await fetch('/api/countdown/stop', { method: 'POST' });
+    const res = await fetchWithAuth('/api/countdown/stop', { method: 'POST' });
     return await res.json();
   };
 
   const apiAdvanceBracket = async (matchId, winnerId, options = {}) => {
-    const res = await fetch('/api/bracket/advance', {
+    const res = await fetchWithAuth('/api/bracket/advance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ matchId, winnerId, ...options })
@@ -479,7 +480,7 @@ export function RaceProvider({ children }) {
 
   const apiLockQualifying = async () => {
     try {
-      const res = await fetch('/api/tickets/lock-qualifying', {
+      const res = await fetchWithAuth('/api/tickets/lock-qualifying', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -497,7 +498,7 @@ export function RaceProvider({ children }) {
 
   const apiUnlockQualifying = async () => {
     try {
-      const res = await fetch('/api/tickets/unlock-qualifying', {
+      const res = await fetchWithAuth('/api/tickets/unlock-qualifying', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -512,7 +513,7 @@ export function RaceProvider({ children }) {
 
   const apiLockRound = async (round = 2) => {
     try {
-      const res = await fetch('/api/bracket/lock-round', {
+      const res = await fetchWithAuth('/api/bracket/lock-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ round })
@@ -531,7 +532,7 @@ export function RaceProvider({ children }) {
 
   const apiUnlockRound = async (round = 2) => {
     try {
-      const res = await fetch('/api/bracket/unlock-round', {
+      const res = await fetchWithAuth('/api/bracket/unlock-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ round })
@@ -547,7 +548,7 @@ export function RaceProvider({ children }) {
 
   const apiResetBracketMatch = async (matchId) => {
     try {
-      const res = await fetch('/api/bracket/reset', {
+      const res = await fetchWithAuth('/api/bracket/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ matchId })
@@ -572,6 +573,7 @@ export function RaceProvider({ children }) {
         bannerAlert,
         newBtoModal,
         setNewBtoModal,
+        fetchWithAuth,
         newQualifierModal,
         setNewQualifierModal,
         switchUser,

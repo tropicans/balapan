@@ -104,7 +104,42 @@ function AppContent() {
       return <SuspendedAccountScreen onNavigatePublic={navigateScreen} />;
     }
 
-    // 4. User is approved: render authorized screen
+    // 4. User is approved: enforce role-based access for operational screens (SEC-04)
+    const SCREEN_ROLES = {
+      cashier: ['cashier', 'admin', 'super_admin'],
+      rd: ['race_director', 'admin', 'super_admin'],
+      winners: ['marshal', 'race_director', 'admin', 'super_admin'],
+      events: ['admin', 'super_admin'],
+      admin: ['admin', 'super_admin']
+    };
+
+    const allowedRoles = SCREEN_ROLES[activeScreen];
+    const isAllowed = user.role === 'super_admin' || (allowedRoles && allowedRoles.includes(user.role));
+
+    if (!isAllowed) {
+      return (
+        <div className="max-w-xl mx-auto mt-16 p-8 bg-obsidian border border-red-500/50 clip-cyber shadow-[0_0_25px_rgba(239,68,68,0.2)] text-center space-y-4">
+          <div className="w-12 h-12 mx-auto bg-red-500/20 border border-red-500 flex items-center justify-center clip-cyber text-red-400">
+            <span className="font-orbitron font-black text-xl">!</span>
+          </div>
+          <h2 className="text-xl font-orbitron font-bold text-white tracking-wider">
+            AKSES DITOLAK // ROLE TIDAK MEMADAI
+          </h2>
+          <p className="text-sm text-cyberSilver/70">
+            Peran akun Anda (<span className="text-neonCyan font-bold uppercase">{user.role}</span>) tidak memiliki izin untuk mengakses layar ini. Silakan hubungi Administrator.
+          </p>
+          <div className="pt-4 flex justify-center gap-3">
+            <button
+              onClick={() => navigateScreen('tv')}
+              className="px-4 py-2 font-orbitron text-xs font-bold bg-neonCyan/20 text-neonCyan border border-neonCyan clip-cyber hover:bg-neonCyan hover:text-black transition"
+            >
+              KEMBALI KE TV SIRKUIT
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (activeScreen === 'cashier') return <CashierDashboard />;
     if (activeScreen === 'rd') return <RaceDirectorDashboard />;
     if (activeScreen === 'winners') return <WinnerRegistrationDashboard />;

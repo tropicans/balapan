@@ -1270,7 +1270,7 @@ app.get('/api/events', (req, res) => {
 });
 
 // 19b. Create event
-app.post('/api/events', (req, res) => {
+app.post('/api/events', requireRole('admin', 'super_admin'), (req, res) => {
   try {
     const { nama, tanggal, catatan, jumlah_lap } = req.body || {};
     const created = createEvent({ nama, tanggal, catatan, jumlah_lap });
@@ -1282,7 +1282,7 @@ app.post('/api/events', (req, res) => {
 });
 
 // 19c. Activate event
-app.post('/api/events/:id/activate', (req, res) => {
+app.post('/api/events/:id/activate', requireRole('admin', 'super_admin'), (req, res) => {
   try {
     const activated = setActiveEvent(req.params.id);
     broadcastFullState();
@@ -1294,7 +1294,7 @@ app.post('/api/events/:id/activate', (req, res) => {
 });
 
 // 19d. Archive event
-app.post('/api/events/:id/archive', (req, res) => {
+app.post('/api/events/:id/archive', requireRole('admin', 'super_admin'), (req, res) => {
   try {
     const archived = archiveEvent(req.params.id);
     broadcastFullState();
@@ -1310,7 +1310,7 @@ app.post('/api/events/:id/archive', (req, res) => {
 // ====================================================
 
 // 20a. Register single participant (PARN-01, PARN-02, D-01, D-02)
-app.post('/api/participants', (req, res) => {
+app.post('/api/participants', requireRole('cashier', 'admin', 'super_admin'), (req, res) => {
   try {
     const { name, team_name, event_id } = req.body || {};
     const participant = registerParticipant({ name, team_name, event_id });
@@ -1329,8 +1329,8 @@ app.get('/api/participants', (req, res) => {
     const result = getParticipants({
       event_id,
       search,
-      limit: parseInt(limit, 10) || 200,
-      offset: parseInt(offset, 10) || 0
+      limit: limit ? parseInt(limit) : undefined,
+      offset: offset ? parseInt(offset) : undefined
     });
     res.json({ success: true, data: result });
   } catch (err) {
@@ -1339,7 +1339,7 @@ app.get('/api/participants', (req, res) => {
 });
 
 // 20c. Update participant typo (name / team only) (D-12)
-app.put('/api/participants/:id', (req, res) => {
+app.put('/api/participants/:id', requireRole('cashier', 'admin', 'super_admin'), (req, res) => {
   try {
     const { name, team_name } = req.body || {};
     const updated = updateParticipant(req.params.id, { name, team_name });
@@ -1353,7 +1353,7 @@ app.put('/api/participants/:id', (req, res) => {
 });
 
 // 20d. Preview CSV import (PARN-05, D-08)
-app.post('/api/participants/import-preview', (req, res) => {
+app.post('/api/participants/import-preview', requireRole('cashier', 'admin', 'super_admin'), (req, res) => {
   try {
     const csvText = typeof req.body === 'string' ? req.body : (req.body?.csv || '');
     if (!csvText || !csvText.trim()) {
@@ -1374,7 +1374,7 @@ app.post('/api/participants/import-preview', (req, res) => {
 });
 
 // 20e. Batch import participants into active event (PARN-05, D-07, D-09)
-app.post('/api/participants/import', (req, res) => {
+app.post('/api/participants/import', requireRole('cashier', 'admin', 'super_admin'), (req, res) => {
   try {
     const { participants, csv, event_id } = req.body || {};
     let participantsList = participants;
@@ -1415,7 +1415,7 @@ app.get('/api/participants/sync-sheet/status', (req, res) => {
 });
 
 // 20g. Sync participants directly from Google Sheets (SYNC-01 to SYNC-07)
-app.post('/api/participants/sync-sheet', async (req, res) => {
+app.post('/api/participants/sync-sheet', requireRole('cashier', 'admin', 'super_admin'), async (req, res) => {
   try {
     const { sheet_url, event_id, csv_override } = req.body || {};
     const result = await syncParticipantsFromSheet({ sheet_url, event_id, csv_override });
@@ -1443,7 +1443,7 @@ app.post('/api/participants/sync-sheet', async (req, res) => {
 // ====================================================
 
 // 21a. Record or update manual BTO time (personal best policy)
-app.post('/api/bto', (req, res) => {
+app.post('/api/bto', requireRole('scrutineer', 'race_director', 'admin', 'super_admin'), (req, res) => {
   try {
     const { participant_number, user_id, finish_time, recorded_by, event_id } = req.body || {};
     const result = recordBtoTime({ participant_number, user_id, finish_time, recorded_by, event_id });
@@ -1486,7 +1486,7 @@ app.get('/api/bto/leaderboard', (req, res) => {
 });
 
 // 21c. Delete BTO record (official correction)
-app.delete('/api/bto/:id', (req, res) => {
+app.delete('/api/bto/:id', requireRole('scrutineer', 'race_director', 'admin', 'super_admin'), (req, res) => {
   try {
     const result = deleteBtoRecord(req.params.id);
     io.emit('bto:updated', { type: 'record_deleted', id: req.params.id });
@@ -1503,7 +1503,7 @@ app.delete('/api/bto/:id', (req, res) => {
 // ====================================================
 
 // 22a. Register Winner by Participant Number and Round (Milestone v3.2)
-app.post('/api/winners/register', (req, res) => {
+app.post('/api/winners/register', requireRole('marshal', 'race_director', 'admin', 'super_admin'), (req, res) => {
   try {
     const { participant_number, round, event_id } = req.body || {};
     const result = registerWinner({ participant_number, round, event_id });
@@ -1518,7 +1518,7 @@ app.post('/api/winners/register', (req, res) => {
 });
 
 // 22b. Undo Last Winner Registration (optionally filtered by round)
-app.post('/api/winners/undo', (req, res) => {
+app.post('/api/winners/undo', requireRole('marshal', 'race_director', 'admin', 'super_admin'), (req, res) => {
   try {
     const { round, event_id } = req.body || {};
     const result = undoLastWinnerRegistration({ round, event_id });
@@ -1555,7 +1555,7 @@ app.get('/api/winners/eligibility', (req, res) => {
 });
 
 // 22d. Advance Bracket Match Winner (BRKT-01, BRKT-02 - no lock required)
-app.post('/api/bracket/advance', (req, res) => {
+app.post('/api/bracket/advance', requireRole('race_director', 'admin', 'super_admin'), (req, res) => {
   try {
     const { match_id, matchId, winner_id, winnerId, isFinal, autoAdvance } = req.body || {};
     const mId = match_id || matchId;
@@ -1573,7 +1573,7 @@ app.post('/api/bracket/advance', (req, res) => {
 });
 
 // 22e. Finalize & Lock Round (RDELIM-04, D-01, D-05)
-app.post('/api/bracket/lock-round', async (req, res) => {
+app.post('/api/bracket/lock-round', requireRole('race_director', 'admin', 'super_admin'), async (req, res) => {
   try {
     const round = parseInt(req.body?.round) || 2;
     const result = RaceManager.lockRound(round);
@@ -1587,7 +1587,7 @@ app.post('/api/bracket/lock-round', async (req, res) => {
 });
 
 // 22f. Emergency Unlock Round (RDELIM-04, D-03, D-05)
-app.post('/api/bracket/unlock-round', async (req, res) => {
+app.post('/api/bracket/unlock-round', requireRole('race_director', 'admin', 'super_admin'), async (req, res) => {
   try {
     const round = parseInt(req.body?.round) || 2;
     const result = RaceManager.unlockRound(round);
@@ -1612,7 +1612,7 @@ app.get('/api/bracket/progress', (req, res) => {
 });
 
 // 22h. Reset / Reopen Bracket Match (Re-race / Winner Correction)
-app.post('/api/bracket/reset', (req, res) => {
+app.post('/api/bracket/reset', requireRole('race_director', 'admin', 'super_admin'), (req, res) => {
   try {
     const { match_id, matchId } = req.body || {};
     const mId = match_id || matchId;

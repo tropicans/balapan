@@ -17,6 +17,7 @@ console.log('🧪 RUNNING ADMIN APPROVAL & RBAC TEST SUITE (PHASE 21)...');
 
 process.env.NODE_ENV = 'test';
 process.env.SUPER_ADMIN_EMAIL = 'tropicans@gmail.com';
+process.env.TEST_STRICT_AUTH = 'true';
 
 await initDatabase();
 

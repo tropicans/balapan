@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { sound } from '../../utils/audio.js';
+import { fetchWithAuth } from '../../utils/api.js';
 
 export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
   const [sheetUrl, setSheetUrl] = useState('');
@@ -33,7 +34,7 @@ export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
   const fetchCurrentConfig = async () => {
     setFetchingConfig(true);
     try {
-      const res = await fetch('/api/participants/sync-sheet/status');
+      const res = await fetchWithAuth('/api/participants/sync-sheet/status');
       const data = await res.json();
       if (data.success && data.data) {
         setSheetUrl(data.data.configuredUrl || '');
@@ -60,7 +61,7 @@ export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
     setSyncResult(null);
 
     try {
-      const res = await fetch('/api/participants/sync-sheet', {
+      const res = await fetchWithAuth('/api/participants/sync-sheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sheet_url: sheetUrl.trim() })

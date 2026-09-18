@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { sound } from '../../utils/audio.js';
+import { fetchWithAuth } from '../../utils/api.js';
 import clsx from 'clsx';
 
 export function CouponRegistrationForm({
@@ -52,7 +53,7 @@ export function CouponRegistrationForm({
     setFetchingNext(true);
     setErrorBanner(null);
     try {
-      const res = await fetch('/api/coupon-packages/next-serial');
+      const res = await fetchWithAuth('/api/coupon-packages/next-serial');
       const data = await res.json();
       if (data.success && data.data?.next_serial) {
         setSerialNumber(data.data.next_serial);
@@ -151,7 +152,7 @@ export function CouponRegistrationForm({
         payload.team_name = teamName.trim() || undefined;
       }
 
-      const res = await fetch('/api/coupon-packages', {
+      const res = await fetchWithAuth('/api/coupon-packages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

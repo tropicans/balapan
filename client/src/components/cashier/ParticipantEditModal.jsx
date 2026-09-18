@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Lock, X, Save, Loader2, AlertCircle } from 'lucide-react';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { sound } from '../../utils/audio.js';
+import { fetchWithAuth } from '../../utils/api.js';
 
 export function ParticipantEditModal({ participant, onClose, onSuccess }) {
   const nameInputRef = useRef(null);
@@ -36,7 +37,7 @@ export function ParticipantEditModal({ participant, onClose, onSuccess }) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/participants/${participant.id}`, {
+      const res = await fetchWithAuth(`/api/participants/${participant.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

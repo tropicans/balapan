@@ -22,20 +22,23 @@ export function Navbar({ activeScreen, setActiveScreen }) {
   const { user, isAuthenticated, isApproved, isPending, isSuperAdmin, isAdmin, logout } = useAuth();
   const [authDropdown, setAuthDropdown] = useState(false);
 
-  // Dynamic screens list based on RBAC permissions
-  const baseScreens = [
-    { id: 'cashier', label: 'Registrasi Kasir', icon: CreditCard, color: 'amber', path: '/cashier' },
-    { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director' },
-    { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket' },
-    { id: 'winners', label: 'Registrasi Pemenang', icon: UserCheck, color: 'cyan', path: '/winners' },
-    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
-    { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events' },
+  // Dynamic screens list based on RBAC permissions (SEC-04)
+  const allScreens = [
+    { id: 'cashier', label: 'Registrasi Kasir', icon: CreditCard, color: 'amber', path: '/cashier', roles: ['cashier', 'admin', 'super_admin'] },
+    { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director', roles: ['race_director', 'admin', 'super_admin'] },
+    { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket', roles: 'public' },
+    { id: 'winners', label: 'Registrasi Pemenang', icon: UserCheck, color: 'cyan', path: '/winners', roles: ['marshal', 'race_director', 'admin', 'super_admin'] },
+    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv', roles: 'public' },
+    { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events', roles: ['admin', 'super_admin'] },
+    { id: 'admin', label: 'Admin Approval', icon: ShieldCheck, color: 'cyan', path: '/admin', roles: ['admin', 'super_admin'] }
   ];
 
-  // If user is Super Admin or Admin, expose Admin User Management screen
-  const screens = isAdmin
-    ? [...baseScreens, { id: 'admin', label: 'Admin Approval', icon: ShieldCheck, color: 'cyan', path: '/admin' }]
-    : baseScreens;
+  const screens = allScreens.filter(screen => {
+    if (screen.roles === 'public') return true;
+    if (!isAuthenticated || !isApproved || !user) return false;
+    if (isSuperAdmin) return true;
+    return Array.isArray(screen.roles) && screen.roles.includes(user.role);
+  });
 
   const handleSelectScreen = (screen) => {
     setActiveScreen(screen.id);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRace } from '../../context/RaceContext.jsx';
+import { fetchWithAuth } from '../../utils/api.js';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { CyberCard } from '../ui/CyberCard.jsx';
 import {
@@ -64,7 +65,7 @@ export function WinnerRegistrationPanel() {
   // Fetch registered winners for selected round
   const fetchWinners = useCallback(async () => {
     try {
-      const res = await fetch(`/api/winners?round=${selectedRound}`);
+      const res = await fetchWithAuth(`/api/winners?round=${selectedRound}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setWinnersList(data.data);
@@ -99,7 +100,7 @@ export function WinnerRegistrationPanel() {
       return;
     }
     try {
-      const resE = await fetch(`/api/winners/eligibility?participant_number=${encodeURIComponent(participantNum)}&round=${selectedRound}`);
+      const resE = await fetchWithAuth(`/api/winners/eligibility?participant_number=${encodeURIComponent(participantNum)}&round=${selectedRound}`);
       const dataE = await resE.json();
       if (dataE.success && dataE.data) {
         setEligibilityInfo(dataE.data);
@@ -111,22 +112,14 @@ export function WinnerRegistrationPanel() {
     }
   }, [selectedRound]);
 
-  // Lookup participant & check eligibility for selectedRound (Omni-Search)
+  // Live suggestions and validation on typing
   useEffect(() => {
     const query = participantInput.trim();
     if (!query) {
-      setSelectedParticipant(null);
-      setEligibilityInfo(null);
       setSuggestions([]);
       setShowDropdown(false);
-      return;
-    }
-
-    if (selectedParticipant && (
-      query === `#${selectedParticipant.participant_number}` ||
-      query === String(selectedParticipant.participant_number) ||
-      query === `#${selectedParticipant.participant_number} - ${selectedParticipant.name}`
-    )) {
+      setSelectedParticipant(null);
+      setEligibilityInfo(null);
       return;
     }
 
@@ -134,7 +127,7 @@ export function WinnerRegistrationPanel() {
       setSearching(true);
       try {
         const cleanQuery = query.replace(/^#/, '');
-        const resP = await fetch(`/api/participants?search=${encodeURIComponent(cleanQuery)}&limit=8`);
+        const resP = await fetchWithAuth(`/api/participants?search=${encodeURIComponent(cleanQuery)}&limit=8`);
         const dataP = await resP.json();
         if (dataP.success && Array.isArray(dataP.data?.participants)) {
           const list = dataP.data.participants;
@@ -145,30 +138,21 @@ export function WinnerRegistrationPanel() {
 
           if (exactByNum) {
             setSelectedParticipant(exactByNum);
-            setShowDropdown(false);
-            setErrorMsg(null);
             checkEligibility(exactByNum.participant_number);
-          } else if (exactByName && list.length === 1) {
+          } else if (exactByName) {
             setSelectedParticipant(exactByName);
-            setShowDropdown(false);
-            setErrorMsg(null);
             checkEligibility(exactByName.participant_number);
-          } else {
-            setShowDropdown(list.length > 0);
           }
-        } else {
-          setSuggestions([]);
-          setShowDropdown(false);
         }
       } catch (e) {
-        setSuggestions([]);
+        console.error('Participant search error:', e);
       } finally {
         setSearching(false);
       }
-    }, 150);
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [participantInput, selectedRound, selectedParticipant, checkEligibility]);
+  }, [participantInput, checkEligibility]);
 
   const handleSelectParticipant = (p) => {
     setSelectedParticipant(p);
@@ -187,16 +171,14 @@ export function WinnerRegistrationPanel() {
     inputRef.current?.focus();
   };
 
-  // Handle register winner
+  // Handle Register Winner for active round
   const handleRegister = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setErrorMsg(null);
     setFeedbackMsg(null);
 
-    const cleanNum = participantInput.trim().replace(/^#/, '').split(' - ')[0];
-    const targetNumber = selectedParticipant ? selectedParticipant.participant_number : (isNaN(cleanNum) ? null : parseInt(cleanNum, 10));
-
-    if (!targetNumber) {
+    const targetNumber = selectedParticipant?.participant_number || parseInt(participantInput.trim().replace(/^#/, ''), 10);
+    if (!targetNumber || isNaN(targetNumber)) {
       setErrorMsg(`Pilih atau masukkan nomor/nama pembalap pemenang untuk Babak ${selectedRound}`);
       inputRef.current?.focus();
       return;
@@ -204,7 +186,7 @@ export function WinnerRegistrationPanel() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/winners/register', {
+      const res = await fetchWithAuth('/api/winners/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ participant_number: targetNumber, round: selectedRound })
@@ -235,7 +217,7 @@ export function WinnerRegistrationPanel() {
     setFeedbackMsg(null);
     setUndoing(true);
     try {
-      const res = await fetch('/api/winners/undo', {
+      const res = await fetchWithAuth('/api/winners/undo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ round: selectedRound })
