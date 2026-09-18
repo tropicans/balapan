@@ -47,7 +47,7 @@ export function RealtimeTV() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl md:text-3xl font-orbitron font-black text-white tracking-widest text-glow-cyan">
-                {activeEvent?.name ? activeEvent.name.toUpperCase() : 'DGDASH RACING SYSTEM'}
+                {(activeEvent?.nama || activeEvent?.name || 'DGDASH RACING SYSTEM').toUpperCase()}
               </h1>
               <span className="px-3 py-1 text-sm font-orbitron font-black bg-neonPink/20 text-neonPink border border-neonPink clip-cyber shadow-glowPink">
                 CIRCUIT TV

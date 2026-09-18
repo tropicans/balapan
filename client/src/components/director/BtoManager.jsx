@@ -55,17 +55,22 @@ export function BtoManager() {
   useEffect(() => {
     if (!socket) return;
     const handleUpdate = () => fetchLeaderboard();
-    socket.on('bto:updated', handleUpdate);
-    socket.on('NEW_BTO_RECORD', handleUpdate);
-    socket.on('STATE_UPDATE', (state) => {
-      if (state?.btoLeaderboard) {
+    const handleStateUpdate = (state) => {
+      if (Array.isArray(state?.btoLeaderboard)) {
+        setLeaderboard(state.btoLeaderboard);
+      } else if (state?.btoLeaderboard) {
         fetchLeaderboard();
       }
-    });
+    };
+
+    socket.on('bto:updated', handleUpdate);
+    socket.on('NEW_BTO_RECORD', handleUpdate);
+    socket.on('STATE_UPDATE', handleStateUpdate);
 
     return () => {
       socket.off('bto:updated', handleUpdate);
       socket.off('NEW_BTO_RECORD', handleUpdate);
+      socket.off('STATE_UPDATE', handleStateUpdate);
     };
   }, [socket, fetchLeaderboard]);
 

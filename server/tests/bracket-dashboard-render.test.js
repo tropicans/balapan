@@ -10,8 +10,21 @@ const projectRoot = path.resolve(__dirname, '../..');
 console.log('🧪 RUNNING BRACKET DASHBOARD RENDER TEST (REPRODUCING BUG)...');
 
 const mockRaceContextPath = path.join(projectRoot, 'temp-mock-race-context.jsx');
+const mockAuthContextPath = path.join(projectRoot, 'temp-mock-auth-context.jsx');
 const runnerPath = path.join(projectRoot, 'temp-test-entry.jsx');
 const tempBundle = path.join(projectRoot, 'temp-test-bundle.mjs');
+
+const mockAuthContextCode = `
+import React from 'react';
+export function useAuth() {
+  return {
+    user: { id: 'admin-1', role: 'admin', status: 'approved' },
+    isAuthenticated: true,
+    isApproved: true,
+    isDirectorOrAdmin: true
+  };
+}
+`;
 
 const mockRaceContextCode = `
 import React from 'react';
@@ -66,6 +79,7 @@ try {
 `;
 
 fs.writeFileSync(mockRaceContextPath, mockRaceContextCode, 'utf8');
+fs.writeFileSync(mockAuthContextPath, mockAuthContextCode, 'utf8');
 fs.writeFileSync(runnerPath, runnerCode, 'utf8');
 
 let exitCode = 0;
@@ -75,6 +89,9 @@ const mockPlugin = {
   setup(build) {
     build.onResolve({ filter: /RaceContext/ }, args => {
       return { path: mockRaceContextPath };
+    });
+    build.onResolve({ filter: /AuthContext/ }, args => {
+      return { path: mockAuthContextPath };
     });
     build.onResolve({ filter: /canvas-confetti/ }, args => {
       return { path: path.join(projectRoot, 'client/src/utils/audio.js') };
@@ -116,6 +133,7 @@ try {
   }
 } finally {
   if (fs.existsSync(mockRaceContextPath)) fs.unlinkSync(mockRaceContextPath);
+  if (fs.existsSync(mockAuthContextPath)) fs.unlinkSync(mockAuthContextPath);
   if (fs.existsSync(runnerPath)) fs.unlinkSync(runnerPath);
   if (fs.existsSync(tempBundle)) fs.unlinkSync(tempBundle);
 }

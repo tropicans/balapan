@@ -18,9 +18,12 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { WinnerRegistrationPanel } from '../components/bracket/WinnerRegistrationPanel.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export function BracketDashboard() {
   const { raceState, apiAdvanceBracket } = useRace();
+  const { user } = useAuth();
+  const isDirectorOrAdmin = Boolean(user && user.status === 'approved' && ['race_director', 'admin', 'super_admin'].includes(user.role));
   const matches = raceState.bracketMatches || [];
   const isQualifyingLocked = raceState?.settings?.qualifying_status === 'locked' || raceState?.ticketStats?.is_locked;
 
@@ -57,6 +60,13 @@ export function BracketDashboard() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedRound, searchQuery, statusFilter]);
+
+  // Fallback activeTab to bracket if not race director or admin
+  useEffect(() => {
+    if (!isDirectorOrAdmin && activeTab === 'winners') {
+      setActiveTab('bracket');
+    }
+  }, [isDirectorOrAdmin, activeTab]);
 
   // Matches in the currently selected round
   const currentRoundMatches = useMemo(() => {
@@ -209,7 +219,7 @@ export function BracketDashboard() {
 
         {/* Action / Winner Status */}
         <div className="flex-shrink-0 flex items-center gap-1.5">
-          {hasContestant && !isCompleted && (
+          {isDirectorOrAdmin && hasContestant && !isCompleted && (
             <button
               onClick={() => handleSelectWinner(match, userId)}
               disabled={advancingMatchId === match.id}
@@ -343,36 +353,38 @@ export function BracketDashboard() {
         </div>
       </div>
 
-      {/* Main Tab Navigation (Bracket vs Winner Registration) */}
-      <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
-        <button
-          onClick={() => setActiveTab('bracket')}
-          className={clsx(
-            "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
-            activeTab === 'bracket'
-              ? "bg-neonPink text-black shadow-glowPink"
-              : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
-          )}
-        >
-          <GitBranch className="w-4 h-4" />
-          <span>BAGAN PERTANDINGAN</span>
-        </button>
+      {/* Main Tab Navigation (Bracket vs Winner Registration) - Director/Admin Only */}
+      {isDirectorOrAdmin && (
+        <div className="flex items-center gap-2 border-b border-gray-800 pb-2">
+          <button
+            onClick={() => setActiveTab('bracket')}
+            className={clsx(
+              "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
+              activeTab === 'bracket'
+                ? "bg-neonPink text-black shadow-glowPink"
+                : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
+            )}
+          >
+            <GitBranch className="w-4 h-4" />
+            <span>BAGAN PERTANDINGAN</span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('winners')}
-          className={clsx(
-            "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
-            activeTab === 'winners'
-              ? "bg-neonCyan text-black shadow-glowCyan"
-              : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
-          )}
-        >
-          <UserCheck className="w-4 h-4" />
-          <span>REGISTRASI PEMENANG BABAK 2 (v3.0)</span>
-        </button>
-      </div>
+          <button
+            onClick={() => setActiveTab('winners')}
+            className={clsx(
+              "px-4 py-2 font-orbitron text-xs font-bold uppercase clip-cyber flex items-center gap-2 transition-all",
+              activeTab === 'winners'
+                ? "bg-neonCyan text-black shadow-glowCyan"
+                : "bg-black/60 text-cyberSilver/60 hover:text-white border border-gray-800"
+            )}
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>REGISTRASI PEMENANG BABAK 2 (v3.0)</span>
+          </button>
+        </div>
+      )}
 
-      {activeTab === 'winners' ? (
+      {isDirectorOrAdmin && activeTab === 'winners' ? (
         <WinnerRegistrationPanel />
       ) : (
         <>
