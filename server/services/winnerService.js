@@ -52,18 +52,7 @@ export function registerWinner({ participant_number, event_id }) {
       throw new Error(`Peserta dengan nomor #${pNum} tidak ditemukan pada event aktif`);
     }
 
-    // 2. Check if user is already in Round 2
-    const existingInR2 = db.prepare(`
-      SELECT id, match_number 
-      FROM bracket_matches 
-      WHERE event_id = ? AND round_number = 2 AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
-    `).get(targetEventId, user.id, user.id, user.id);
-
-    if (existingInR2) {
-      throw new Error(`Peserta #${user.participant_number} (${user.name}) sudah terdaftar di Babak 2 (Heat #${existingInR2.match_number})`);
-    }
-
-    // 3. Find open slot in Round 2 matches
+    // 2. Find open slot in Round 2 matches
     const openMatches = db.prepare(`
       SELECT * FROM bracket_matches 
       WHERE event_id = ? AND round_number = 2 AND status = 'pending' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
@@ -75,6 +64,11 @@ export function registerWinner({ participant_number, event_id }) {
     let slotLane = null;
 
     for (const m of openMatches) {
+      // Ensure a racer is NEVER placed against themselves in the same heat
+      if (m.user_id_1 === user.id || m.user_id_2 === user.id || m.user_id_3 === user.id) {
+        continue;
+      }
+
       if (!m.user_id_1) {
         targetMatch = m;
         targetSlot = 'user_id_1';

@@ -78,12 +78,19 @@ async function runTests() {
     console.log('✓ Test 2: Sequential slotting A -> B -> C and dynamic heat allocation verified');
 
     // ----------------------------------------------------
-    // Test 3: Duplicate protection in Round 2 (WREG-04)
+    // Test 3: Multi-slot / multi-ticket registration in Round 2 (WREG-04)
     // ----------------------------------------------------
-    console.log('--- Test 3: WREG-04 - Duplicate Prevention ---');
-    assert.throws(() => registerWinner({ participant_number: 1 }), /sudah terdaftar di Babak 2/);
-    assert.throws(() => registerWinner({ participant_number: '2' }), /sudah terdaftar di Babak 2/);
-    console.log('✓ Test 3: Duplicate winner registrations prevented');
+    console.log('--- Test 3: WREG-04 - Multi-Slot Support (Separate Heats) ---');
+    const w1Second = registerWinner({ participant_number: 1 });
+    assert.ok(w1Second.success, 'Participant 1 must be able to register multiple tickets into Round 2');
+    assert.notStrictEqual(w1Second.match.id, match1Id, 'Participant 1 must be placed in a separate heat (Heat 2)');
+    assert.strictEqual(w1Second.match.id, w4.match.id, 'Participant 1 should take an open slot in Heat 2');
+    assert.strictEqual(w1Second.slot, 'user_id_2', 'Must take slot 2 (Jalur B) in Heat 2');
+    assert.strictEqual(w1Second.lane, 'B');
+    console.log('✓ Test 3: Participant 1 successfully registered into Heat 2 without clashing with themselves');
+
+    // Clean up second registration so subsequent Test 4 (undo for p4) remains intact
+    undoLastWinnerRegistration();
 
     // ----------------------------------------------------
     // Test 4: Undo last winner registration (WREG-05)
