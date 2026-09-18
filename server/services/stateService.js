@@ -1,6 +1,7 @@
 import db from '../db.js';
 import { getActiveEvent, getActiveEventId } from './eventService.js';
 import { getBtoLeaderboard } from './btoService.js';
+import { RaceManager } from '../raceManager.js';
 
 /**
  * Returns the v3.0 canonical state contract:
@@ -60,6 +61,8 @@ export function getFullState() {
     bracketMatches,
     btoLeaderboard,
     settings,
+    round2_status: RaceManager.getRoundStatus(2),
+    round2_progress: RaceManager.getRoundProgress(2),
     serverTime: new Date().toISOString(),
 
     // Legacy client compatibility fallbacks (empty/mock)

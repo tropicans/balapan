@@ -213,6 +213,8 @@ export class RaceManager {
       scrutineerQueue,
       bracketMatches,
       settings,
+      round2_status: RaceManager.getRoundStatus(2),
+      round2_progress: RaceManager.getRoundProgress(2),
       ticketStats: hasTickets ? TicketEngine.getTicketStats() : {
         total_issued: 0,
         total_void: 0,
@@ -785,6 +787,92 @@ export class RaceManager {
     });
   }
 
+  // Get status of a tournament round ('open' | 'locked')
+  static getRoundStatus(round = 2) {
+    if (!checkTableExists('tournament_settings')) {
+      return 'open';
+    }
+    const key = `round${round}_status`;
+    const setting = db.prepare('SELECT value FROM tournament_settings WHERE key = ?').get(key);
+    return setting?.value || 'open';
+  }
+
+  // Get progress metadata for a round
+  static getRoundProgress(round = 2) {
+    if (!checkTableExists('bracket_matches')) {
+      return {
+        round,
+        is_locked: false,
+        total_heats: 0,
+        completed_heats: 0,
+        pending_heats: 0,
+        can_finalize: false
+      };
+    }
+
+    const activeEventId = getActiveEventId();
+    const row = activeEventId
+      ? db.prepare(`
+          SELECT 
+            COUNT(*) as total, 
+            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed 
+          FROM bracket_matches 
+          WHERE round_number = ? AND (event_id = ? OR event_id IS NULL)
+        `).get(round, activeEventId)
+      : db.prepare(`
+          SELECT 
+            COUNT(*) as total, 
+            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed 
+          FROM bracket_matches 
+          WHERE round_number = ?
+        `).get(round);
+
+    const total_heats = Number(row?.total) || 0;
+    const completed_heats = Number(row?.completed) || 0;
+    const pending_heats = total_heats - completed_heats;
+    const is_locked = this.getRoundStatus(round) === 'locked';
+    const can_finalize = total_heats > 0 && pending_heats === 0 && !is_locked;
+
+    return {
+      round,
+      is_locked,
+      total_heats,
+      completed_heats,
+      pending_heats,
+      can_finalize
+    };
+  }
+
+  // Finalize and lock a round (requires all heats to be completed)
+  static lockRound(round = 2) {
+    const progress = this.getRoundProgress(round);
+    if (progress.total_heats === 0) {
+      throw new Error(`Tidak ada heat di Babak ${round} untuk dikunci.`);
+    }
+    if (progress.pending_heats > 0) {
+      throw new Error(`Masih ada ${progress.pending_heats} heat Babak ${round} yang belum selesai.`);
+    }
+
+    const key = `round${round}_status`;
+    db.prepare(`
+      INSERT OR REPLACE INTO tournament_settings (key, value, updated_at)
+      VALUES (?, 'locked', CURRENT_TIMESTAMP)
+    `).run(key);
+
+    return this.getRoundProgress(round);
+  }
+
+  // Emergency unlock of a round
+  static unlockRound(round = 2) {
+    const key = `round${round}_status`;
+    db.prepare(`
+      INSERT OR REPLACE INTO tournament_settings (key, value, updated_at)
+      VALUES (?, 'open', CURRENT_TIMESTAMP)
+    `).run(key);
+
+    return this.getRoundProgress(round);
+  }
+
   // RD advances bracket match winner with 3:1 hierarchical tree reduction
   static advanceBracketWinner(matchId, winnerId, options = {}) {
     const match = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(matchId);
@@ -792,6 +880,10 @@ export class RaceManager {
 
     if (!winnerId || (match.user_id_1 !== winnerId && match.user_id_2 !== winnerId && match.user_id_3 !== winnerId)) {
       throw new Error('Pemenang harus salah satu dari kontestan pertandingan');
+    }
+
+    if (match.round_number === 2 && RaceManager.getRoundStatus(2) === 'locked') {
+      throw new Error('Babak 2 telah difinalisasi dan dikunci. Buka kunci Babak 2 terlebih dahulu jika ingin merevisi hasil.');
     }
 
     db.prepare(`

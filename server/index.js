@@ -1399,6 +1399,45 @@ app.post('/api/bracket/advance', (req, res) => {
   }
 });
 
+// 22e. Finalize & Lock Round (RDELIM-04, D-01, D-05)
+app.post('/api/bracket/lock-round', async (req, res) => {
+  try {
+    const round = parseInt(req.body?.round) || 2;
+    const result = RaceManager.lockRound(round);
+    io.emit(`round${round}:locked`, { round, timestamp: new Date().toISOString() });
+    io.emit('bracket_updated');
+    broadcastFullState();
+    res.json({ success: true, data: result, message: `Babak ${round} berhasil difinalisasi dan dikunci.` });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 22f. Emergency Unlock Round (RDELIM-04, D-03, D-05)
+app.post('/api/bracket/unlock-round', async (req, res) => {
+  try {
+    const round = parseInt(req.body?.round) || 2;
+    const result = RaceManager.unlockRound(round);
+    io.emit(`round${round}:unlocked`, { round, timestamp: new Date().toISOString() });
+    io.emit('bracket_updated');
+    broadcastFullState();
+    res.json({ success: true, data: result, message: `Kunci Babak ${round} berhasil dibuka.` });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 22g. Get Round Progress Metadata (RDELIM-04, D-04)
+app.get('/api/bracket/progress', (req, res) => {
+  try {
+    const round = parseInt(req.query?.round) || 2;
+    const progress = RaceManager.getRoundProgress(round);
+    res.json({ success: true, data: progress });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Serve frontend static files in production
 const clientDistPath = path.join(__dirname, '../client/dist');
 app.use(express.static(clientDistPath));
