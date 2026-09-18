@@ -3,7 +3,8 @@ import { useRace } from '../context/RaceContext.jsx';
 import { CyberButton } from '../components/ui/CyberButton.jsx';
 import { CyberCard } from '../components/ui/CyberCard.jsx';
 import { 
-  Lock, 
+  Lock,
+  Unlock, 
   Play, 
   CheckCircle, 
   RotateCcw, 
@@ -26,6 +27,7 @@ import { BtoManager } from '../components/director/BtoManager.jsx';
 export function RaceDirectorDashboard() {
   const {
     raceState,
+    socket,
     apiLockRace,
     apiStartRace,
     apiSubmitFinish,
@@ -35,7 +37,8 @@ export function RaceDirectorDashboard() {
     apiStartCountdown,
     apiResetCountdown,
     apiStopCountdown,
-    apiLockQualifying
+    apiLockQualifying,
+    apiUnlockQualifying
   } = useRace();
 
   const [loading, setLoading] = useState(false);
@@ -43,6 +46,7 @@ export function RaceDirectorDashboard() {
   const [successMsg, setSuccessMsg] = useState(null);
   const [qualifyingLocked, setQualifyingLocked] = useState(false);
   const [lockQualifyingModalOpen, setLockQualifyingModalOpen] = useState(false);
+  const [unlockQualifyingModalOpen, setUnlockQualifyingModalOpen] = useState(false);
   const [rdTab, setRdTab] = useState('race'); // 'race' or 'bto'
 
   // Finish times input state
@@ -87,6 +91,19 @@ export function RaceDirectorDashboard() {
       .catch(() => {});
   }, [overrideLane]);
 
+  // Real-time listener for qualifying lock/unlock
+  useEffect(() => {
+    if (!socket) return;
+    const handleLocked = () => setQualifyingLocked(true);
+    const handleUnlocked = () => setQualifyingLocked(false);
+    socket.on('qualifying:locked', handleLocked);
+    socket.on('qualifying:unlocked', handleUnlocked);
+    return () => {
+      socket.off('qualifying:locked', handleLocked);
+      socket.off('qualifying:unlocked', handleUnlocked);
+    };
+  }, [socket]);
+
   // Handle Lock Qualifying
   const handleLockQualifying = async () => {
     setLoading(true);
@@ -96,6 +113,22 @@ export function RaceDirectorDashboard() {
       setQualifyingLocked(true);
       setLockQualifyingModalOpen(false);
       setSuccessMsg(res.message || 'Kualifikasi Babak 1 berhasil dikunci. Bagan Babak 2 telah difinalisasi.');
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Unlock Qualifying
+  const handleUnlockQualifying = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await apiUnlockQualifying();
+      setQualifyingLocked(false);
+      setUnlockQualifyingModalOpen(false);
+      setSuccessMsg(res.message || 'Kualifikasi Babak 1 berhasil dibuka kembali.');
     } catch (err) {
       setErrorMsg(err.message);
     } finally {
@@ -336,20 +369,27 @@ export function RaceDirectorDashboard() {
             </span>
           </div>
 
-          <button
-            onClick={() => setLockQualifyingModalOpen(true)}
-            disabled={qualifyingLocked || loading}
-            className={clsx(
-              "px-3 py-1.5 text-xs font-orbitron font-bold flex items-center gap-1.5 clip-cyber border transition-all",
-              qualifyingLocked
-                ? "bg-red-950/40 text-red-400 border-red-500/60 opacity-80 cursor-not-allowed"
-                : "bg-neonAmber/20 text-neonAmber hover:bg-neonAmber hover:text-black border-neonAmber shadow-glowAmber active:scale-95"
-            )}
-            title="Kunci Kualifikasi Babak 1 & Finalisasi Bagan Babak 2"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>{qualifyingLocked ? 'KUALIFIKASI TERKUNCI' : 'KUNCI KUALIFIKASI'}</span>
-          </button>
+          {qualifyingLocked ? (
+            <button
+              onClick={() => setUnlockQualifyingModalOpen(true)}
+              disabled={loading}
+              className="px-3 py-1.5 text-xs font-orbitron font-bold flex items-center gap-1.5 clip-cyber border bg-neonCyan/20 text-neonCyan hover:bg-neonCyan hover:text-black border-neonCyan shadow-glowCyan transition-all active:scale-95 cursor-pointer"
+              title="Klik untuk membuka kembali Kualifikasi Babak 1"
+            >
+              <Unlock className="w-3.5 h-3.5" />
+              <span>BUKA KUALIFIKASI</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setLockQualifyingModalOpen(true)}
+              disabled={loading}
+              className="px-3 py-1.5 text-xs font-orbitron font-bold flex items-center gap-1.5 clip-cyber border bg-neonAmber/20 text-neonAmber hover:bg-neonAmber hover:text-black border-neonAmber shadow-glowAmber transition-all active:scale-95 cursor-pointer"
+              title="Kunci Kualifikasi Babak 1 & Finalisasi Bagan Babak 2"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>KUNCI KUALIFIKASI</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -850,6 +890,50 @@ export function RaceDirectorDashboard() {
                 disabled={loading}
               >
                 {loading ? 'MEMPROSES...' : 'YA, KUNCI SEKARANG'}
+              </CyberButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unlock Qualifying Confirmation Modal */}
+      {unlockQualifyingModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-obsidian border-2 border-neonCyan p-6 max-w-md w-full clip-cyber space-y-4 shadow-glowCyan">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-neonCyan/20 border border-neonCyan flex items-center justify-center clip-cyber text-neonCyan">
+                <Unlock className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-orbitron font-black text-white">BUKA KUALIFIKASI</h3>
+                <p className="text-xs font-mono text-neonCyan">BUKA KEMBALI BABAK 1</p>
+              </div>
+            </div>
+
+            <p className="text-xs font-mono text-cyberSilver/90 leading-relaxed">
+              Apakah Anda yakin ingin membuka kembali Kualifikasi Babak 1?
+              <br /><br />
+              • Status kualifikasi akan kembali aktif (<strong className="text-neonGreen">OPEN</strong>).
+              <br />
+              • Penerbitan tiket dan pendaftaran peserta Babak 2 dapat dilanjutkan kembali.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-800">
+              <CyberButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setUnlockQualifyingModalOpen(false)}
+                disabled={loading}
+              >
+                BATAL
+              </CyberButton>
+              <CyberButton
+                variant="cyan"
+                size="sm"
+                onClick={handleUnlockQualifying}
+                disabled={loading}
+              >
+                {loading ? 'MEMPROSES...' : 'YA, BUKA SEKARANG'}
               </CyberButton>
             </div>
           </div>
