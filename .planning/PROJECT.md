@@ -60,29 +60,19 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **BRKT-01..03**: Eksekusi bracket eliminasi 3-jalur manual advance — Shipped in v3.0
 - ✓ **MON-01..05**: TV sirkuit HUD & race director monitoring dari state v3.0 — Shipped in v3.0
 - ✓ **RDELIM-01..05**: Race Director Elimination Command Center (Babak 2+ bracket control, 1-klik winner, finalisasi/kunci babak 2, WebSocket sync) — Shipped in v3.1
+- ✓ **AUTH-01..06, APPR-01..06**: Google OAuth 2.0 Sign-In, `tropicans@gmail.com` Super Admin auto-provisioning & immunity, Pending Approval Gate, Dasbor Manajemen Pengguna (`/admin`), RBAC middleware, dan public route bypass (`/tv`, `/bracket`) — Shipped in v3.2
 
 ### Active
 
-- [ ] Integrasi Login Google OAuth (Google Identity Services / verifyIdToken)
-- [ ] Otomatisasi Super Admin untuk tropicans@gmail.com
-- [ ] Mekanisme Pending Approval untuk pengguna Google baru
-- [ ] Dasbor Manajemen Pengguna & Persetujuan Admin (/admin)
-- [ ] Role-Based Access Control (RBAC) untuk dasbor operasional
-- [ ] Akses bebas publik untuk Layar TV Sirkuit (/tv) dan Bagan Turnamen (/bracket)
+*Tidak ada milestone aktif. Siap untuk milestone berikutnya via `/gsd-new-milestone`.*
 
-## Current Milestone: v3.2 Google OAuth Authentication & Admin Approval System
+## Current State: v3.2 Shipped (2026-09-18)
 
-**Goal:** Mengamankan akses operasional sistem balap dengan autentikasi Google OAuth 2.0, menetapkan `tropicans@gmail.com` sebagai Super Admin, memberlakukan alur persetujuan (approval) oleh admin bagi pengguna Google baru, serta menyediakan dasbor kontrol hak akses/peran (Role) dengan tetap menjaga layar publik (/tv dan /bracket) dapat diakses bebas.
-
-**Target features:**
-- **Google OAuth 2.0 Sign-In**: Tombol login Google aman di antarmuka web, verifikasi ID Token di backend via library resmi Google, dan penerbitan sesi JWT.
-- **Super Admin Auto-Provisioning**: Email `tropicans@gmail.com` otomatis mendapatkan peran `super_admin` dengan status `approved` saat login.
-- **Pending Approval Gate**: User Google lain yang baru login otomatis masuk status `pending` dan ditahan di layar antrean "Menunggu Persetujuan Admin" tanpa bisa mengakses dasbor operasional.
-- **Admin User Management & Approval Panel (`/admin`)**: Dasbor khusus bagi Super Admin untuk melihat daftar permintaan login pending, menyetujui (approve), memilih role pengguna (Kasir, Race Director, Scrutineer, Co-Admin, Viewer), atau mencabut akses.
-- **Role-Based Access Control (RBAC)**: Middleware backend dan pengamanan rute frontend yang membatasi aksi berdasarkan role yang telah di-approve.
-- **Public Screen Exemption**: Layar TV sirkuit (`/tv`) dan bagan publik (`/bracket`) tetap terbuka dan dapat diakses bebas tanpa login untuk kemudahan monitor sirkuit dan penonton.
-
-**Key context:** Sistem sebelumnya terbuka tanpa autentikasi. Milestone v3.2 menambahkan lapisan keamanan login Google tanpa mengubah atau memperlambat alur registrasi peserta dan eksekusi balapan di arena.
+Sistem telah dilengkapi dengan autentikasi Google OAuth 2.0 penuh dan sistem otorisasi berbasis approval admin:
+1. **Google OAuth & Auto Super Admin**: Tombol resmi Google Identity Services di web, verifikasi ID Token di backend, dan penugasan otomatis akun `tropicans@gmail.com` sebagai Super Admin dengan kekebalan sistem.
+2. **Pending Approval Gate**: Pengguna Google baru selain super admin otomatis ditahan di layar pending dan menunggu persetujuan `tropicans@gmail.com`.
+3. **Dasbor Manajemen Pengguna (`/admin`)**: Super Admin dapat melihat antrean pending, menyetujui akun dengan memilih role operasional (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`), mengubah role, atau menangguhkan akun (suspend) secara real-time.
+4. **Public Route Exemption**: Layar TV Sirkuit (`/tv`) dan Bagan Turnamen (`/bracket`) tetap bebas diakses tanpa login untuk kemudahan display sirkuit.
 
 ### Out of Scope
 

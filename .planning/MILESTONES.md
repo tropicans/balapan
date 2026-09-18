@@ -1,5 +1,25 @@
 # Project Milestones
 
+## v3.2: Google OAuth Authentication & Admin Approval System
+- **Shipped:** 2026-09-18
+- **Phases:** 4 (Phases 20-23)
+- **Plans:** 4
+- **Requirements Satisfied:** 12/12 (`AUTH-01`..`06`, `APPR-01`..`06`)
+- **Key Accomplishments:**
+  - Login resmi Google OAuth 2.0 / Google Identity Services (GIS) terintegrasi pada frontend dan backend.
+  - Penugasan otomatis akun `tropicans@gmail.com` sebagai Super Admin dengan status approved dan kekebalan sistem (Immunity).
+  - Alur persetujuan (approval gate) untuk seluruh pengguna Google baru dengan penahan layar "Menunggu Persetujuan Admin".
+  - Dasbor Manajemen Pengguna (`/admin`) dengan metrik KPI real-time, filter pencarian, dan modal penetapan peran (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`).
+  - Penangguhan/pencabutan akses seketika (suspend) dengan pemutusan sesi token aktif.
+  - Akses bebas tanpa login untuk layar publik penonton (`/tv` Layar TV Sirkuit dan `/bracket` Bagan Turnamen).
+  - Sinkronisasi real-time via Socket.IO antara aksi approval Super Admin dan layar operator.
+- **Verification:** 19/19 test suites passing (100% green), Vite production build clean (0 errors).
+- **Roadmap Archive:** [milestones/v3.2-ROADMAP.md](milestones/v3.2-ROADMAP.md)
+- **Requirements Archive:** [milestones/v3.2-REQUIREMENTS.md](milestones/v3.2-REQUIREMENTS.md)
+- **Audit Report:** [milestones/v3.2-MILESTONE-AUDIT.md](milestones/v3.2-MILESTONE-AUDIT.md)
+
+---
+
 ## v3.1: Race Director Elimination Command Center
 - **Shipped:** 2026-09-18
 - **Phases:** 2 (Phases 18-19)
