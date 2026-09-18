@@ -5,6 +5,7 @@ import { LogIn, Shield, Tv, GitBranch, AlertCircle, Sparkles } from 'lucide-reac
 export function LoginScreen({ onNavigatePublic }) {
   const { loginWithGoogleToken, loginWithMock, error: authError, loading } = useAuth();
   const googleBtnRef = useRef(null);
+  const isGsiInitializedRef = useRef(false);
   const [devEmail, setDevEmail] = useState('tropicans@gmail.com');
   const [devName, setDevName] = useState('Tropicans Super Admin');
   const [showDevLogin, setShowDevLogin] = useState(false);
@@ -27,31 +28,40 @@ export function LoginScreen({ onNavigatePublic }) {
 
   useEffect(() => {
     // Initialize Google Identity Services if available and client id is provided
-    if (window.google?.accounts?.id && googleClientId && googleBtnRef.current) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: async (response) => {
-            try {
-              if (response.credential) {
-                await loginWithGoogleToken(response.credential);
+    if (window.google?.accounts?.id && googleClientId) {
+      if (!isGsiInitializedRef.current) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: async (response) => {
+              try {
+                if (response.credential) {
+                  await loginWithGoogleToken(response.credential);
+                }
+              } catch (err) {
+                setLocalError(err.message || 'Login dengan Google gagal');
               }
-            } catch (err) {
-              setLocalError(err.message || 'Login dengan Google gagal');
-            }
-          },
-        });
+            },
+          });
+          isGsiInitializedRef.current = true;
+        } catch (e) {
+          console.warn('[GIS] Init error:', e);
+        }
+      }
 
-        window.google.accounts.id.renderButton(googleBtnRef.current, {
-          theme: 'filled_black',
-          size: 'large',
-          shape: 'rectangular',
-          text: 'signin_with',
-          logo_alignment: 'left',
-          width: 280,
-        });
-      } catch (e) {
-        console.warn('[GIS] Init error:', e);
+      if (googleBtnRef.current) {
+        try {
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'filled_black',
+            size: 'large',
+            shape: 'rectangular',
+            text: 'signin_with',
+            logo_alignment: 'left',
+            width: 280,
+          });
+        } catch (e) {
+          console.warn('[GIS] renderButton error:', e);
+        }
       }
     }
   }, [googleClientId, loginWithGoogleToken]);

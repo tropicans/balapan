@@ -81,12 +81,18 @@ app.get('/api/health', (req, res) => {
 // 0.1 Authentication Endpoints (Google OAuth & Session)
 app.post('/api/auth/google', async (req, res) => {
   try {
-    const { credential } = req.body;
+    let credential = req.body?.credential || req.body?.id_token || req.body?.token;
+    if (!credential && req.body?.mock_user) {
+      const email = req.body.mock_user.email || 'user@gmail.com';
+      const name = req.body.mock_user.name || 'Test User';
+      credential = `mock-google-token:${email}:${name}`;
+    }
+
     if (!credential) {
       return res.status(400).json({ success: false, error: 'Google credential/token wajib dikirim' });
     }
     const result = await authenticateGoogleUser(credential);
-    res.json({ success: true, ...result });
+    res.json({ success: true, data: result, ...result });
   } catch (err) {
     console.error('Google auth error:', err);
     res.status(401).json({ success: false, error: err.message || 'Autentikasi Google gagal' });
@@ -104,7 +110,7 @@ app.get('/api/auth/me', (req, res) => {
     if (!user) {
       return res.status(401).json({ success: false, error: 'Sesi telah kedaluwarsa atau tidak valid' });
     }
-    res.json({ success: true, user });
+    res.json({ success: true, data: user, user });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

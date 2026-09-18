@@ -33,10 +33,11 @@ export function AuthProvider({ children }) {
         }
       });
       const data = await res.json();
-      if (data.success && data.data) {
-        setUser(data.data);
+      const userData = data.data || data.user;
+      if (data.success && userData) {
+        setUser(userData);
         setError(null);
-        return data.data;
+        return userData;
       } else {
         // Token expired or invalid
         localStorage.removeItem(STORAGE_KEY);
@@ -92,15 +93,22 @@ export function AuthProvider({ children }) {
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_token: idToken })
+        body: JSON.stringify({
+          credential: idToken,
+          id_token: idToken
+        })
       });
       const data = await res.json();
       if (!data.success) {
-        throw new Error(data.message || 'Login Google gagal');
+        throw new Error(data.message || data.error || 'Login Google gagal');
       }
 
-      const newToken = data.data.token;
-      const newUser = data.data.user;
+      const newToken = data.data?.token || data.token;
+      const newUser = data.data?.user || data.user;
+
+      if (!newToken || !newUser) {
+        throw new Error('Respons autentikasi tidak valid');
+      }
 
       localStorage.setItem(STORAGE_KEY, newToken);
       setToken(newToken);
@@ -119,18 +127,29 @@ export function AuthProvider({ children }) {
     setLoading(true);
     setError(null);
     try {
+      const email = mockUser?.email || 'user@gmail.com';
+      const name = mockUser?.name || 'Test User';
+      const mockCredential = `mock-google-token:${email}:${name}`;
+
       const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mock_user: mockUser })
+        body: JSON.stringify({
+          credential: mockCredential,
+          mock_user: mockUser
+        })
       });
       const data = await res.json();
       if (!data.success) {
-        throw new Error(data.message || 'Mock login gagal');
+        throw new Error(data.message || data.error || 'Mock login gagal');
       }
 
-      const newToken = data.data.token;
-      const newUser = data.data.user;
+      const newToken = data.data?.token || data.token;
+      const newUser = data.data?.user || data.user;
+
+      if (!newToken || !newUser) {
+        throw new Error('Respons autentikasi tidak valid');
+      }
 
       localStorage.setItem(STORAGE_KEY, newToken);
       setToken(newToken);
