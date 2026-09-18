@@ -65,3 +65,29 @@ npm test
 # Build aplikasi frontend
 npm run build
 ```
+
+---
+
+## 🐳 Docker & CI/CD Auto-Rebuild
+
+### 1. Auto-Rebuild Lokal (Docker Compose Watch & Git Hook)
+
+Aplikasi telah dilengkapi fitur otomatisasi agar setiap perubahan kode langsung memicu build ulang kontainer secara otomatis:
+
+```bash
+# Opsi A: Live Auto-Rebuild saat file di-edit (Docker Compose Watch)
+npm run docker:watch
+
+# Opsi B: Setup Git Hook (Otomatis rebuild setiap "git commit" atau "git merge")
+npm run setup:hooks
+
+# Opsi C: Rebuild manual satu baris
+npm run docker:rebuild
+```
+
+### 2. Cloud CI/CD (GitHub Actions)
+
+Alur kerja CI/CD otomatis berjalan pada setiap `push` dan `pull request` ke branch `main`:
+- **Automated Tests**: Menjalankan seluruh test suite (`npm test`) dan build check frontend.
+- **Docker Image Build & Push**: Membangun Docker image dengan GitHub layer caching (`type=gha`) dan mempublikasikan otomatis ke GitHub Container Registry (`ghcr.io/tropicans/balapan:latest`).
+

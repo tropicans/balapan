@@ -14,10 +14,13 @@
     "import:roster": "node scripts/import-roster.js",
     "test": "node server/tests/race-flow.test.js && node server/tests/camera-scanner.test.js && node server/tests/coupon-package.test.js && node server/tests/marshal-flow.test.js && node server/tests/ticket-engine-flow.test.js && node server/tests/bracket-dashboard-render.test.js && node server/tests/bracket-3lane.test.js && node server/tests/e2e-tournament-lifecycle.test.js && node server/tests/migration-foundation.test.js && node server/tests/participant-registration.test.js && node server/tests/bto-service.test.js && node server/tests/winner-registration.test.js && node server/tests/state-contract.test.js",
     "docker:build": "docker compose build",
+    "docker:rebuild": "docker compose up -d --build",
+    "docker:watch": "docker compose watch",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:restart": "docker compose restart"
+    "docker:restart": "docker compose restart",
+    "setup:hooks": "node scripts/setup-git-hooks.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
