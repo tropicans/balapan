@@ -60,11 +60,23 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **BRKT-01..03**: Eksekusi bracket eliminasi 3-jalur manual advance — Shipped in v3.0
 - ✓ **MON-01..05**: TV sirkuit HUD & race director monitoring dari state v3.0 — Shipped in v3.0
 - ✓ **RDELIM-01..05**: Race Director Elimination Command Center (Babak 2+ bracket control, 1-klik winner, finalisasi/kunci babak 2, WebSocket sync) — Shipped in v3.1
-- ✓ **AUTH-01..06, APPR-01..06**: Google OAuth 2.0 Sign-In, `tropicans@gmail.com` Super Admin auto-provisioning & immunity, Pending Approval Gate, Dasbor Manajemen Pengguna (`/admin`), RBAC middleware, dan public route bypass (`/tv`, `/bracket`) — Shipped in v3.2
+## Current Milestone: v3.3 Google Sheets Racer Sync & Admin Integration
+
+**Goal:** Mengintegrasikan sinkronisasi data peserta/pembalap langsung dari Google Sheets ke event aktif dengan satu kali klik melalui tombol Sync di dasbor Kasir dan Admin.
+
+**Target features:**
+- Integrasi parser Google Sheets CSV export live fetch dari URL spreadsheet kustom/default
+- Logika sinkronisasi cerdas idempotence (anti-duplikat: peserta baru ditambahkan dengan nomor urut berikutnya, peserta lama dilewati)
+- Endpoint backend `/api/participants/sync-sheet` yang diproteksi hak akses (RBAC cashier/admin)
+- Tombol aksi "SYNC GOOGLE SHEET" terintegrasi dengan modal konfirmasi dan notifikasi real-time di Dasbor Kasir (`/cashier`) dan Panel Admin (`/admin`)
 
 ### Active
 
-*Tidak ada milestone aktif. Siap untuk milestone berikutnya via `/gsd-new-milestone`.*
+- [ ] **SYNC-01**: Service backend untuk fetch dan parse CSV dari Google Sheets live URL (mendukung sheet ID + gid)
+- [ ] **SYNC-02**: Logika sinkronisasi cerdas (idempotent duplicate detection berdasarkan nama peserta per active event)
+- [ ] **SYNC-03**: Endpoint API `/api/participants/sync-sheet` dengan broadcast Socket.IO dan revalidasi active event
+- [ ] **SYNC-04**: Tombol dan modal konfirmasi Sync Google Sheet di Dasbor Kasir (`CashierDashboard.jsx`)
+- [ ] **SYNC-05**: Tombol dan visual status Sync Google Sheet di Panel Admin (`AdminUserDashboard.jsx`)
 
 ## Current State: v3.2 Shipped (2026-09-18)
 
@@ -142,4 +154,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-18 for Milestone v3.2*
+*Last updated: 2026-09-18 for Milestone v3.3*
