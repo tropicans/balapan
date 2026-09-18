@@ -1,49 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useRace } from '../../context/RaceContext.jsx';
-import { CyberButton } from './CyberButton.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { 
   Tv, 
-  Smartphone, 
   Sliders, 
   ShieldCheck, 
   CreditCard, 
   GitBranch, 
-  QrCode, 
-  Radio, 
-  User, 
-  Coins, 
   ChevronDown,
-  Flag,
   Calendar,
-  UserCheck
+  UserCheck,
+  LogIn,
+  LogOut,
+  Shield,
+  Clock
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export function Navbar({ activeScreen, setActiveScreen }) {
-  const { connected, currentUser, switchUser, raceState } = useRace();
-  const [userDropdown, setUserDropdown] = useState(false);
-  const [users, setUsers] = useState([]);
+  const { connected, raceState } = useRace();
+  const { user, isAuthenticated, isApproved, isPending, isSuperAdmin, isAdmin, logout } = useAuth();
+  const [authDropdown, setAuthDropdown] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/users')
-      .then((res) => res.json())
-      .then((res) => {
-        if (cancelled || !res?.success || !Array.isArray(res.data)) return;
-        setUsers(res.data.map((u) => ({
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          team_name: u.team_name,
-          role: u.role,
-          coupon_balance: u.coupon_balance ?? 0
-        })));
-      })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-
-  const screens = [
+  // Dynamic screens list based on RBAC permissions
+  const baseScreens = [
     { id: 'cashier', label: 'Registrasi Kasir', icon: CreditCard, color: 'amber', path: '/cashier' },
     { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director' },
     { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket' },
@@ -51,6 +31,11 @@ export function Navbar({ activeScreen, setActiveScreen }) {
     { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv' },
     { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events' },
   ];
+
+  // If user is Super Admin or Admin, expose Admin User Management screen
+  const screens = isAdmin
+    ? [...baseScreens, { id: 'admin', label: 'Admin Approval', icon: ShieldCheck, color: 'cyan', path: '/admin' }]
+    : baseScreens;
 
   const handleSelectScreen = (screen) => {
     setActiveScreen(screen.id);
@@ -63,9 +48,25 @@ export function Navbar({ activeScreen, setActiveScreen }) {
 
   const activeRaceNum = raceState.activeRace?.race_number || 1;
 
+  // Format role label for badge
+  const getRoleBadge = (role) => {
+    switch (role) {
+      case 'super_admin': return { label: 'SUPER ADMIN', color: 'border-neonCyan text-neonCyan bg-neonCyan/20' };
+      case 'admin': return { label: 'CO-ADMIN', color: 'border-cyan-500 text-cyan-400 bg-cyan-500/20' };
+      case 'cashier': return { label: 'KASIR', color: 'border-neonAmber text-neonAmber bg-amber-500/20' };
+      case 'race_director': return { label: 'RACE DIRECTOR', color: 'border-neonPink text-neonPink bg-neonPink/20' };
+      case 'scrutineer': return { label: 'SCRUTINEER', color: 'border-purple-500 text-purple-400 bg-purple-500/20' };
+      case 'viewer': return { label: 'VIEWER', color: 'border-gray-500 text-gray-300 bg-gray-600/20' };
+      case 'pending': return { label: 'PENDING', color: 'border-yellow-500 text-yellow-400 bg-yellow-500/20' };
+      default: return { label: role?.toUpperCase() || 'GUEST', color: 'border-gray-600 text-gray-400 bg-gray-800' };
+    }
+  };
+
+  const badge = getRoleBadge(user?.role);
+
   return (
     <header className="sticky top-0 z-40 bg-obsidian/95 border-b border-cyan-500/20 backdrop-blur-md print:hidden">
-      {/* Top Header: Brand Logo & Status + User Switcher */}
+      {/* Top Header: Brand Logo & Status + Authenticated User Profile */}
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4 border-b border-gray-800/80">
         {/* Brand / Logo */}
         <div className="flex items-center gap-3">
@@ -86,66 +87,102 @@ export function Navbar({ activeScreen, setActiveScreen }) {
               {connected ? "LIVE SYNC" : "OFFLINE"}
             </span>
             <span>•</span>
-            <span className="uppercase">NEO-RACING HUD v2.0</span>
+            <span className="uppercase">NEO-RACING HUD v3.2</span>
           </div>
         </div>
 
-        {/* User Session & Role Switcher */}
+        {/* Authenticated User Identity / Google Login Control */}
         <div className="relative flex-shrink-0">
-          <button
-            onClick={() => setUserDropdown(!userDropdown)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-midnight border border-neonCyan/40 clip-cyber hover:border-neonCyan text-left whitespace-nowrap"
-          >
-            <div className="w-6 h-6 rounded-full bg-neonCyan/20 flex items-center justify-center border border-neonCyan text-neonCyan font-bold text-xs">
-              {currentUser?.name ? currentUser.name[0] : 'U'}
-            </div>
-            <div className="hidden sm:block">
-              <div className="text-xs font-orbitron font-bold text-white leading-none">
-                {currentUser?.name || 'Pilih Akun'}
-              </div>
-              <div className="flex items-center gap-1 text-[10px] text-neonAmber font-mono mt-0.5">
-                <Coins className="w-3 h-3" />
-                <span>{currentUser?.coupon_balance ?? 0} Kupon</span>
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-cyberSilver/70" />
-          </button>
-
-          {/* User Switcher Dropdown */}
-          {userDropdown && (
-            <div className="absolute right-0 mt-2 w-64 bg-obsidian border border-neonCyan/50 shadow-glowCyan clip-cyber p-2 z-50">
-              <div className="text-[10px] font-orbitron font-bold text-neonCyan px-2 py-1 uppercase tracking-wider border-b border-gray-800">
-                Pilih Peserta / Akun
-              </div>
-              <div className="mt-1 space-y-1 max-h-60 overflow-y-auto">
-                {users.length === 0 && (
-                  <div className="px-2.5 py-2 text-[10px] font-mono text-cyberSilver/60">
-                    Belum ada peserta terdaftar.
+          {isAuthenticated && user ? (
+            <div>
+              <button
+                onClick={() => setAuthDropdown(!authDropdown)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-midnight border border-neonCyan/40 clip-cyber hover:border-neonCyan text-left whitespace-nowrap transition"
+              >
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-6 h-6 rounded-full border border-neonCyan object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-neonCyan/20 flex items-center justify-center border border-neonCyan text-neonCyan font-bold text-xs">
+                    {user.name ? user.name[0] : 'U'}
                   </div>
                 )}
-                {users.map(u => (
-                  <button
-                    key={u.id}
-                    onClick={() => {
-                      switchUser(u);
-                      setUserDropdown(false);
-                    }}
-                    className={clsx(
-                      "w-full text-left px-2.5 py-1.5 text-xs font-mono flex items-center justify-between transition-colors",
-                      currentUser?.email === u.email
-                        ? "bg-neonCyan/20 text-neonCyan font-bold"
-                        : "text-cyberSilver hover:bg-white/5 hover:text-white"
-                    )}
-                  >
-                    <div>
-                      <div className="font-orbitron text-xs">{u.name}</div>
-                      <div className="text-[10px] text-cyberSilver/60">{u.team_name || u.role}</div>
+                <div className="hidden sm:block">
+                  <div className="text-xs font-orbitron font-bold text-white leading-none flex items-center gap-1.5">
+                    <span>{user.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={clsx("px-1.5 py-0.2 text-[9px] font-orbitron font-bold clip-cyber border", badge.color)}>
+                      {badge.label}
+                    </span>
+                  </div>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-cyberSilver/70 ml-0.5" />
+              </button>
+
+              {/* User Profile Dropdown Menu */}
+              {authDropdown && (
+                <div className="absolute right-0 mt-2 w-72 bg-obsidian border-2 border-neonCyan/60 shadow-glowCyan clip-cyber p-3 z-50">
+                  <div className="border-b border-gray-800 pb-2.5 mb-2.5">
+                    <div className="text-xs font-orbitron font-bold text-white truncate">
+                      {user.name}
                     </div>
-                    <span className="text-neonAmber text-xs font-bold">{u.coupon_balance} K</span>
+                    <div className="text-[11px] font-mono text-cyberSilver/80 truncate">
+                      {user.email}
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className={clsx("px-1.5 py-0.5 text-[9px] font-orbitron font-bold clip-cyber border", badge.color)}>
+                        ROLE: {badge.label}
+                      </span>
+                      <span className={clsx(
+                        "px-1.5 py-0.5 text-[9px] font-orbitron font-bold clip-cyber border",
+                        isApproved && "bg-emerald-950/60 text-emerald-400 border-emerald-500/50",
+                        isPending && "bg-amber-950/60 text-amber-400 border-amber-500/50",
+                        !isApproved && !isPending && "bg-red-950/60 text-red-400 border-red-500/50"
+                      )}>
+                        STATUS: {user.status?.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setActiveScreen('admin');
+                        setAuthDropdown(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-orbitron font-bold text-neonCyan hover:bg-neonCyan/10 clip-cyber flex items-center gap-2 mb-2 transition"
+                    >
+                      <Shield className="w-3.5 h-3.5" />
+                      <span>MANAJEMEN PENGGUNA</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      setAuthDropdown(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs font-orbitron font-bold text-red-400 hover:bg-red-950/40 hover:text-red-300 clip-cyber flex items-center gap-2 transition"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>KELUAR (LOGOUT)</span>
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
+          ) : (
+            <button
+              onClick={() => setActiveScreen('cashier')}
+              className="flex items-center gap-2 px-3 py-1.5 bg-neonCyan/10 border border-neonCyan text-neonCyan hover:bg-neonCyan hover:text-black font-orbitron font-bold text-xs clip-cyber shadow-glowCyan transition"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>LOGIN PETUGAS</span>
+            </button>
           )}
         </div>
       </div>

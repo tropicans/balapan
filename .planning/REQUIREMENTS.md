@@ -9,17 +9,17 @@ Mengamankan akses operasional sistem balap dengan autentikasi Google OAuth 2.0, 
 
 ### Google OAuth Authentication (AUTH)
 
-- [ ] **AUTH-01**: User dapat login menggunakan akun Google (Google Sign-In) melalui tombol resmi Google di antarmuka web
+- [x] **AUTH-01**: User dapat login menggunakan akun Google (Google Sign-In) melalui tombol resmi Google di antarmuka web
 - [x] **AUTH-02**: Backend memverifikasi Google ID Token dengan aman (memvalidasi signature, audience Client ID, dan payload profile/email)
 - [x] **AUTH-03**: Akun dengan email `tropicans@gmail.com` otomatis berstatus `approved` dengan role `super_admin` saat login
 - [x] **AUTH-04**: Backend menerbitkan token sesi aman (JWT / bearer token) setelah verifikasi Google berhasil untuk autentikasi endpoint API
-- [ ] **AUTH-05**: User dapat logout dengan aman yang menghapus sesi lokal dan mengembalikan status ke guest/public
-- [ ] **AUTH-06**: Pengunjung tetap dapat melihat layar publik (`/tv` Layar TV Sirkuit dan `/bracket` Bagan Turnamen) secara bebas tanpa login
+- [x] **AUTH-05**: User dapat logout dengan aman yang menghapus sesi lokal dan mengembalikan status ke guest/public
+- [x] **AUTH-06**: Pengunjung tetap dapat melihat layar publik (`/tv` Layar TV Sirkuit dan `/bracket` Bagan Turnamen) secara bebas tanpa login
 
 ### Admin Approval & Access Control (APPR)
 
 - [x] **APPR-01**: User Google baru selain super admin otomatis tercatat dengan status `pending` (menunggu persetujuan)
-- [ ] **APPR-02**: User dengan status `pending` melihat layar penahan "Menunggu Persetujuan Admin" dan dicegah mengakses dasbor operasional (`/cashier`, `/director`, `/winners`, `/events`, `/admin`)
+- [x] **APPR-02**: User dengan status `pending` melihat layar penahan "Menunggu Persetujuan Admin" dan dicegah mengakses dasbor operasional (`/cashier`, `/director`, `/winners`, `/events`, `/admin`)
 - [ ] **APPR-03**: Super Admin (`tropicans@gmail.com`) memiliki akses ke Dasbor Manajemen Pengguna (`/admin`) untuk melihat daftar akun pending, approved, dan rejected/suspended
 - [ ] **APPR-04**: Super Admin dapat menyetujui (approve) akun pending serta menentukan Peran/Role (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`)
 - [ ] **APPR-05**: Super Admin dapat mengubah role atau mencabut (revoke/suspend) akses pengguna terdaftar sewaktu-waktu
@@ -46,18 +46,18 @@ Mengamankan akses operasional sistem balap dengan autentikasi Google OAuth 2.0, 
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 22 | Pending |
+| AUTH-01 | Phase 22 | Satisfied |
 | AUTH-02 | Phase 20 | Satisfied |
 | AUTH-03 | Phase 20 | Satisfied |
 | AUTH-04 | Phase 20 | Satisfied |
-| AUTH-05 | Phase 22 | Pending |
-| AUTH-06 | Phase 22 | Pending |
+| AUTH-05 | Phase 22 | Satisfied |
+| AUTH-06 | Phase 22 | Satisfied |
 | APPR-01 | Phase 20 | Satisfied |
-| APPR-02 | Phase 22 | Pending |
-| APPR-03 | Phase 21, 23 | Pending |
-| APPR-04 | Phase 21, 23 | Pending |
-| APPR-05 | Phase 21, 23 | Pending |
-| APPR-06 | Phase 21, 23 | Pending |
+| APPR-02 | Phase 22 | Satisfied |
+| APPR-03 | Phase 21, 23 | In Progress |
+| APPR-04 | Phase 21, 23 | In Progress |
+| APPR-05 | Phase 21, 23 | In Progress |
+| APPR-06 | Phase 21, 23 | In Progress |
 
 ---
 

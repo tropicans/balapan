@@ -47,7 +47,7 @@
 
 - [x] **Phase 20: Database Schema, Google Auth Verification & Session Backend** - SQLite users table, token verification, tropicans@gmail auto-admin, and session tokens (completed 2026-09-18)
 - [x] **Phase 21: Admin Approval Engine & RBAC Middleware** - Approval status management, role assignment, admin endpoints, and route protection middleware (completed 2026-09-18)
-- [ ] **Phase 22: Frontend Google Login, Pending Gate & Public Route Bypass** - Google Sign-In button, AuthContext, pending approval gate, and /tv & /bracket public bypass
+- [x] **Phase 22: Frontend Google Login, Pending Gate & Public Route Bypass** - Google Sign-In button, AuthContext, pending approval gate, and /tv & /bracket public bypass (completed 2026-09-18)
 - [ ] **Phase 23: Admin Approval Dashboard UI & Role-Based UI Controls** - /admin user management page, approve modal with role picker, and role-scoped navigation
 
 ---
@@ -101,7 +101,7 @@
 5. Tombol Logout tersedia di Navbar yang menghapus sesi dan mengembalikan user ke tampilan publik.
 
 **Plans**: 1 plan
-- 22-01-PLAN.md — Google Identity Services integration, AuthContext, PendingGate component, Navbar user profile & public route exemption.
+- [x] 22-01-PLAN.md — Google Identity Services integration, AuthContext, PendingGate component, Navbar user profile & public route exemption. (completed 2026-09-18)
 
 ---
 
