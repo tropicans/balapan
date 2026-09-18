@@ -24,6 +24,7 @@ import clsx from 'clsx';
 export function EliminationManager() {
   const { raceState, apiAdvanceBracket, apiLockRound, apiUnlockRound } = useRace();
   const matches = raceState.bracketMatches || [];
+  const isQualifyingLocked = raceState?.settings?.qualifying_status === 'locked' || raceState?.ticketStats?.is_locked;
 
   // Determine all unique rounds present in matches (sorted numerically)
   const availableRounds = useMemo(() => {
@@ -250,7 +251,11 @@ export function EliminationManager() {
                 "text-xs font-orbitron truncate",
                 hasContestant ? (isWinner ? "text-neonGreen font-black" : "text-white") : "text-gray-600 italic text-[11px]"
               )}>
-                {displayName || (selectedRound === 2 ? 'Menunggu Lolos Babak 1...' : 'Menunggu Pemenang Heat...')}
+                {displayName || (
+                  selectedRound === 2 
+                    ? (isQualifyingLocked ? '(JALUR KOSONG / BYE)' : 'Menunggu Lolos Babak 1...')
+                    : 'Menunggu Pemenang Heat...'
+                )}
               </span>
               {ticketNumber && (
                 <span className="px-1.5 py-0.2 bg-neonCyan/20 text-neonCyan border border-neonCyan/60 font-mono font-bold text-[9px] clip-cyber">
@@ -295,6 +300,7 @@ export function EliminationManager() {
     const isCompleted = match.status === 'completed';
     const isFinalMatch = match.is_final === 1 || match.round_number === highestRound;
     const isAutoAdvanced = match.is_auto_advanced === 1;
+    const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
 
     return (
       <div
@@ -326,6 +332,12 @@ export function EliminationManager() {
               <span className="px-2 py-0.5 bg-neonAmber/20 border border-neonAmber text-neonAmber font-orbitron font-black text-[9px] flex items-center gap-1 clip-cyber animate-pulse">
                 <Zap className="w-3 h-3 text-neonAmber" />
                 AUTO-ADVANCE
+              </span>
+            )}
+            {contestantCount === 1 && !isAutoAdvanced && (
+              <span className="px-1.5 py-0.5 bg-neonAmber/20 border border-neonAmber/60 text-neonAmber font-orbitron font-bold text-[9px] flex items-center gap-1 clip-cyber">
+                <Zap className="w-3 h-3 text-neonAmber" />
+                SOLO RUN / BYE
               </span>
             )}
           </div>

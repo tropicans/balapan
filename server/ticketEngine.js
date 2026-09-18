@@ -29,27 +29,8 @@ export class TicketEngine {
         db.prepare("INSERT INTO tournament_settings (key, value, updated_at) VALUES ('qualifying_status', 'locked', CURRENT_TIMESTAMP)").run();
       }
 
-      // Handle Bye System (D-12) for pending Round 2 matches
-      const pendingR2Matches = db.prepare(`
-        SELECT * FROM bracket_matches 
-        WHERE round_number = 2 AND status = 'pending'
-        ORDER BY match_number ASC
-      `).all();
-
-      for (const m of pendingR2Matches) {
-        const racers = [m.user_id_1, m.user_id_2, m.user_id_3].filter(Boolean);
-        if (racers.length === 1) {
-          // Automatic Bye: single racer automatically advances to next round
-          const soleWinnerId = racers[0];
-          db.prepare(`
-            UPDATE bracket_matches 
-            SET status = 'completed', winner_id = ? 
-            WHERE id = ?
-          `).run(soleWinnerId, m.id);
-
-          RaceManager.advanceBracketWinner(m.id, soleWinnerId);
-        }
-      }
+      // Note: Under Opsi A (Manual Solo Run), heats with 1 racer remain 'pending'
+      // so the Race Director can manually declare them winner after their solo run.
 
       const totalTickets = db.prepare("SELECT COUNT(*) as count FROM next_round_tickets WHERE status = 'issued'").get()?.count || 0;
       return { success: true, is_locked: true, total_tickets: totalTickets };
