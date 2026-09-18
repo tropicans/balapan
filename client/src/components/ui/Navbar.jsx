@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRace } from '../../context/RaceContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { 
@@ -8,6 +8,8 @@ import {
   CreditCard, 
   GitBranch, 
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Calendar,
   UserCheck,
   LogIn,
@@ -21,16 +23,19 @@ export function Navbar({ activeScreen, setActiveScreen }) {
   const { connected, raceState } = useRace();
   const { user, isAuthenticated, isApproved, isPending, isSuperAdmin, isAdmin, logout } = useAuth();
   const [authDropdown, setAuthDropdown] = useState(false);
+  const navRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   // Dynamic screens list based on RBAC permissions (SEC-04)
   const allScreens = [
-    { id: 'cashier', label: 'Registrasi Kasir', icon: CreditCard, color: 'amber', path: '/cashier', roles: ['cashier', 'admin', 'super_admin'] },
-    { id: 'rd', label: 'Race Director', icon: Sliders, color: 'pink', path: '/director', roles: ['race_director', 'admin', 'super_admin'] },
-    { id: 'bracket', label: 'Babak Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket', roles: 'public' },
-    { id: 'winners', label: 'Registrasi Pemenang', icon: UserCheck, color: 'cyan', path: '/winners', roles: ['marshal', 'race_director', 'admin', 'super_admin'] },
-    { id: 'tv', label: 'Layar TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv', roles: 'public' },
-    { id: 'events', label: 'Manajemen Event', icon: Calendar, color: 'cyan', path: '/events', roles: ['admin', 'super_admin'] },
-    { id: 'admin', label: 'Admin Approval', icon: ShieldCheck, color: 'cyan', path: '/admin', roles: ['admin', 'super_admin'] }
+    { id: 'cashier', label: 'Registrasi Kasir', shortLabel: 'Kasir', icon: CreditCard, color: 'amber', path: '/cashier', roles: ['cashier', 'admin', 'super_admin'] },
+    { id: 'rd', label: 'Race Director', shortLabel: 'Race Director', icon: Sliders, color: 'pink', path: '/director', roles: ['race_director', 'admin', 'super_admin'] },
+    { id: 'bracket', label: 'Babak Eliminasi', shortLabel: 'Eliminasi', icon: GitBranch, color: 'pink', path: '/bracket', roles: 'public' },
+    { id: 'winners', label: 'Registrasi Pemenang', shortLabel: 'Pemenang', icon: UserCheck, color: 'cyan', path: '/winners', roles: ['marshal', 'race_director', 'admin', 'super_admin'] },
+    { id: 'tv', label: 'Layar TV Sirkuit', shortLabel: 'TV Sirkuit', icon: Tv, color: 'cyan', path: '/tv', roles: 'public' },
+    { id: 'events', label: 'Manajemen Event', shortLabel: 'Event', icon: Calendar, color: 'cyan', path: '/events', roles: ['admin', 'super_admin'] },
+    { id: 'admin', label: 'Admin Approval', shortLabel: 'Admin', icon: ShieldCheck, color: 'cyan', path: '/admin', roles: ['admin', 'super_admin'] }
   ];
 
   const screens = allScreens.filter(screen => {
@@ -47,6 +52,47 @@ export function Navbar({ activeScreen, setActiveScreen }) {
         window.history.pushState(null, '', screen.path);
       } catch (e) {}
     }
+  };
+
+  const checkScroll = () => {
+    if (!navRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = navRef.current;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const nav = navRef.current;
+    if (!nav) return;
+
+    nav.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+
+    const timer = setTimeout(checkScroll, 100);
+
+    return () => {
+      nav.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+      clearTimeout(timer);
+    };
+  }, [screens]);
+
+  useEffect(() => {
+    if (navRef.current) {
+      const activeEl = navRef.current.querySelector('[data-active="true"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+      checkScroll();
+    }
+  }, [activeScreen]);
+
+  const handleScroll = (direction) => {
+    if (!navRef.current) return;
+    const offset = direction === 'left' ? -200 : 200;
+    navRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    setTimeout(checkScroll, 300);
   };
 
   const activeRaceNum = raceState.activeRace?.race_number || 1;
@@ -191,28 +237,59 @@ export function Navbar({ activeScreen, setActiveScreen }) {
       </div>
 
       {/* Navigation Screen Switcher Tabs Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-1.5">
-        <nav className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-1.5 relative flex items-center group">
+        {/* Left Scroll Indicator / Arrow */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => handleScroll('left')}
+            className="absolute left-0 z-20 p-1 sm:p-1.5 bg-obsidian/95 border border-neonCyan/60 text-neonCyan hover:bg-neonCyan/20 hover:border-neonCyan shadow-glowCyan clip-cyber transition flex items-center justify-center backdrop-blur-sm"
+            title="Geser ke kiri"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        <nav 
+          ref={navRef}
+          className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5 w-full scroll-smooth"
+        >
           {screens.map(s => {
             const Icon = s.icon;
             const isActive = activeScreen === s.id;
             return (
               <button
                 key={s.id}
+                data-active={isActive}
                 onClick={() => handleSelectScreen(s)}
                 className={clsx(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-orbitron font-semibold uppercase tracking-wider whitespace-nowrap flex-shrink-0 transition-all duration-150 clip-cyber border",
+                  "flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 text-[11px] sm:text-xs font-orbitron font-semibold uppercase tracking-wider whitespace-nowrap flex-shrink-0 transition-all duration-150 clip-cyber border",
                   isActive
                     ? "bg-neonCyan/20 text-neonCyan border-neonCyan shadow-glowCyan"
                     : "bg-midnight/70 text-cyberSilver/75 border-gray-800 hover:border-gray-600 hover:text-white"
                 )}
               >
                 <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>{s.label}</span>
+                <span className="hidden xl:inline">{s.label}</span>
+                <span className="xl:hidden">{s.shortLabel}</span>
               </button>
             );
           })}
         </nav>
+
+        {/* Right Scroll Indicator / Arrow */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => handleScroll('right')}
+            className="absolute right-0 z-20 p-1 sm:p-1.5 bg-obsidian/95 border border-neonCyan/60 text-neonCyan hover:bg-neonCyan/20 hover:border-neonCyan shadow-glowCyan clip-cyber transition flex items-center justify-center backdrop-blur-sm"
+            title="Geser ke kanan"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     </header>
   );
