@@ -1,5 +1,25 @@
 # Project Milestones
 
+## v3.4: System Hardening, Security & Operational Reliability
+- **Shipped:** 2026-09-18
+- **Phases:** 3 (Phases 26-28)
+- **Plans:** 3
+- **Requirements Satisfied:** 12/12 (`FIX-01`..`04`, `SEC-01`..`04`, `ENH-01`..`04`)
+- **Key Accomplishments:**
+  - Penambalan celah keamanan kredensial `.env` Google OAuth (sanitasi secret), perbaikan socket listener leak `BtoManager`, perbaikan nama event TV HUD, dan integrasi test runner CI.
+  - Pengamanan layar publik `/bracket` menjadi mode read-only untuk penonton (tombol mutasi & form registrasi disembunyikan).
+  - Penegakan middleware RBAC ketat (`requireRole`, `requireApproved`) di seluruh endpoint backend (`/api/events`, `/api/participants`, `/api/bto`, `/api/winners`, `/api/bracket`).
+  - Implementasi fetch helper terpusat (`fetchWithAuth`) yang menyuntikkan token Bearer secara otomatis pada seluruh mutasi frontend.
+  - Filtering dinamis menu navigasi di `Navbar.jsx` serta proteksi pembatasan rute di `App.jsx` berbasis role pengguna.
+  - Reset otomatis status kunci dinamis (`qualifying_status`, `round*_status`) saat pergantian event aktif agar status tidak bocor antar turnamen.
+  - Generalisasi pengecekan round-lock di `advanceBracketWinner` dan `resetBracketMatch` untuk seluruh babak bertingkat (`round_number >= 2`).
+  - Penyediaan tombol akses darurat offline lokal di `LoginScreen.jsx` untuk menjamin operasional turnamen tanpa koneksi internet stadion.
+  - Opsi Multi-Entry pada sinkronisasi Google Sheets untuk mendukung pembalap dengan banyak pendaftaran mobil.
+- **Verification:** 23/23 test suites passing (100% green), Vite client build clean (0 errors), Docker auto-rebuild verified.
+- **Audit Report:** [.planning/v3.4-MILESTONE-AUDIT.md](.planning/v3.4-MILESTONE-AUDIT.md)
+
+---
+
 ## v3.3: Google Sheets Racer Sync & Admin Integration
 - **Shipped:** 2026-09-18
 - **Phases:** 2 (Phases 24-25)

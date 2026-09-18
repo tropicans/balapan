@@ -2,7 +2,7 @@
 
 ## Milestones
 
-- 🔲 **v3.4 System Hardening, Security & Operational Reliability** — Phases 26-28
+- ✅ **v3.4 System Hardening, Security & Operational Reliability** — Phases 26-28 (shipped 2026-09-18)
 - ✅ **v3.3 Google Sheets Racer Sync & Admin Integration** — Phases 24-25 (shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
 - ✅ **v3.2 Google OAuth Authentication & Admin Approval System** — Phases 20-23 (shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
 - ✅ **v3.1 Race Director Elimination Command Center** — Phases 18-19 (shipped 2026-09-18) — [Archive](milestones/v3.1-ROADMAP.md)
@@ -14,16 +14,16 @@
 
 ## Phases
 
-<details open>
-<summary>🔲 v3.4 System Hardening, Security & Operational Reliability (Phases 26-28)</summary>
+<details>
+<summary>✅ v3.4 System Hardening, Security & Operational Reliability (Phases 26-28) — SHIPPED 2026-09-18</summary>
 
-- [ ] **Phase 26: Critical Bug Fixes & Public Bracket Security Gate** (0/1 plan)
+- [x] **Phase 26: Critical Bug Fixes & Public Bracket Security Gate** (1/1 plan) — completed 2026-09-18
   - Goal: Resolve immediate security leak, memory leak, TV display bug, public bracket mutation vulnerability, and test coverage gap.
   - Requirements: FIX-01, FIX-02, FIX-03, FIX-04, SEC-01
-- [ ] **Phase 27: End-to-End RBAC Backend Protection & Frontend Role Guarding** (0/1 plan)
+- [x] **Phase 27: End-to-End RBAC Backend Protection & Frontend Role Guarding** (1/1 plan) — completed 2026-09-18
   - Goal: Secure all backend mutation endpoints with role middleware, integrate token forwarding across all frontend fetch requests, and enforce role-based UI access control.
   - Requirements: SEC-02, SEC-03, SEC-04
-- [ ] **Phase 28: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities** (0/1 plan)
+- [x] **Phase 28: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities** (1/1 plan) — completed 2026-09-18
   - Goal: Prevent cross-event settings leakage, generalize dynamic round locks to all elimination rounds, enable local offline admin login, and enhance Google Sheets multi-entry support.
   - Requirements: ENH-01, ENH-02, ENH-03, ENH-04
 
