@@ -63,21 +63,23 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-None (Milestone v3.0 complete)
+- [ ] Integrasi Bracket Eliminasi di Dasbor Race Director (`/director`)
+- [ ] Penandaan Pemenang & Heat Selesai 1-Klik di Babak 2+
+- [ ] Tombol Finalisasi & Kunci Babak 2 sebelum melangkah ke Babak 3
+- [ ] Sinkronisasi Real-time Bracket Execution dari Race Director ke TV Sirkuit
 
-## Current Milestone: v3.0 Alur Balap Fisik Tanpa Scan Kupon
+## Current Milestone: v3.1 Race Director Elimination Command Center
 
-**Goal:** Hilangkan seluruh proses scanning (kupon & QR jalur) serta modul kupon digital; aplikasi fokus pada registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor, dan manajemen bracket eliminasi.
+**Goal:** Race Director fokus mengendalikan pertandingan mulai dari Babak 2 ke atas sampai Grand Final langsung di `/director`: integrasi visual bagan bracket eliminasi 3-jalur, penandaan pemenang heat secara cepat, indikator heat yang sudah selesai, serta mekanisme finalisasi/kunci Babak 2 sebelum babak berikutnya dimulai.
 
 **Target features:**
-- Kasir: registrasi peserta (nama/tim) dengan nomor unik otomatis — tanpa serial kupon, tanpa saldo digital.
-- Panel Registrasi baru: input nomor peserta/kupon → nama otomatis terdaftar ke Babak 2.
-- Bracket: kelola Babak 2+ (3-jalur, pilih pemenang, auto-advance) tanpa lock/start/countdown.
-- Race Director: pantau peserta Babak 2 + input/monitor BTO manual.
-- TV Sirkuit: tampilkan bracket/peserta Babak 2 + BTO.
-- Hapus: modul kupon digital (`coupons`, `coupon_packages`, serial, tiket), scan QR jalur, layar Marshal, Scrutineer, Peserta HP, QR stencil, countdown/race lock/timing engine, Ticket Engine.
+- Kontrol Eliminasi Terpadu di `/director`: Menggantikan antarmuka race digital lama dengan Panel Eliminasi Babak 2+ yang menampilkan heat aktif, susunan pembalap Jalur A/B/C, dan status tiap heat.
+- Pemilihan Pemenang & Penandaan Heat Selesai 1-Klik: Race Director dapat langsung memilih pemenang mobil di tiap heat Babak 2, otomatis menandai heat sebagai selesai dan memajukan pemenang ke babak berikutnya.
+- Filter & Navigasi Babak Eliminasi: Kemudahan memantau Babak 2, Babak 3, hingga Grand Final langsung di halaman Race Director.
+- Finalisasi / Kunci Babak 2: Tombol konfirmasi penguncian Babak 2 saat semua heat Babak 2 selesai guna memastikan bagan Babak 3 siap dan mencegah salah klik.
+- Sinkronisasi Real-Time: Perubahan hasil heat oleh Race Director langsung tersiar ke layar TV Sirkuit (`/tv`) dan bagan publik (`/bracket`).
 
-**Key context:** Babak 1 sepenuhnya manual di lintasan. Identitas Babak 2 = nama pembalap; nomor hanya untuk memudahkan panitia input pemenang. BTO diinput manual oleh panitia.
+**Key context:** Babak 1 diselesaikan panitia di lapangan dan pemenang dimasukkan di `/winners`. Begitu Kualifikasi Babak 1 dikunci, pusat kendali turnamen beralih sepenuhnya ke Race Director di `/director` untuk memimpin eksekusi eliminasi Babak 2 sampai Grand Final.
 
 ### Out of Scope
 

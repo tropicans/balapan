@@ -1,7 +1,7 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v3.0 — Alur Balap Fisik Tanpa Scan Kupon",
+  "milestone": "v3.1",
   "phases": [
     {
       "number": "11",
@@ -11,38 +11,38 @@
     {
       "number": "12",
       "name": "Participant Registration & Auto-Numbering",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "13",
       "name": "Manual BTO Backend & Leaderboard",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "14",
       "name": "Winner Registration & Bracket Execution",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "15",
       "name": "State Contract Switch & Backend Decoupling/Removal",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "16",
       "name": "Frontend Rewrite & Monitoring Screens",
-      "status": "pending"
+      "status": "complete"
     },
     {
       "number": "17",
       "name": "Destructive Cleanup, Tests & Seed",
-      "status": "pending"
+      "status": "complete"
     }
   ],
   "next": {
-    "command": "/gsd-progress --next",
-    "label": "Advance to the next step (plan phase 12)",
-    "reason": "Phase 12 of 7 — needs a plan"
+    "command": "/gsd-discuss-phase",
+    "label": "Discuss the first phase",
+    "reason": "Project initialized — plan your first phase"
   },
-  "updated_at": "2026-09-17T10:58:40.765Z"
+  "updated_at": "2026-09-18T01:12:22.429Z"
 }
