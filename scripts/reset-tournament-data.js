@@ -1,0 +1,10 @@
+process.env.DB_PATH = '/app/data/tamiya.sqlite';
+import db, { initDatabase } from '../server/db.js';
+await initDatabase();
+db.prepare('DELETE FROM bracket_matches').run();
+db.prepare('DELETE FROM next_round_tickets').run();
+db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('qualifying_status', 'open', datetime('now'))").run();
+db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('round2_status', 'open', datetime('now'))").run();
+db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('round3_status', 'open', datetime('now'))").run();
+db.save();
+console.log('✅ Tournament data in /app/data/tamiya.sqlite successfully reset!');

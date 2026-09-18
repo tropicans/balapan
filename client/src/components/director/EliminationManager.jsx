@@ -298,7 +298,7 @@ export function EliminationManager() {
   // Render individual 3-lane match card
   const renderMatchCard = (match) => {
     const isCompleted = match.status === 'completed';
-    const isFinalMatch = match.is_final === 1 || match.round_number === highestRound;
+    const isFinalMatch = match.is_final === 1 || (match.round_number === highestRound && highestRound > 2);
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
 
