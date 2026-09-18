@@ -110,6 +110,16 @@ app.get('/api/auth/me', (req, res) => {
   }
 });
 
+// 0.1b Auth Public Config Endpoint (provides Google Client ID to frontend)
+app.get('/api/auth/config', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      google_client_id: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || ''
+    }
+  });
+});
+
 app.post('/api/auth/logout', (req, res) => {
   try {
     const authHeader = req.headers.authorization;

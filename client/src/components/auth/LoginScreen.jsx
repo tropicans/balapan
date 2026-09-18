@@ -10,7 +10,20 @@ export function LoginScreen({ onNavigatePublic }) {
   const [showDevLogin, setShowDevLogin] = useState(false);
   const [localError, setLocalError] = useState(null);
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const [googleClientId, setGoogleClientId] = useState(() => import.meta.env.VITE_GOOGLE_CLIENT_ID || '');
+
+  useEffect(() => {
+    if (!googleClientId) {
+      fetch('/api/auth/config')
+        .then((res) => res.json())
+        .then((res) => {
+          if (res?.success && res.data?.google_client_id) {
+            setGoogleClientId(res.data.google_client_id);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [googleClientId]);
 
   useEffect(() => {
     // Initialize Google Identity Services if available and client id is provided

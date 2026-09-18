@@ -13,6 +13,8 @@ services:
       - PORT=3000
       - DB_PATH=/app/data/tamiya.sqlite
       - ALLOW_DESTRUCTIVE_MIGRATION=false
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-tropicans@gmail.com}
     volumes:
       - dgdash_data:/app/data
     develop:
