@@ -78,16 +78,35 @@ async function runTests() {
     console.log('✓ Test 2: Sequential slotting A -> B -> C and dynamic heat allocation verified');
 
     // ----------------------------------------------------
-    // Test 3: Multi-slot / multi-ticket registration in Round 2 (WREG-04)
+    // Test 3: Multi-slot / multi-ticket registration in Round 2 (Same Heat Support)
     // ----------------------------------------------------
-    console.log('--- Test 3: WREG-04 - Multi-Slot Support (Separate Heats) ---');
+    console.log('--- Test 3: WREG-04 - Multi-Slot Support in Same Heat ---');
+    // Heat 2 currently has p4 in Jalur A (slot user_id_1).
+    // When p4 wins again, p4 MUST be placed into the SAME heat (Heat 2 Jalur B), NOT creating Heat 3!
+    const p4Second = registerWinner({ participant_number: 4 });
+    assert.ok(p4Second.success, 'Participant 4 must be able to register multiple wins into Round 2');
+    assert.strictEqual(p4Second.match.id, w4.match.id, 'Participant 4 winning again MUST be placed in the SAME heat (Heat 2)');
+    assert.strictEqual(p4Second.slot, 'user_id_2', 'Must take slot 2 (Jalur B) in Heat 2');
+    assert.strictEqual(p4Second.lane, 'B');
+
+    // When p4 wins a 3rd time, p4 MUST take Jalur C in the SAME heat (Heat 2)!
+    const p4Third = registerWinner({ participant_number: 4 });
+    assert.ok(p4Third.success);
+    assert.strictEqual(p4Third.match.id, w4.match.id, 'Participant 4 winning a 3rd time MUST be placed in the SAME heat (Heat 2)');
+    assert.strictEqual(p4Third.slot, 'user_id_3', 'Must take slot 3 (Jalur C) in Heat 2');
+    assert.strictEqual(p4Third.lane, 'C');
+
+    // Clean up the two registrations for p4 so subsequent tests remain aligned
+    undoLastWinnerRegistration();
+    undoLastWinnerRegistration();
+
+    // Now test registering participant 1 when Heat 1 is full -> fills open slot in Heat 2 (Jalur B)
     const w1Second = registerWinner({ participant_number: 1 });
     assert.ok(w1Second.success, 'Participant 1 must be able to register multiple tickets into Round 2');
-    assert.notStrictEqual(w1Second.match.id, match1Id, 'Participant 1 must be placed in a separate heat (Heat 2)');
     assert.strictEqual(w1Second.match.id, w4.match.id, 'Participant 1 should take an open slot in Heat 2');
     assert.strictEqual(w1Second.slot, 'user_id_2', 'Must take slot 2 (Jalur B) in Heat 2');
     assert.strictEqual(w1Second.lane, 'B');
-    console.log('✓ Test 3: Participant 1 successfully registered into Heat 2 without clashing with themselves');
+    console.log('✓ Test 3: Participant successfully registered into the same heat across open lanes');
 
     // Clean up second registration so subsequent Test 4 (undo for p4) remains intact
     undoLastWinnerRegistration();

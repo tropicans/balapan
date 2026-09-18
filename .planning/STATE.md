@@ -75,7 +75,8 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260918-cicd | Implement CI/CD & Auto-Rebuild Pipeline (GitHub Actions + Compose Watch + Git Hooks) | 2026-09-18 | 4581d3b | [260918-cicd-auto-rebuild](./quick/260918-cicd-auto-rebuild/) |
-| 260918-unlock-qualifying | Interactive Unlock Qualifying Button & Modal on Race Director Dashboard | 2026-09-18 | pending | [260918-unlock-qualifying-ui](./quick/260918-unlock-qualifying-ui/) |
+| 260918-unlock-qualifying | Interactive Unlock Qualifying Button & Modal on Race Director Dashboard | 2026-09-18 | 6d4b341 | [260918-unlock-qualifying-ui](./quick/260918-unlock-qualifying-ui/) |
+| 260918-same-heat | Place consecutive wins by the same racer into the same heat across open lanes | 2026-09-18 | pending | [260918-same-heat-winner-registration](./quick/260918-same-heat-winner-registration/) |
 
 ## Deferred Items
 

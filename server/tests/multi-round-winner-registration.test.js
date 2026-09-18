@@ -116,10 +116,12 @@ async function runTests() {
     // Now p1 has 2 wins in Round 2, and 1 registration in Round 3. Second registration in Round 3 must succeed!
     const w1SecondR3 = registerWinner({ participant_number: 1, round: 3 });
     assert.ok(w1SecondR3.success);
-    // Since Heat 1 in Round 3 already has p1 in Lane A, self-clash prevention must place p1 in Heat 2 in Round 3!
-    assert.notStrictEqual(w1SecondR3.match.id, w1R3.match.id, 'Self-clash prevention must place p1 in a separate heat in Round 3');
+    // As per rule: consecutive wins by the same participant are placed in the SAME heat (Jalur B), not the next heat!
+    assert.strictEqual(w1SecondR3.match.id, w1R3.match.id, 'Consecutive win must place p1 in the SAME heat in Round 3');
+    assert.strictEqual(w1SecondR3.slot, 'user_id_2', 'Must take Jalur B in the same heat');
+    assert.strictEqual(w1SecondR3.lane, 'B');
     assert.strictEqual(w1SecondR3.match.round_number, 3);
-    console.log('✓ Test 6: Multi-slot win verified: p1 placed in separate heat in Round 3 without clashing with themselves');
+    console.log('✓ Test 6: Multi-slot win verified: p1 placed in the same heat (Jalur B) in Round 3');
 
     // ----------------------------------------------------
     // Test 7: HTTP REST API with round parameter

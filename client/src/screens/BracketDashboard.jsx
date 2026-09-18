@@ -176,6 +176,7 @@ export function BracketDashboard() {
 
     const ticketNumber = lane === 'A' ? match.ticket_number_1 : (lane === 'B' ? match.ticket_number_2 : match.ticket_number_3);
     const ticketIndex = lane === 'A' ? match.ticket_index_1 : (lane === 'B' ? match.ticket_index_2 : match.ticket_index_3);
+    const participantNumber = lane === 'A' ? match.participant_number_1 : (lane === 'B' ? match.participant_number_2 : match.participant_number_3);
     const displayName = (userName && ticketIndex) ? `${userName} #${ticketIndex}` : userName;
     const cfg = laneConfigs[lane] || laneConfigs.A;
 
@@ -203,9 +204,9 @@ export function BracketDashboard() {
                     : 'Menunggu Pemenang Heat...'
                 )}
               </span>
-              {ticketNumber && (
+              {(ticketNumber || participantNumber) && (
                 <span className="px-1.5 py-0.2 bg-neonCyan/20 text-neonCyan border border-neonCyan/60 font-mono font-bold text-[9px] clip-cyber">
-                  #{ticketNumber}
+                  #{ticketNumber || participantNumber}
                 </span>
               )}
             </div>

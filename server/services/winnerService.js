@@ -114,11 +114,6 @@ export function registerWinner({ participant_number, round = 2, event_id }) {
     let slotLane = null;
 
     for (const m of openMatches) {
-      // Ensure a racer is NEVER placed against themselves in the same heat
-      if (m.user_id_1 === user.id || m.user_id_2 === user.id || m.user_id_3 === user.id) {
-        continue;
-      }
-
       if (!m.user_id_1) {
         targetMatch = m;
         targetSlot = 'user_id_1';
