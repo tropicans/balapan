@@ -46,7 +46,7 @@
 ### 🟡 v3.2 Google OAuth Authentication & Admin Approval System (Phases 20-23)
 
 - [x] **Phase 20: Database Schema, Google Auth Verification & Session Backend** - SQLite users table, token verification, tropicans@gmail auto-admin, and session tokens (completed 2026-09-18)
-- [ ] **Phase 21: Admin Approval Engine & RBAC Middleware** - Approval status management, role assignment, admin endpoints, and route protection middleware
+- [x] **Phase 21: Admin Approval Engine & RBAC Middleware** - Approval status management, role assignment, admin endpoints, and route protection middleware (completed 2026-09-18)
 - [ ] **Phase 22: Frontend Google Login, Pending Gate & Public Route Bypass** - Google Sign-In button, AuthContext, pending approval gate, and /tv & /bracket public bypass
 - [ ] **Phase 23: Admin Approval Dashboard UI & Role-Based UI Controls** - /admin user management page, approve modal with role picker, and role-scoped navigation
 
@@ -84,7 +84,7 @@
 5. Automated test suite hijau memvalidasi alur approve, penetapan role, dan penolakan akses tidak berizin pada endpoint operasional.
 
 **Plans**: 1 plan
-- 21-01-PLAN.md — Admin user management service, approval & role endpoints, RBAC middleware protection, and API unit tests.
+- [x] 21-01-PLAN.md — Admin user management service, approval & role endpoints, RBAC middleware protection, and API unit tests. (completed 2026-09-18)
 
 ---
 

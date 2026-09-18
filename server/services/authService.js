@@ -232,3 +232,124 @@ export function invalidateSession(token) {
   const res = db.prepare('DELETE FROM auth_sessions WHERE token = ?').run(token);
   return res.changes > 0;
 }
+
+export const VALID_ROLES = ['super_admin', 'admin', 'cashier', 'race_director', 'scrutineer', 'viewer'];
+
+/**
+ * List application users with optional filtering
+ */
+export function listAppUsers({ status, search } = {}) {
+  let query = 'SELECT id, google_id, email, name, avatar, role, status, created_at, approved_at, approved_by FROM app_users WHERE 1=1';
+  const params = [];
+
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+
+  if (search && search.trim()) {
+    query += ' AND (name LIKE ? OR email LIKE ?)';
+    const term = `%${search.trim()}%`;
+    params.push(term, term);
+  }
+
+  query += ' ORDER BY created_at DESC';
+
+  return db.prepare(query).all(...params);
+}
+
+/**
+ * Get user by ID
+ */
+export function getAppUserById(userId) {
+  if (!userId) return null;
+  return db.prepare(`
+    SELECT id, google_id, email, name, avatar, role, status, created_at, approved_at, approved_by
+    FROM app_users
+    WHERE id = ?
+  `).get(userId);
+}
+
+/**
+ * Approve pending user with an assigned role
+ */
+export function approveAppUser(userId, role, approvedBy = 'admin') {
+  if (!userId) throw new Error('User ID wajib disertakan');
+
+  if (!VALID_ROLES.includes(role)) {
+    throw new Error(`Role tidak valid. Pilihan yang tersedia: ${VALID_ROLES.filter(r => r !== 'super_admin').join(', ')}`);
+  }
+
+  const user = getAppUserById(userId);
+  if (!user) throw new Error('Pengguna tidak ditemukan');
+
+  const now = new Date().toISOString();
+
+  db.prepare(`
+    UPDATE app_users
+    SET role = ?,
+        status = 'approved',
+        approved_at = ?,
+        approved_by = ?
+    WHERE id = ?
+  `).run(role, now, approvedBy, userId);
+
+  return getAppUserById(userId);
+}
+
+/**
+ * Update user role
+ */
+export function updateAppUserRole(userId, newRole, requestedBy = null) {
+  if (!userId) throw new Error('User ID wajib disertakan');
+
+  if (!VALID_ROLES.includes(newRole)) {
+    throw new Error(`Role tidak valid. Pilihan yang tersedia: ${VALID_ROLES.join(', ')}`);
+  }
+
+  const user = getAppUserById(userId);
+  if (!user) throw new Error('Pengguna tidak ditemukan');
+
+  if (isSuperAdminEmail(user.email) && newRole !== 'super_admin') {
+    throw new Error('Peran Super Admin (tropicans@gmail.com) tidak dapat diubah');
+  }
+
+  db.prepare(`
+    UPDATE app_users
+    SET role = ?
+    WHERE id = ?
+  `).run(newRole, userId);
+
+  return getAppUserById(userId);
+}
+
+/**
+ * Set user status (approved, suspended, pending)
+ */
+export function setAppUserStatus(userId, newStatus, requestedBy = null) {
+  if (!userId) throw new Error('User ID wajib disertakan');
+
+  if (!['approved', 'suspended', 'pending'].includes(newStatus)) {
+    throw new Error('Status tidak valid. Pilihan: approved, suspended, pending');
+  }
+
+  const user = getAppUserById(userId);
+  if (!user) throw new Error('Pengguna tidak ditemukan');
+
+  if (isSuperAdminEmail(user.email) && newStatus !== 'approved') {
+    throw new Error('Status Super Admin (tropicans@gmail.com) tidak dapat dinonaktifkan');
+  }
+
+  db.prepare(`
+    UPDATE app_users
+    SET status = ?
+    WHERE id = ?
+  `).run(newStatus, userId);
+
+  // If suspended, invalidate all active sessions immediately
+  if (newStatus === 'suspended') {
+    db.prepare('DELETE FROM auth_sessions WHERE user_id = ?').run(userId);
+  }
+
+  return getAppUserById(userId);
+}

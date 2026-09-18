@@ -13,7 +13,17 @@ import { registerParticipant, getParticipants, updateParticipant, importParticip
 import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
 import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners, checkWinnerEligibility } from './services/winnerService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
-import { authenticateGoogleUser, getUserByToken, invalidateSession } from './services/authService.js';
+import {
+  authenticateGoogleUser,
+  getUserByToken,
+  invalidateSession,
+  listAppUsers,
+  getAppUserById,
+  approveAppUser,
+  updateAppUserRole,
+  setAppUserStatus
+} from './services/authService.js';
+import { requireAuth, requireApproved, requireRole } from './middleware/authMiddleware.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -110,6 +120,62 @@ app.post('/api/auth/logout', (req, res) => {
     res.json({ success: true, message: 'Berhasil keluar' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 0.2 Admin User Management Endpoints (Super Admin & Admin only)
+app.get('/api/admin/users', requireRole('admin', 'super_admin'), (req, res) => {
+  try {
+    const { status, search } = req.query;
+    const users = listAppUsers({ status, search });
+    res.json({ success: true, data: users });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/users/:id/approve', requireRole('admin', 'super_admin'), (req, res) => {
+  try {
+    const { role } = req.body;
+    const updatedUser = approveAppUser(req.params.id, role, req.user.email);
+    io.emit('user:updated', updatedUser);
+    res.json({
+      success: true,
+      user: updatedUser,
+      message: `Pengguna berhasil disetujui sebagai ${role}`
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/users/:id/role', requireRole('admin', 'super_admin'), (req, res) => {
+  try {
+    const { role } = req.body;
+    const updatedUser = updateAppUserRole(req.params.id, role, req.user);
+    io.emit('user:updated', updatedUser);
+    res.json({
+      success: true,
+      user: updatedUser,
+      message: `Peran pengguna berhasil diubah menjadi ${role}`
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/users/:id/status', requireRole('admin', 'super_admin'), (req, res) => {
+  try {
+    const { status } = req.body;
+    const updatedUser = setAppUserStatus(req.params.id, status, req.user);
+    io.emit('user:updated', updatedUser);
+    res.json({
+      success: true,
+      user: updatedUser,
+      message: `Status pengguna berhasil diubah menjadi ${status}`
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
