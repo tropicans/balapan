@@ -35,6 +35,11 @@ export function registerWinner({ participant_number, event_id }) {
     throw new Error('Tidak ada event aktif. Aktifkan atau buat event terlebih dahulu.');
   }
 
+  const qualSetting = db.prepare("SELECT value FROM tournament_settings WHERE key = 'qualifying_status'").get();
+  if (qualSetting && qualSetting.value === 'locked') {
+    throw new Error('Kualifikasi Babak 1 telah dikunci oleh Race Director. Buka kunci kualifikasi di menu Race Director jika ingin mendaftarkan pemenang baru.');
+  }
+
   const pNum = normalizeParticipantNumber(participant_number);
   if (pNum === null) {
     throw new Error('Nomor peserta tidak valid');
@@ -91,9 +96,8 @@ export function registerWinner({ participant_number, event_id }) {
     if (!targetMatch) {
       const maxMatchRow = db.prepare(`
         SELECT COALESCE(MAX(match_number), 0) as max_match 
-        FROM bracket_matches 
-        WHERE event_id = ?
-      `).get(targetEventId);
+        FROM bracket_matches
+      `).get();
 
       const nextMatchNum = (maxMatchRow?.max_match || 0) + 1;
       const newMatchId = uuidv4();

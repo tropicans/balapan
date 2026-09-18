@@ -872,11 +872,11 @@ export class RaceManager {
     const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
     const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
     const newMatchId = uuidv4();
-
+    const matchEventId = match.event_id || null;
     db.prepare(`
-      INSERT INTO bracket_matches (id, match_number, round_number, user_id_1, status)
-      VALUES (?, ?, ?, ?, 'pending')
-    `).run(newMatchId, nextMatchNumber, nextRound, winnerId);
+      INSERT INTO bracket_matches (id, event_id, match_number, round_number, user_id_1, status)
+      VALUES (?, ?, ?, ?, ?, 'pending')
+    `).run(newMatchId, matchEventId, nextMatchNumber, nextRound, winnerId);
 
     db.prepare('UPDATE bracket_matches SET parent_match_id = ? WHERE id = ?').run(newMatchId, matchId);
 

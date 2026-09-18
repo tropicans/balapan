@@ -160,7 +160,20 @@ async function runTests() {
     assert.strictEqual(undoJson.undone_participant.participant_number, 5);
     console.log('✓ Test 6: HTTP REST endpoints verified');
 
-    console.log('\n🎉 ALL 6 WINNER REGISTRATION & BRACKET EXECUTION TESTS PASSED (100% GREEN)!\n');
+    // ----------------------------------------------------
+    // Test 7: Reject registration when qualifying is locked
+    // ----------------------------------------------------
+    console.log('--- Test 7: Reject Winner Registration When Qualifying is Locked ---');
+    db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('qualifying_status', 'locked', CURRENT_TIMESTAMP)").run();
+    assert.throws(
+      () => registerWinner({ participant_number: 1 }),
+      /Kualifikasi Babak 1 telah dikunci/
+    );
+    // Reset to open
+    db.prepare("UPDATE tournament_settings SET value = 'open' WHERE key = 'qualifying_status'").run();
+    console.log('✓ Test 7: Winner registration rejected with friendly message when qualifying is locked');
+
+    console.log('\n🎉 ALL 7 WINNER REGISTRATION & BRACKET EXECUTION TESTS PASSED (100% GREEN)!\n');
     server.close();
     process.exit(0);
   } catch (err) {
