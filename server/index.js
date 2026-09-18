@@ -13,6 +13,7 @@ import { registerParticipant, getParticipants, updateParticipant, importParticip
 import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
 import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners, checkWinnerEligibility } from './services/winnerService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
+import { syncParticipantsFromSheet, getSheetSyncConfig } from './services/googleSheetService.js';
 import {
   authenticateGoogleUser,
   getUserByToken,
@@ -1391,6 +1392,47 @@ app.post('/api/participants/import', (req, res) => {
     });
     broadcastFullState();
     res.status(201).json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 20f. Get Google Sheet sync status & configuration
+app.get('/api/participants/sync-sheet/status', (req, res) => {
+  try {
+    const config = getSheetSyncConfig();
+    const activeEvent = getActiveEvent();
+    res.json({
+      success: true,
+      data: {
+        ...config,
+        activeEvent: activeEvent ? { id: activeEvent.id, nama: activeEvent.nama } : null
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 20g. Sync participants directly from Google Sheets (SYNC-01 to SYNC-07)
+app.post('/api/participants/sync-sheet', async (req, res) => {
+  try {
+    const { sheet_url, event_id, csv_override } = req.body || {};
+    const result = await syncParticipantsFromSheet({ sheet_url, event_id, csv_override });
+
+    if (result.addedCount > 0) {
+      io.emit('participants_imported', {
+        count: result.addedCount,
+        event_id: result.targetEventId
+      });
+      broadcastFullState();
+    }
+
+    res.json({
+      success: true,
+      message: `Sinkronisasi selesai: ${result.addedCount} pembalap baru ditambahkan, ${result.skippedCount} dilewati/duplikat.`,
+      data: result
+    });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
