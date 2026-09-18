@@ -904,6 +904,19 @@ export class RaceManager {
       };
     }
 
+    // In physical tournament with physical coupons & scrutineering (Milestone v3.2),
+    // winners do NOT automatically advance to next round when options.autoAdvance === false.
+    if (options.autoAdvance === false) {
+      return {
+        success: true,
+        matchId,
+        winnerId,
+        roundNumber: match.round_number,
+        autoAdvanced: false,
+        message: 'Hasil heat berhasil dicatat. Pemenang berhak atas kupon fisik babak berikutnya.'
+      };
+    }
+
     const nextRound = match.round_number + 1;
 
     // Check if winnerId is already registered in nextRound (prevents duplicate promotion)

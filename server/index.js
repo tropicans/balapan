@@ -11,7 +11,7 @@ import { TicketEngine } from './ticketEngine.js';
 import { createEvent, listEvents, getActiveEvent, setActiveEvent, archiveEvent } from './services/eventService.js';
 import { registerParticipant, getParticipants, updateParticipant, importParticipants } from './services/participantService.js';
 import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
-import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners } from './services/winnerService.js';
+import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners, checkWinnerEligibility } from './services/winnerService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -626,17 +626,6 @@ app.post('/api/race/override', (req, res) => {
   }
 });
 
-// 15. RD Advance Bracket Match
-app.post('/api/bracket/advance', (req, res) => {
-  try {
-    const { matchId, winnerId, isFinal } = req.body;
-    const result = RaceManager.advanceBracketWinner(matchId, winnerId, { isFinal });
-    broadcastFullState();
-    res.json(result);
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
-  }
-});
 
 // 16. Countdown Controls (Babak 2 Voice Countdown)
 app.post('/api/countdown/start', (req, res) => {
@@ -1342,11 +1331,11 @@ app.delete('/api/bto/:id', (req, res) => {
 // Phase 14: Winner Registration & Bracket Execution (WREG-01 to WREG-06, BRKT-01 to BRKT-03)
 // ====================================================
 
-// 22a. Register Round 2 Winner by Participant Number (WREG-01, WREG-02, WREG-03, WREG-04, WREG-06)
+// 22a. Register Winner by Participant Number and Round (Milestone v3.2)
 app.post('/api/winners/register', (req, res) => {
   try {
-    const { participant_number, event_id } = req.body || {};
-    const result = registerWinner({ participant_number, event_id });
+    const { participant_number, round, event_id } = req.body || {};
+    const result = registerWinner({ participant_number, round, event_id });
 
     io.emit('winner_registered', result);
     io.emit('bracket_updated');
@@ -1357,11 +1346,11 @@ app.post('/api/winners/register', (req, res) => {
   }
 });
 
-// 22b. Undo Last Winner Registration (WREG-05)
+// 22b. Undo Last Winner Registration (optionally filtered by round)
 app.post('/api/winners/undo', (req, res) => {
   try {
-    const { event_id } = req.body || {};
-    const result = undoLastWinnerRegistration({ event_id });
+    const { round, event_id } = req.body || {};
+    const result = undoLastWinnerRegistration({ round, event_id });
 
     io.emit('winner_undone', result);
     io.emit('bracket_updated');
@@ -1372,24 +1361,37 @@ app.post('/api/winners/undo', (req, res) => {
   }
 });
 
-// 22c. Get List of Registered Winners
+// 22c. Get List of Registered Winners (optionally filtered by round)
 app.get('/api/winners', (req, res) => {
   try {
-    const { event_id } = req.query;
-    const winners = getRegisteredWinners({ event_id });
+    const { round, event_id } = req.query;
+    const winners = getRegisteredWinners({ round, event_id });
     res.json({ success: true, data: winners });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
+// 22c2. Check Participant Eligibility for Target Round
+app.get('/api/winners/eligibility', (req, res) => {
+  try {
+    const { participant_number, round, event_id } = req.query;
+    const eligibility = checkWinnerEligibility({ participant_number, round, event_id });
+    res.json({ success: true, data: eligibility });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // 22d. Advance Bracket Match Winner (BRKT-01, BRKT-02 - no lock required)
 app.post('/api/bracket/advance', (req, res) => {
   try {
-    const { match_id, matchId, winner_id, winnerId, isFinal } = req.body || {};
+    const { match_id, matchId, winner_id, winnerId, isFinal, autoAdvance } = req.body || {};
     const mId = match_id || matchId;
     const wId = winner_id || winnerId;
-    const result = RaceManager.advanceBracketWinner(mId, wId, { isFinal });
+    // In physical tournament (v3.2), winners do not auto-advance to next round unless autoAdvance is explicitly true
+    const shouldAutoAdvance = autoAdvance === true;
+    const result = RaceManager.advanceBracketWinner(mId, wId, { isFinal, autoAdvance: shouldAutoAdvance });
 
     io.emit('bracket_updated');
     broadcastFullState();
