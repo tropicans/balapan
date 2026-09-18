@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Sparkles, 
   User, 
@@ -10,7 +10,9 @@ import {
   DollarSign, 
   CreditCard,
   PlusCircle,
-  Loader2
+  Loader2,
+  Search,
+  X
 } from 'lucide-react';
 import { CyberButton } from '../ui/CyberButton.jsx';
 import { sound } from '../../utils/audio.js';
@@ -27,6 +29,7 @@ export function CouponRegistrationForm({
   const [serialNumber, setSerialNumber] = useState('');
   const [racerMode, setRacerMode] = useState('select'); // 'select' | 'new'
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [racerSearch, setRacerSearch] = useState('');
   const [newUserName, setNewUserName] = useState('');
   const [teamName, setTeamName] = useState('');
   const [totalQuota, setTotalQuota] = useState(50);
@@ -87,6 +90,18 @@ export function CouponRegistrationForm({
     sound.playTone(700, 'sine', 0.04, 0.1);
     serialInputRef.current?.focus();
   };
+
+  // Filtered users for select dropdown (omni-search by number, name, team)
+  const filteredUsers = useMemo(() => {
+    if (!racerSearch.trim()) return users;
+    const q = racerSearch.toLowerCase().trim();
+    const cleanNum = q.replace(/^#/, '');
+    return users.filter(u =>
+      u.name?.toLowerCase().includes(q) ||
+      (u.team_name && u.team_name.toLowerCase().includes(q)) ||
+      (cleanNum && String(u.participant_number || '') === cleanNum)
+    );
+  }, [users, racerSearch]);
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -361,16 +376,35 @@ export function CouponRegistrationForm({
 
           {/* Mode 1: Select Existing Racer */}
           {racerMode === 'select' ? (
-            <div>
+            <div className="space-y-1.5">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-cyberSilver/50 absolute left-2.5 top-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  value={racerSearch}
+                  onChange={(e) => setRacerSearch(e.target.value)}
+                  placeholder="Cari nomor (#12) atau nama pembalap..."
+                  className="w-full bg-black/80 border border-gray-700 pl-8 pr-7 py-1.5 text-xs font-mono text-white placeholder-gray-500 focus:outline-none focus:border-neonAmber clip-cyber"
+                />
+                {racerSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setRacerSearch('')}
+                    className="absolute right-2 top-1.5 text-gray-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
                 className="w-full bg-black/60 border border-gray-700 text-sm font-mono text-white p-2.5 outline-none focus:border-neonAmber focus:ring-1 focus:ring-neonAmber"
               >
-                <option value="">-- Pilih Pembalap Terdaftar --</option>
-                {users.map(u => (
+                <option value="">-- Pilih Pembalap Terdaftar ({filteredUsers.length} Pembalap) --</option>
+                {filteredUsers.map(u => (
                   <option key={u.id} value={u.id}>
-                    {u.name} {u.team_name ? `[${u.team_name}]` : ''} — Saldo: {u.coupon_balance ?? 0}
+                    {u.participant_number ? `#${u.participant_number} ` : ''}{u.name} {u.team_name ? `[${u.team_name}]` : ''} — Saldo: {u.coupon_balance ?? 0}
                   </option>
                 ))}
               </select>

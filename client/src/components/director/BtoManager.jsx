@@ -8,7 +8,9 @@ import {
   Clock,
   Trash2,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Search,
+  X
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -24,6 +26,8 @@ export function BtoManager() {
   const [finishTimeInput, setFinishTimeInput] = useState('');
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [searchingParticipant, setSearchingParticipant] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const timeInputRef = useRef(null);
   const participantInputRef = useRef(null);
@@ -65,37 +69,78 @@ export function BtoManager() {
     };
   }, [socket, fetchLeaderboard]);
 
-  // Lookup participant by number on input change
+  // Lookup participant by number or name on input change
   useEffect(() => {
-    const clean = participantInput.trim().replace(/^#/, '');
-    if (!clean || isNaN(clean)) {
+    const query = participantInput.trim();
+    if (!query) {
       setSelectedParticipant(null);
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    // If already selected and input matches display format, don't re-search
+    if (selectedParticipant && (
+      query === `#${selectedParticipant.participant_number}` ||
+      query === String(selectedParticipant.participant_number) ||
+      query === `#${selectedParticipant.participant_number} - ${selectedParticipant.name}`
+    )) {
       return;
     }
 
     const timer = setTimeout(async () => {
       setSearchingParticipant(true);
       try {
-        const res = await fetch(`/api/participants?search=${encodeURIComponent(clean)}`);
+        const cleanQuery = query.replace(/^#/, '');
+        const res = await fetch(`/api/participants?search=${encodeURIComponent(cleanQuery)}&limit=8`);
         const data = await res.json();
-        if (data.success && data.data?.participants) {
-          const found = data.data.participants.find(p => String(p.participant_number) === clean);
-          if (found) {
-            setSelectedParticipant(found);
+        if (data.success && Array.isArray(data.data?.participants)) {
+          const list = data.data.participants;
+          setSuggestions(list);
+
+          const exactByNum = list.find(p => String(p.participant_number) === cleanQuery);
+          const exactByName = list.find(p => p.name.toLowerCase() === cleanQuery.toLowerCase());
+
+          if (exactByNum) {
+            setSelectedParticipant(exactByNum);
+            setShowDropdown(false);
+            setErrorMsg(null);
+          } else if (exactByName && list.length === 1) {
+            setSelectedParticipant(exactByName);
+            setShowDropdown(false);
             setErrorMsg(null);
           } else {
-            setSelectedParticipant(null);
+            setShowDropdown(list.length > 0);
           }
+        } else {
+          setSuggestions([]);
+          setShowDropdown(false);
         }
       } catch (e) {
-        // ignore search error
+        setSuggestions([]);
       } finally {
         setSearchingParticipant(false);
       }
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [participantInput]);
+  }, [participantInput, selectedParticipant]);
+
+  const handleSelectParticipant = (p) => {
+    setSelectedParticipant(p);
+    setParticipantInput(`#${p.participant_number} - ${p.name}`);
+    setShowDropdown(false);
+    setErrorMsg(null);
+    timeInputRef.current?.focus();
+  };
+
+  const handleClearParticipant = () => {
+    setParticipantInput('');
+    setSelectedParticipant(null);
+    setSuggestions([]);
+    setShowDropdown(false);
+    participantInputRef.current?.focus();
+  };
 
   // Handle record submit
   const handleRecordTime = async (e) => {
@@ -103,9 +148,12 @@ export function BtoManager() {
     setErrorMsg(null);
     setFeedbackMsg(null);
 
-    const cleanNum = participantInput.trim().replace(/^#/, '');
-    if (!cleanNum) {
-      setErrorMsg('Masukkan nomor peserta');
+    const cleanNum = participantInput.trim().replace(/^#/, '').split(' - ')[0];
+    const targetNumber = selectedParticipant ? selectedParticipant.participant_number : (isNaN(cleanNum) ? null : parseInt(cleanNum, 10));
+    const targetUserId = selectedParticipant?.id;
+
+    if (!targetNumber && !targetUserId) {
+      setErrorMsg('Pilih atau masukkan nomor/nama pembalap terdaftar');
       participantInputRef.current?.focus();
       return;
     }
@@ -123,7 +171,8 @@ export function BtoManager() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          participant_number: cleanNum,
+          participant_number: targetNumber,
+          user_id: targetUserId,
           finish_time: timeNum
         })
       });
@@ -137,6 +186,8 @@ export function BtoManager() {
       setParticipantInput('');
       setFinishTimeInput('');
       setSelectedParticipant(null);
+      setSuggestions([]);
+      setShowDropdown(false);
       fetchLeaderboard();
       participantInputRef.current?.focus();
     } catch (err) {
@@ -212,42 +263,88 @@ export function BtoManager() {
                 </div>
               )}
 
-              {/* Participant Number Input */}
+              {/* Participant Number or Name Input (Omni-Search) */}
               <div>
                 <label className="block text-xs font-mono text-cyberSilver/80 uppercase mb-1">
-                  Nomor Peserta (#)
+                  Cari Nomor (#) atau Nama Pembalap
                 </label>
                 <div className="relative">
+                  <Search className="w-4 h-4 text-cyberSilver/50 absolute left-3 top-3 pointer-events-none" />
                   <input
                     ref={participantInputRef}
                     type="text"
                     value={participantInput}
-                    onChange={(e) => setParticipantInput(e.target.value)}
-                    placeholder="Contoh: 12 atau #12"
-                    className="w-full bg-black/70 border border-cyberSilver/30 focus:border-neonAmber px-3 py-2 text-white font-mono text-lg focus:outline-none clip-cyber"
+                    onChange={(e) => {
+                      setParticipantInput(e.target.value);
+                      if (selectedParticipant) setSelectedParticipant(null);
+                    }}
+                    onFocus={() => {
+                      if (suggestions.length > 0 && !selectedParticipant) setShowDropdown(true);
+                    }}
+                    placeholder="Ketik nomor (#12) atau nama pembalap..."
+                    className="w-full bg-black/70 border border-cyberSilver/30 focus:border-neonAmber pl-9 pr-8 py-2 text-white font-mono text-base focus:outline-none clip-cyber"
                   />
+                  {participantInput && (
+                    <button
+                      type="button"
+                      onClick={handleClearParticipant}
+                      className="absolute right-2.5 top-2.5 text-cyberSilver/50 hover:text-white"
+                      title="Hapus pencarian"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                   {searchingParticipant && (
-                    <span className="absolute right-3 top-2.5 text-xs text-cyberSilver/50 font-mono">
+                    <span className="absolute right-8 top-2.5 text-xs text-cyberSilver/50 font-mono">
                       Mencari...
                     </span>
+                  )}
+
+                  {/* Autocomplete Suggestions Dropdown */}
+                  {showDropdown && suggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-obsidian border border-neonAmber/60 shadow-[0_4px_20px_rgba(0,0,0,0.8)] z-50 max-h-56 overflow-y-auto divide-y divide-gray-800 clip-cyber">
+                      {suggestions.map((p) => (
+                        <div
+                          key={p.id}
+                          onMouseDown={() => handleSelectParticipant(p)}
+                          className="p-2.5 hover:bg-neonAmber/20 cursor-pointer transition-colors flex items-center justify-between text-xs font-mono"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-orbitron font-bold text-neonAmber">
+                              #{p.participant_number}
+                            </span>
+                            <span className="text-white font-bold">{p.name}</span>
+                            {p.team_name && (
+                              <span className="text-neonPink text-[11px]">[{p.team_name}]</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-neonAmber uppercase font-bold">PILIH</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
                 {/* Participant resolved card */}
                 {selectedParticipant ? (
-                  <div className="mt-2 p-2.5 bg-black/60 border border-neonCyan/40 clip-cyber text-xs font-mono">
-                    <div className="text-neonCyan font-bold text-sm">
-                      #{selectedParticipant.participant_number} — {selectedParticipant.name}
-                    </div>
-                    {selectedParticipant.team_name && (
-                      <div className="text-neonPink text-[11px] mt-0.5">
-                        Tim: {selectedParticipant.team_name}
+                  <div className="mt-2 p-2.5 bg-black/60 border border-neonCyan/40 clip-cyber text-xs font-mono flex items-center justify-between">
+                    <div>
+                      <div className="text-neonCyan font-bold text-sm">
+                        #{selectedParticipant.participant_number} — {selectedParticipant.name}
                       </div>
-                    )}
+                      {selectedParticipant.team_name && (
+                        <div className="text-neonPink text-[11px] mt-0.5">
+                          Tim: {selectedParticipant.team_name}
+                        </div>
+                      )}
+                    </div>
+                    <span className="px-2 py-0.5 bg-neonCyan/20 text-neonCyan text-[10px] font-bold clip-cyber border border-neonCyan/40">
+                      TERPILIH
+                    </span>
                   </div>
-                ) : participantInput.trim() ? (
+                ) : participantInput.trim() && !showDropdown && !searchingParticipant ? (
                   <div className="mt-1 text-[11px] font-mono text-neonAmber/80">
-                    Masukkan nomor peserta terdaftar untuk melihat nama pembalap
+                    Pembalap tidak ditemukan. Masukkan nomor # atau nama yang terdaftar.
                   </div>
                 ) : null}
               </div>

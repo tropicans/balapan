@@ -151,11 +151,14 @@ export function AdminUserDashboard() {
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
     const q = searchQuery.toLowerCase().trim();
+    const cleanNum = q.replace(/^#/, '');
     return users.filter(
       (u) =>
         u.name?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
-        u.role?.toLowerCase().includes(q)
+        u.role?.toLowerCase().includes(q) ||
+        (u.team_name && u.team_name.toLowerCase().includes(q)) ||
+        (cleanNum && String(u.participant_number || '') === cleanNum)
     );
   }, [users, searchQuery]);
 
@@ -257,7 +260,7 @@ export function AdminUserDashboard() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama atau email Google..."
+            placeholder="Cari #nomor, nama, tim, email, atau role..."
             className="w-full pl-9 pr-3 py-1.5 bg-obsidian border border-gray-700 text-white text-xs font-mono clip-cyber focus:border-neonCyan focus:outline-none"
           />
         </div>

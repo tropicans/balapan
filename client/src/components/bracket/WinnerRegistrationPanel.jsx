@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   ShieldAlert,
   Search,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -23,6 +24,8 @@ export function WinnerRegistrationPanel() {
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [eligibilityInfo, setEligibilityInfo] = useState(null);
   const [searching, setSearching] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [undoing, setUndoing] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -89,48 +92,100 @@ export function WinnerRegistrationPanel() {
     };
   }, [socket, fetchWinners]);
 
-  // Lookup participant & check eligibility for selectedRound
+  // Check eligibility for participant number in selected round
+  const checkEligibility = useCallback(async (participantNum) => {
+    if (!participantNum) {
+      setEligibilityInfo(null);
+      return;
+    }
+    try {
+      const resE = await fetch(`/api/winners/eligibility?participant_number=${encodeURIComponent(participantNum)}&round=${selectedRound}`);
+      const dataE = await resE.json();
+      if (dataE.success && dataE.data) {
+        setEligibilityInfo(dataE.data);
+      } else {
+        setEligibilityInfo(null);
+      }
+    } catch (e) {
+      setEligibilityInfo(null);
+    }
+  }, [selectedRound]);
+
+  // Lookup participant & check eligibility for selectedRound (Omni-Search)
   useEffect(() => {
-    const clean = participantInput.trim().replace(/^#/, '');
-    if (!clean || isNaN(clean)) {
+    const query = participantInput.trim();
+    if (!query) {
       setSelectedParticipant(null);
       setEligibilityInfo(null);
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    if (selectedParticipant && (
+      query === `#${selectedParticipant.participant_number}` ||
+      query === String(selectedParticipant.participant_number) ||
+      query === `#${selectedParticipant.participant_number} - ${selectedParticipant.name}`
+    )) {
       return;
     }
 
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        // 1. Participant details
-        const resP = await fetch(`/api/participants?search=${encodeURIComponent(clean)}`);
+        const cleanQuery = query.replace(/^#/, '');
+        const resP = await fetch(`/api/participants?search=${encodeURIComponent(cleanQuery)}&limit=8`);
         const dataP = await resP.json();
-        let foundUser = null;
-        if (dataP.success && dataP.data?.participants) {
-          foundUser = dataP.data.participants.find(p => String(p.participant_number) === clean);
-          setSelectedParticipant(foundUser || null);
-        }
+        if (dataP.success && Array.isArray(dataP.data?.participants)) {
+          const list = dataP.data.participants;
+          setSuggestions(list);
 
-        // 2. Eligibility for selectedRound
-        if (foundUser) {
-          const resE = await fetch(`/api/winners/eligibility?participant_number=${encodeURIComponent(clean)}&round=${selectedRound}`);
-          const dataE = await resE.json();
-          if (dataE.success && dataE.data) {
-            setEligibilityInfo(dataE.data);
+          const exactByNum = list.find(p => String(p.participant_number) === cleanQuery);
+          const exactByName = list.find(p => p.name.toLowerCase() === cleanQuery.toLowerCase());
+
+          if (exactByNum) {
+            setSelectedParticipant(exactByNum);
+            setShowDropdown(false);
+            setErrorMsg(null);
+            checkEligibility(exactByNum.participant_number);
+          } else if (exactByName && list.length === 1) {
+            setSelectedParticipant(exactByName);
+            setShowDropdown(false);
+            setErrorMsg(null);
+            checkEligibility(exactByName.participant_number);
           } else {
-            setEligibilityInfo(null);
+            setShowDropdown(list.length > 0);
           }
         } else {
-          setEligibilityInfo(null);
+          setSuggestions([]);
+          setShowDropdown(false);
         }
       } catch (e) {
-        // ignore
+        setSuggestions([]);
       } finally {
         setSearching(false);
       }
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [participantInput, selectedRound]);
+  }, [participantInput, selectedRound, selectedParticipant, checkEligibility]);
+
+  const handleSelectParticipant = (p) => {
+    setSelectedParticipant(p);
+    setParticipantInput(`#${p.participant_number} - ${p.name}`);
+    setShowDropdown(false);
+    setErrorMsg(null);
+    checkEligibility(p.participant_number);
+  };
+
+  const handleClearParticipant = () => {
+    setParticipantInput('');
+    setSelectedParticipant(null);
+    setEligibilityInfo(null);
+    setSuggestions([]);
+    setShowDropdown(false);
+    inputRef.current?.focus();
+  };
 
   // Handle register winner
   const handleRegister = async (e) => {
@@ -138,9 +193,11 @@ export function WinnerRegistrationPanel() {
     setErrorMsg(null);
     setFeedbackMsg(null);
 
-    const cleanNum = participantInput.trim().replace(/^#/, '');
-    if (!cleanNum) {
-      setErrorMsg(`Masukkan nomor peserta pemenang untuk Babak ${selectedRound}`);
+    const cleanNum = participantInput.trim().replace(/^#/, '').split(' - ')[0];
+    const targetNumber = selectedParticipant ? selectedParticipant.participant_number : (isNaN(cleanNum) ? null : parseInt(cleanNum, 10));
+
+    if (!targetNumber) {
+      setErrorMsg(`Pilih atau masukkan nomor/nama pembalap pemenang untuk Babak ${selectedRound}`);
       inputRef.current?.focus();
       return;
     }
@@ -150,17 +207,19 @@ export function WinnerRegistrationPanel() {
       const res = await fetch('/api/winners/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participant_number: cleanNum, round: selectedRound })
+        body: JSON.stringify({ participant_number: targetNumber, round: selectedRound })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || `Gagal mendaftarkan pemenang ke Babak ${selectedRound}`);
       }
 
-      setFeedbackMsg(data.message || `Peserta #${cleanNum} berhasil didaftarkan ke Babak ${selectedRound}!`);
+      setFeedbackMsg(data.message || `Peserta #${targetNumber} berhasil didaftarkan ke Babak ${selectedRound}!`);
       setParticipantInput('');
       setSelectedParticipant(null);
       setEligibilityInfo(null);
+      setSuggestions([]);
+      setShowDropdown(false);
       fetchWinners();
       inputRef.current?.focus();
     } catch (err) {
@@ -278,24 +337,69 @@ export function WinnerRegistrationPanel() {
                 </div>
               )}
 
+              {/* Participant Number or Name Input (Omni-Search) */}
               <div>
                 <label className="block text-xs font-mono text-cyberSilver/80 uppercase mb-1">
-                  Nomor Peserta (#)
+                  Cari Nomor (#) atau Nama Pembalap
                 </label>
                 <div className="relative">
+                  <Search className="w-4 h-4 text-cyberSilver/50 absolute left-3 top-3.5 pointer-events-none" />
                   <input
                     ref={inputRef}
                     type="text"
                     value={participantInput}
-                    onChange={(e) => setParticipantInput(e.target.value)}
-                    placeholder="Ketik nomor: misal 7 atau #7"
-                    className="w-full bg-black/70 border border-cyberSilver/30 focus:border-neonCyan px-3 py-2.5 text-white font-mono text-xl focus:outline-none clip-cyber"
+                    onChange={(e) => {
+                      setParticipantInput(e.target.value);
+                      if (selectedParticipant) {
+                        setSelectedParticipant(null);
+                        setEligibilityInfo(null);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (suggestions.length > 0 && !selectedParticipant) setShowDropdown(true);
+                    }}
+                    placeholder="Ketik nomor (#7) atau nama pembalap..."
+                    className="w-full bg-black/70 border border-cyberSilver/30 focus:border-neonCyan pl-9 pr-8 py-2.5 text-white font-mono text-lg focus:outline-none clip-cyber"
                     autoFocus
                   />
+                  {participantInput && (
+                    <button
+                      type="button"
+                      onClick={handleClearParticipant}
+                      className="absolute right-2.5 top-3 text-cyberSilver/50 hover:text-white"
+                      title="Hapus pencarian"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                   {searching && (
-                    <span className="absolute right-3 top-3 text-xs text-cyberSilver/50 font-mono">
-                      Mencari & validasi...
+                    <span className="absolute right-8 top-3 text-xs text-cyberSilver/50 font-mono">
+                      Mencari...
                     </span>
+                  )}
+
+                  {/* Autocomplete Suggestions Dropdown */}
+                  {showDropdown && suggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-obsidian border border-neonCyan/60 shadow-[0_4px_20px_rgba(0,0,0,0.8)] z-50 max-h-56 overflow-y-auto divide-y divide-gray-800 clip-cyber">
+                      {suggestions.map((p) => (
+                        <div
+                          key={p.id}
+                          onMouseDown={() => handleSelectParticipant(p)}
+                          className="p-2.5 hover:bg-neonCyan/20 cursor-pointer transition-colors flex items-center justify-between text-xs font-mono"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-orbitron font-bold text-neonCyan">
+                              #{p.participant_number}
+                            </span>
+                            <span className="text-white font-bold">{p.name}</span>
+                            {p.team_name && (
+                              <span className="text-neonPink text-[11px]">[{p.team_name}]</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-neonCyan uppercase font-bold">PILIH</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
@@ -339,9 +443,9 @@ export function WinnerRegistrationPanel() {
                     </div>
                   )}
                 </div>
-              ) : participantInput.trim() ? (
+              ) : participantInput.trim() && !showDropdown && !searching ? (
                 <div className="text-[11px] font-mono text-neonAmber/80">
-                  Mencari pembalap bernomor #{participantInput.replace(/^#/, '')}...
+                  Pembalap tidak ditemukan. Masukkan nomor # atau nama yang terdaftar.
                 </div>
               ) : null}
 

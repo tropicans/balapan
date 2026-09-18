@@ -183,11 +183,16 @@ export function CashierDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    (u.team_name && u.team_name.toLowerCase().includes(search.toLowerCase())) ||
-    (u.email && u.email.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredUsers = users.filter(u => {
+    const q = search.toLowerCase().trim();
+    const cleanNum = q.replace(/^#/, '');
+    return (
+      u.name?.toLowerCase().includes(q) ||
+      (u.team_name && u.team_name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (cleanNum && String(u.participant_number || '') === cleanNum)
+    );
+  });
 
   return (
     <div className="max-w-7xl mx-auto p-3 md:p-5 space-y-5">
@@ -396,7 +401,7 @@ export function CashierDashboard() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari nama pembalap, racer tag, atau email..."
+                  placeholder="Cari #nomor, nama pembalap, racer tag, atau email..."
                   className="w-full bg-black/70 border border-neonAmber/50 pl-10 pr-4 py-2.5 text-sm font-mono text-white clip-cyber focus:outline-none focus:border-neonAmber"
                 />
               </div>
@@ -414,8 +419,11 @@ export function CashierDashboard() {
                     )}
                   >
                     <div>
-                      <div className="font-orbitron font-bold text-white text-sm truncate">
-                        {u.name}
+                      <div className="font-orbitron font-bold text-white text-sm truncate flex items-center gap-1.5">
+                        {u.participant_number && (
+                          <span className="text-neonAmber font-black">#{u.participant_number}</span>
+                        )}
+                        <span>{u.name}</span>
                       </div>
                       <div className="text-xs font-mono text-neonPink tracking-wider">
                         [{u.team_name || 'NO TAG'}]
