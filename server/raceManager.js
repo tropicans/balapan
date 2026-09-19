@@ -198,6 +198,48 @@ export class RaceManager {
         `).all(activeEventId)
       : [];
 
+    // Best Race Leaderboard (Racers with most coupon entries in Babak 2)
+    const bestRaceMap = new Map();
+    for (const bm of bracketMatches) {
+      if (bm.round_number === 2 || bm.round_number === 1) {
+        if (bm.user_id_1) {
+          const item = bestRaceMap.get(bm.user_id_1) || {
+            user_id: bm.user_id_1,
+            name: bm.user_1_name,
+            team_name: bm.user_1_team,
+            participant_number: bm.participant_number_1,
+            coupon_count: 0
+          };
+          item.coupon_count++;
+          bestRaceMap.set(bm.user_id_1, item);
+        }
+        if (bm.user_id_2) {
+          const item = bestRaceMap.get(bm.user_id_2) || {
+            user_id: bm.user_id_2,
+            name: bm.user_2_name,
+            team_name: bm.user_2_team,
+            participant_number: bm.participant_number_2,
+            coupon_count: 0
+          };
+          item.coupon_count++;
+          bestRaceMap.set(bm.user_id_2, item);
+        }
+        if (bm.user_id_3) {
+          const item = bestRaceMap.get(bm.user_id_3) || {
+            user_id: bm.user_id_3,
+            name: bm.user_3_name,
+            team_name: bm.user_3_team,
+            participant_number: bm.participant_number_3,
+            coupon_count: 0
+          };
+          item.coupon_count++;
+          bestRaceMap.set(bm.user_id_3, item);
+        }
+      }
+    }
+    const bestRaceLeaderboard = Array.from(bestRaceMap.values())
+      .sort((a, b) => b.coupon_count - a.coupon_count || (a.participant_number || 0) - (b.participant_number || 0));
+
     const settingsRows = db.prepare('SELECT key, value FROM tournament_settings').all();
     const settings = {};
     for (const s of settingsRows) {
@@ -209,6 +251,7 @@ export class RaceManager {
       participants,
       activeRace,
       btoLeaderboard,
+      bestRaceLeaderboard,
       upcomingRaces,
       scrutineerQueue,
       bracketMatches,
