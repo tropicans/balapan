@@ -1038,15 +1038,18 @@ export class RaceManager {
     // Find the earliest match in nextRound that is not completed and still has an open slot (A, B, or C).
     // This ensures that if a previous heat was No Race (leaving e.g. slot C open while A & B are occupied),
     // the winner of the subsequent heat will immediately pack into slot C before new heats are created.
+    // For Round 3 (Babak 3), strictly limit slot packing to heats 1..21 (match_number <= 221 or <= 21).
     const openNextMatch = activeEvId
       ? db.prepare(`
           SELECT * FROM bracket_matches 
           WHERE round_number = ? AND (event_id = ? OR event_id IS NULL) AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          ${nextRound === 3 ? 'AND ((match_number >= 200 AND match_number <= 221) OR (match_number < 200 AND match_number <= 21))' : ''}
           ORDER BY match_number ASC
         `).get(nextRound, activeEvId)
       : db.prepare(`
           SELECT * FROM bracket_matches 
           WHERE round_number = ? AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          ${nextRound === 3 ? 'AND ((match_number >= 200 AND match_number <= 221) OR (match_number < 200 AND match_number <= 21))' : ''}
           ORDER BY match_number ASC
         `).get(nextRound);
 
@@ -1068,6 +1071,23 @@ export class RaceManager {
     }
 
     // 3. No open match in nextRound -> dynamically create a new match in nextRound
+    // If nextRound is Round 3 (Babak 3), strictly cap at 21 heats (Heat #1..#21, 63 slots). Do not create heat 22, 23, 24!
+    if (nextRound === 3) {
+      const r3Count = activeEvId
+        ? db.prepare('SELECT COUNT(*) as cnt FROM bracket_matches WHERE (event_id = ? OR event_id IS NULL) AND round_number = 3').get(activeEvId)?.cnt || 0
+        : db.prepare('SELECT COUNT(*) as cnt FROM bracket_matches WHERE round_number = 3').get()?.cnt || 0;
+      if (r3Count >= 21) {
+        return {
+          success: true,
+          matchId,
+          winnerId,
+          nextRound,
+          message: 'Babak 3 sudah penuh (maksimal 21 heat / 63 pembalap)',
+          capped: true
+        };
+      }
+    }
+
     const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
     const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
     const newMatchId = uuidv4();
@@ -1138,15 +1158,27 @@ export class RaceManager {
           ? db.prepare(`
               SELECT * FROM bracket_matches 
               WHERE round_number = ? AND (event_id = ? OR event_id IS NULL) AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+              ${nextRound === 3 ? 'AND ((match_number >= 200 AND match_number <= 221) OR (match_number < 200 AND match_number <= 21))' : ''}
               ORDER BY match_number ASC
             `).get(nextRound, activeEvId)
           : db.prepare(`
               SELECT * FROM bracket_matches 
               WHERE round_number = ? AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+              ${nextRound === 3 ? 'AND ((match_number >= 200 AND match_number <= 221) OR (match_number < 200 AND match_number <= 21))' : ''}
               ORDER BY match_number ASC
             `).get(nextRound);
 
         if (!openMatch) {
+          // If advancing to Round 3, strictly do not create heats beyond Heat 21!
+          if (nextRound === 3) {
+            const r3Count = activeEvId
+              ? db.prepare('SELECT COUNT(*) as cnt FROM bracket_matches WHERE (event_id = ? OR event_id IS NULL) AND round_number = 3').get(activeEvId)?.cnt || 0
+              : db.prepare('SELECT COUNT(*) as cnt FROM bracket_matches WHERE round_number = 3').get()?.cnt || 0;
+            if (r3Count >= 21) {
+              continue; // Babak 3 is capped at 21 heats (63 slots). Do not create heat 22, 23, 24!
+            }
+          }
+
           const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
           const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
           const newMatchId = uuidv4();

@@ -369,6 +369,20 @@ export function reconcileLegacyParticipants(dbInstance) {
         WHERE participant_number = ? AND role = 'participant' AND source_key IS NULL
       `).run(`stc:ots:${n}`, n);
     }
+
+    // 4. Safely prune excess empty heats in Round 3 beyond Heat 21 (match_number > 221 or > 21)
+    dbInstance.prepare(`
+      DELETE FROM bracket_matches 
+      WHERE round_number = 3 
+        AND (
+          (match_number >= 200 AND match_number > 221) 
+          OR (match_number < 200 AND match_number > 21)
+        )
+        AND user_id_1 IS NULL 
+        AND user_id_2 IS NULL 
+        AND user_id_3 IS NULL 
+        AND winner_id IS NULL
+    `).run();
   } catch (err) {
     // Non-fatal on newly created tables
   }

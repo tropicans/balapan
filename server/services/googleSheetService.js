@@ -412,12 +412,15 @@ export function parseBracketCsv(csvText) {
       const finisher = cells[4] || '';
 
       // In Babak 1 (round_number 2 in DGDASH): only import heats with contestants/finishers (e.g. 1..103, skipping blank template rows 104..140).
-      // In Babak 2 and higher (round_number >= 3 in DGDASH, e.g. Babak 3 with 50 heats):
-      // import all defined heats from the sheet so that upcoming elimination heats (Heats 5..50 in Babak 3) are complete.
+      // In Babak 2 and higher (round_number >= 3 in DGDASH):
+      // Babak 3 (Eliminasi) strictly has 21 heats (Heat #1..#21, 63 slots). Do not import blank template rows beyond 21.
+      // Babak 4 and higher only import heats with contestants.
       const hasContestants = Boolean(laneA || laneB || laneC || finisher);
       const shouldInclude = currentRound.round_number === 2 
         ? hasContestants 
-        : (currentRound.round_number === 3 || hasContestants);
+        : (currentRound.round_number === 3 
+            ? (raceNum <= 21) // Babak 3 strictly capped at 21 heats
+            : hasContestants);
 
       if (shouldInclude) {
         heats.push({
@@ -567,20 +570,65 @@ export async function syncBracketFromSheet({ sheet_url, event_id, csv_override }
         db.prepare('SELECT * FROM bracket_matches WHERE match_number = ?').get(dbMatchNumber);
 
       if (existing) {
-        const currentWinnerId = existing.winner_id || null;
-        const newWinnerId = winnerId !== null ? winnerId : currentWinnerId;
-        const newStatus = newWinnerId ? 'completed' : (existing.status === 'completed' && !newWinnerId ? 'pending' : existing.status);
+        // APPLICATION IS SINGLE SOURCE OF TRUTH FOR MATCH RESULTS & BRACKET PROGRESSION:
+        // User rule: "di google sheet tidak dilakukan update untuk hasil babak 2..semua dilakukan diaplikasi"
+        let newWinnerId = existing.winner_id || null;
+        let newStatus = existing.status;
 
-        // If sheet has a racer in this lane, use that racer; if sheet lane is blank, preserve any in-app advanced racer.
-        const effectiveUser1 = heat.lane_a ? userId1 : (existing.user_id_1 || null);
-        const effectiveUser2 = heat.lane_b ? userId2 : (existing.user_id_2 || null);
-        const effectiveUser3 = heat.lane_c ? userId3 : (existing.user_id_3 || null);
+        // 1. Status & Winner Protection:
+        if (existing.status === 'completed') {
+          // If match is already completed in application (including No Race where winner_id is null):
+          // NEVER reset status to pending and NEVER overwrite existing app result.
+          newStatus = 'completed';
+          newWinnerId = existing.winner_id || null;
+        } else if (existing.status === 'in_progress') {
+          // Heat is currently active on track, do not disrupt status
+          newStatus = 'in_progress';
+          newWinnerId = existing.winner_id || null;
+        } else {
+          // Match is pending in application:
+          // If sheet explicitly provides a valid resolved winner, apply it
+          if (winnerId !== null) {
+            newWinnerId = winnerId;
+            newStatus = 'completed';
+          } else {
+            newStatus = 'pending';
+          }
+        }
+
+        // 2. Participant / Lane Protection:
+        let effectiveUser1 = existing.user_id_1 || null;
+        let effectiveUser2 = existing.user_id_2 || null;
+        let effectiveUser3 = existing.user_id_3 || null;
+
+        if (heat.round_number >= 3) {
+          // Elimination rounds (Babak 3+) are populated via in-app auto-advance from Round 2.
+          // Never overwrite or clear in-app participants from sheet sync.
+          // Only populate if slot is currently empty in app AND sheet provides a valid resolved participant:
+          if (!effectiveUser1 && userId1) effectiveUser1 = userId1;
+          if (!effectiveUser2 && userId2) effectiveUser2 = userId2;
+          if (!effectiveUser3 && userId3) effectiveUser3 = userId3;
+        } else {
+          // Round 2 (Preliminary / Babak 1 in sheet):
+          // If match is already completed or in_progress, protect participant lanes from being modified
+          if (existing.status !== 'completed' && existing.status !== 'in_progress') {
+            if (heat.lane_a) {
+              if (userId1) effectiveUser1 = userId1;
+            }
+            if (heat.lane_b) {
+              if (userId2) effectiveUser2 = userId2;
+            }
+            if (heat.lane_c) {
+              if (userId3) effectiveUser3 = userId3;
+            }
+          }
+        }
 
         const changed = (
           (existing.user_id_1 || null) !== (effectiveUser1 || null) ||
           (existing.user_id_2 || null) !== (effectiveUser2 || null) ||
           (existing.user_id_3 || null) !== (effectiveUser3 || null) ||
-          (currentWinnerId !== newWinnerId) ||
+          (existing.winner_id || null) !== (newWinnerId || null) ||
           (existing.status !== newStatus) ||
           Number(existing.is_final || 0) !== Number(heat.is_final || 0)
         );
@@ -649,6 +697,20 @@ export async function syncBracketFromSheet({ sheet_url, event_id, csv_override }
       }
     }
 
+    // Safely prune any excess empty heats in Round 3 beyond Heat 21 (match_number > 221 or > 21)
+    db.prepare(`
+      DELETE FROM bracket_matches 
+      WHERE round_number = 3 
+        AND (
+          (match_number >= 200 AND match_number > 221) 
+          OR (match_number < 200 AND match_number > 21)
+        )
+        AND user_id_1 IS NULL 
+        AND user_id_2 IS NULL 
+        AND user_id_3 IS NULL 
+        AND winner_id IS NULL
+    `).run();
+
     const nowIso = new Date().toISOString();
     db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_bracket_sync_url', ?, CURRENT_TIMESTAMP)").run(rawUrl);
     db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_bracket_last_sync_time', ?, CURRENT_TIMESTAMP)").run(nowIso);
@@ -669,6 +731,15 @@ export async function syncBracketFromSheet({ sheet_url, event_id, csv_override }
       syncedAt: nowIso
     };
   })();
+
+  // Reconcile in-app round advances if new heats or slots were initialized
+  try {
+    const { RaceManager } = await import('../raceManager.js');
+    RaceManager.reconcileRoundAdvances(2);
+    RaceManager.reconcileRoundAdvances(3);
+  } catch (_) {}
+
+  return syncResult;
 }
 
 let lastParticipantCsvHash = null;
