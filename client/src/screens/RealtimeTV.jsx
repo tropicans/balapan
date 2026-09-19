@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRace } from '../context/RaceContext.jsx';
-import { Trophy, Zap, Crown, Ticket, Sparkles, GitBranch, Users, CheckCircle } from 'lucide-react';
+import { Trophy, Zap, Crown, Ticket, Sparkles, GitBranch, Users, CheckCircle, Play, Pause } from 'lucide-react';
 import { BtoCelebrationModal } from '../components/ui/BtoCelebrationModal.jsx';
 import clsx from 'clsx';
 
 export function RealtimeTV() {
   const { raceState, bannerAlert } = useRace();
   const [timeClock, setTimeClock] = useState('');
+
+  // Auto-scroll state for heat board
+  const heatContainerRef = useRef(null);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Live Digital Clock
   useEffect(() => {
@@ -26,6 +31,42 @@ export function RealtimeTV() {
 
   // Round 2 matches (or first round in elimination)
   const round2Matches = bracketMatches.filter(m => m.round_number === 2 || m.round_number === 1);
+
+  // Auto-scroll loop for elimination heats on circuit TV
+  useEffect(() => {
+    if (!autoScrollEnabled) return;
+
+    let pauseTimeout = null;
+    let isWaiting = false;
+
+    const interval = setInterval(() => {
+      const el = heatContainerRef.current;
+      if (!el || isHovered || isWaiting) return;
+
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 5) return; // All heats fit without scrolling
+
+      if (el.scrollTop >= maxScroll - 2) {
+        // Reached bottom: pause 3.5s, then return to top and pause 3.5s before restarting
+        isWaiting = true;
+        pauseTimeout = setTimeout(() => {
+          if (el) {
+            el.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+          pauseTimeout = setTimeout(() => {
+            isWaiting = false;
+          }, 3500);
+        }, 3500);
+      } else {
+        el.scrollTop += 1;
+      }
+    }, 45);
+
+    return () => {
+      clearInterval(interval);
+      if (pauseTimeout) clearTimeout(pauseTimeout);
+    };
+  }, [autoScrollEnabled, isHovered, round2Matches.length]);
   const totalSlots = round2Matches.length * 3;
   const filledSlots = round2Matches.reduce((acc, m) => {
     let count = 0;
@@ -114,12 +155,44 @@ export function RealtimeTV() {
                   SKEMA HEAT BABAK 2 (ELIMINASI)
                 </h2>
               </div>
-              <span className="text-[10px] font-mono bg-neonCyan/20 text-neonCyan px-2 py-0.5 clip-cyber">
-                3-LANE BRACKET
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAutoScrollEnabled(prev => !prev)}
+                  className={clsx(
+                    "text-[10px] font-mono px-2 py-0.5 clip-cyber border flex items-center gap-1.5 transition-colors cursor-pointer",
+                    autoScrollEnabled
+                      ? "bg-neonCyan/20 text-neonCyan border-neonCyan/60 shadow-glowCyan"
+                      : "bg-black/60 text-gray-400 border-gray-700 hover:text-white"
+                  )}
+                  title={autoScrollEnabled ? "Klik untuk jeda auto-scroll" : "Klik untuk aktifkan auto-scroll"}
+                >
+                  {autoScrollEnabled ? (
+                    <>
+                      <span className="w-1.5 h-1.5 rounded-full bg-neonCyan animate-ping" />
+                      <span>AUTO-SCROLL ON</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-2.5 h-2.5 text-gray-400" />
+                      <span>AUTO-SCROLL OFF</span>
+                    </>
+                  )}
+                </button>
+                <span className="text-[10px] font-mono bg-neonCyan/20 text-neonCyan px-2 py-0.5 clip-cyber">
+                  3-LANE BRACKET
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[500px] pr-1">
+            <div
+              ref={heatContainerRef}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onTouchStart={() => setIsHovered(true)}
+              onTouchEnd={() => setIsHovered(false)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[500px] pr-1 scroll-smooth"
+            >
               {round2Matches.length === 0 ? (
                 <div className="col-span-2 text-center py-16 text-sm font-mono text-cyberSilver/40">
                   Belum ada heat Babak 2 yang dibentuk. Menunggu pendaftaran pemenang dari Babak 1.
