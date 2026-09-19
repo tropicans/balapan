@@ -18,12 +18,13 @@ import {
   AlertTriangle,
   ShieldAlert,
   AlertCircle,
-  RotateCcw
+  RotateCcw,
+  XCircle
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export function EliminationManager() {
-  const { raceState, apiAdvanceBracket, apiResetBracketMatch, apiLockRound, apiUnlockRound } = useRace();
+  const { raceState, apiAdvanceBracket, apiResetBracketMatch, apiDeclareBracketNoRace, apiLockRound, apiUnlockRound } = useRace();
   const matches = raceState.bracketMatches || [];
   const isQualifyingLocked = raceState?.settings?.qualifying_status === 'locked' || raceState?.ticketStats?.is_locked;
 
@@ -45,9 +46,10 @@ export function EliminationManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [advancingMatchId, setAdvancingMatchId] = useState(null);
   const [resettingMatchId, setResettingMatchId] = useState(null);
-
+  const [declaringNoRaceId, setDeclaringNoRaceId] = useState(null);
 
   // Modals state
+  const [noRaceModalMatch, setNoRaceModalMatch] = useState(null);
   const [lockModalOpen, setLockModalOpen] = useState(false);
   const [unlockModalOpen, setUnlockModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
@@ -167,6 +169,30 @@ export function EliminationManager() {
       setTimeout(() => setFeedbackMsg(null), 5000);
     } finally {
       setResettingMatchId(null);
+    }
+  };
+
+  // Declare Bracket Match No Race Action
+  const handleDeclareNoRace = async (match) => {
+    if (!match || declaringNoRaceId) return;
+
+    if (match.round_number === 2 && round2Progress.isLocked) {
+      setFeedbackMsg({ type: 'error', text: 'Babak 2 telah dikunci. Buka kunci terlebih dahulu untuk mengubah status heat.' });
+      setTimeout(() => setFeedbackMsg(null), 5000);
+      return;
+    }
+
+    setDeclaringNoRaceId(match.id);
+    try {
+      const res = await apiDeclareBracketNoRace(match.id);
+      setFeedbackMsg({ type: 'success', text: res?.message || `Heat #${match.match_number} dinyatakan No Race!` });
+      setTimeout(() => setFeedbackMsg(null), 3000);
+      setNoRaceModalMatch(null);
+    } catch (err) {
+      setFeedbackMsg({ type: 'error', text: err.message || 'Gagal mendeklarasikan No Race.' });
+      setTimeout(() => setFeedbackMsg(null), 5000);
+    } finally {
+      setDeclaringNoRaceId(null);
     }
   };
 
@@ -324,6 +350,7 @@ export function EliminationManager() {
   // Render individual 3-lane match card
   const renderMatchCard = (match) => {
     const isCompleted = match.status === 'completed';
+    const isNoRace = isCompleted && !match.winner_id;
     const isFinalMatch = match.is_final === 1 || (match.round_number === highestRound && highestRound > 2);
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
@@ -334,13 +361,15 @@ export function EliminationManager() {
         key={match.id}
         className={clsx(
           "p-4 bg-obsidian border clip-cyber space-y-2.5 relative transition-all duration-200",
-          isAutoAdvanced
-            ? "border-neonAmber/80 bg-neonAmber/10 shadow-glowAmber"
-            : isCompleted 
-              ? "border-neonGreen/60 bg-neonGreen/5 shadow-glowGreen" 
-              : isFinalMatch 
-                ? "border-neonAmber/60 bg-neonAmber/5 shadow-glowAmber" 
-                : "border-gray-800 hover:border-neonCyan/50"
+          isNoRace
+            ? "border-rose-500/70 bg-rose-950/20 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
+            : isAutoAdvanced
+              ? "border-neonAmber/80 bg-neonAmber/10 shadow-glowAmber"
+              : isCompleted 
+                ? "border-neonGreen/60 bg-neonGreen/5 shadow-glowGreen" 
+                : isFinalMatch 
+                  ? "border-neonAmber/60 bg-neonAmber/5 shadow-glowAmber" 
+                  : "border-gray-800 hover:border-neonCyan/50"
         )}
       >
         {/* Match Header */}
@@ -371,10 +400,17 @@ export function EliminationManager() {
           <div className="flex items-center gap-1.5">
             {isCompleted ? (
               <>
-                <span className="flex items-center gap-1 text-neonGreen font-bold px-2 py-0.5 bg-neonGreen/10 border border-neonGreen clip-cyber text-[10px]">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  SELESAI
-                </span>
+                {isNoRace ? (
+                  <span className="flex items-center gap-1 text-rose-400 font-bold px-2 py-0.5 bg-rose-500/10 border border-rose-500 clip-cyber text-[10px]">
+                    <XCircle className="w-3.5 h-3.5" />
+                    NO RACE (GUGUR)
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-neonGreen font-bold px-2 py-0.5 bg-neonGreen/10 border border-neonGreen clip-cyber text-[10px]">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    SELESAI
+                  </span>
+                )}
                 {!isR2Locked && (
                   <button
                     onClick={() => handleResetMatch(match)}
@@ -388,13 +424,33 @@ export function EliminationManager() {
                 )}
               </>
             ) : (
-              <span className="flex items-center gap-1 text-neonAmber font-bold px-2 py-0.5 bg-neonAmber/10 border border-neonAmber clip-cyber text-[10px]">
-                <Clock className="w-3.5 h-3.5 animate-pulse" />
-                PENDING
-              </span>
+              <>
+                <span className="flex items-center gap-1 text-neonAmber font-bold px-2 py-0.5 bg-neonAmber/10 border border-neonAmber clip-cyber text-[10px]">
+                  <Clock className="w-3.5 h-3.5 animate-pulse" />
+                  PENDING
+                </span>
+                {!isR2Locked && contestantCount > 0 && (
+                  <button
+                    onClick={() => setNoRaceModalMatch(match)}
+                    disabled={declaringNoRaceId === match.id}
+                    className="px-2 py-0.5 text-[9px] font-orbitron font-bold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-900/60 border border-rose-700/60 hover:border-rose-500 clip-cyber flex items-center gap-1 transition-all cursor-pointer"
+                    title="Deklarasikan semua peserta heat ini gugur (No Race / CO)"
+                  >
+                    <XCircle className="w-3 h-3 text-rose-400" />
+                    <span>NO RACE</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
+
+        {isNoRace && (
+          <div className="px-2.5 py-1 bg-rose-950/40 border border-rose-500/60 text-rose-300 font-mono text-[10px] flex items-center gap-1.5 clip-cyber">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+            <span>SEMUA PESERTA CO / DNF &bull; TIDAK ADA PEMENANG (SLOT LANJUTAN: BYE)</span>
+          </div>
+        )}
 
         {isAutoAdvanced && (
           <div className="px-2.5 py-1 bg-neonAmber/15 border border-neonAmber/60 text-neonAmber font-mono text-[10px] flex items-center gap-1.5 clip-cyber">
@@ -728,6 +784,51 @@ export function EliminationManager() {
                 disabled={modalLoading}
               >
                 {modalLoading ? 'MEMPROSES...' : 'YA, BUKA SEKARANG'}
+              </CyberButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Race Confirmation Modal */}
+      {noRaceModalMatch && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-obsidian border-2 border-rose-500 p-6 max-w-md w-full clip-cyber space-y-4 shadow-[0_0_25px_rgba(244,63,94,0.5)]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-rose-500/20 border border-rose-500 flex items-center justify-center clip-cyber text-rose-400">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-orbitron font-black text-white">
+                  DEKLARASI NO RACE (SEMUA GUGUR)
+                </h3>
+                <p className="text-xs font-mono text-rose-400">
+                  HEAT #{noRaceModalMatch.match_number} &bull; PUTARAN {noRaceModalMatch.round_number}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs font-mono text-cyberSilver/90 leading-relaxed">
+              Yakin mendeklarasikan <strong className="text-rose-400">NO RACE</strong> untuk heat ini? 
+              Seluruh pembalap dinyatakan gugur (CO/DNF) dan <strong className="text-white">tidak ada pemenang</strong> yang dimajukan ke babak berikutnya (slot babak berikutnya menjadi BYE).
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-800">
+              <CyberButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setNoRaceModalMatch(null)}
+                disabled={declaringNoRaceId === noRaceModalMatch.id}
+              >
+                BATAL
+              </CyberButton>
+              <CyberButton
+                variant="pink"
+                size="sm"
+                onClick={() => handleDeclareNoRace(noRaceModalMatch)}
+                disabled={declaringNoRaceId === noRaceModalMatch.id}
+              >
+                {declaringNoRaceId === noRaceModalMatch.id ? 'MEMPROSES...' : 'YA, TETAPKAN NO RACE'}
               </CyberButton>
             </div>
           </div>

@@ -562,6 +562,22 @@ export function RaceProvider({ children }) {
     }
   };
 
+  const apiDeclareBracketNoRace = async (matchId) => {
+    try {
+      const res = await fetchWithAuth('/api/bracket/no-race', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Gagal mendeklarasikan No Race');
+      return data;
+    } catch (err) {
+      sound.playErrorSound();
+      throw err;
+    }
+  };
+
   return (
     <RaceContext.Provider
       value={{
@@ -595,6 +611,7 @@ export function RaceProvider({ children }) {
         apiStopCountdown,
         apiAdvanceBracket,
         apiResetBracketMatch,
+        apiDeclareBracketNoRace,
         apiLockQualifying,
         apiUnlockQualifying,
         apiLockRound,

@@ -1077,6 +1077,43 @@ export class RaceManager {
     };
   }
 
+  // Declare Bracket Match No Race (All contestants CO/DNF - no winner advances)
+  static declareBracketNoRace(matchId) {
+    const match = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(matchId);
+    if (!match) throw new Error('Pertandingan bracket tidak ditemukan');
+
+    // Check lock status for round
+    if (match.round_number >= 2 && RaceManager.getRoundStatus(match.round_number) === 'locked') {
+      throw new Error(`Babak ${match.round_number} telah difinalisasi dan dikunci. Buka kunci Babak ${match.round_number} terlebih dahulu jika ingin mendeklarasikan No Race.`);
+    }
+
+    // If match already has a winner that advanced to next round, reject until registration is cancelled
+    if (match.winner_id) {
+      const nextRound = match.round_number + 1;
+      const inNext = db.prepare(`
+        SELECT id FROM bracket_matches 
+        WHERE event_id = ? AND round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
+      `).get(match.event_id, nextRound, match.winner_id, match.winner_id, match.winner_id);
+      if (inNext) {
+        throw new Error(`Pemenang heat ini sudah terdaftar di Babak ${nextRound}. Batalkan pendaftarannya di menu Registrasi Pemenang terlebih dahulu.`);
+      }
+    }
+
+    db.prepare(`
+      UPDATE bracket_matches 
+      SET status = 'completed', winner_id = NULL 
+      WHERE id = ?
+    `).run(matchId);
+
+    return {
+      success: true,
+      matchId,
+      status: 'completed',
+      winnerId: null,
+      message: `Heat #${match.match_number} berhasil dinyatakan No Race (Semua peserta gugur).`
+    };
+  }
+
 
   // RD Admin Override Panel
   static adminOverrideLane(action, { raceId, lane, userId }) {

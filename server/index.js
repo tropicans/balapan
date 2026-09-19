@@ -1136,6 +1136,32 @@ app.post('/api/marshal/record-bracket-winner', (req, res) => {
   }
 });
 
+// 17e-2. Record No Race (All CO / DNF) for Round 2 Bracket Match
+app.post('/api/marshal/record-bracket-no-race', (req, res) => {
+  try {
+    const { match_id, matchId } = req.body || {};
+    const mId = match_id || matchId;
+    if (!mId) {
+      return res.status(400).json({
+        success: false,
+        error: 'match_id wajib diisi'
+      });
+    }
+
+    const result = RaceManager.declareBracketNoRace(mId);
+    io.emit('bracket_updated', { match_id: mId, no_race: true, result });
+    broadcastFullState();
+
+    res.json({
+      success: true,
+      message: 'Heat dinyatakan No Race (Semua peserta gugur)',
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // 17f. Marshal Start Box Registration & Debit
 app.post('/api/marshal/register-box', (req, res) => {
   try {
@@ -1726,6 +1752,24 @@ app.post('/api/bracket/reset', requireRole('race_director', 'admin', 'super_admi
     io.emit('bracket_updated');
     broadcastFullState();
     res.json({ success: true, data: result, message: 'Heat berhasil dibuka kembali.' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 22i. Declare Bracket Match No Race (All CO / DNF - RD / Admin Panel)
+app.post('/api/bracket/no-race', requireRole('race_director', 'admin', 'super_admin'), (req, res) => {
+  try {
+    const { match_id, matchId } = req.body || {};
+    const mId = match_id || matchId;
+    if (!mId) {
+      return res.status(400).json({ success: false, error: 'matchId wajib diisi' });
+    }
+    const result = RaceManager.declareBracketNoRace(mId);
+
+    io.emit('bracket_updated', { match_id: mId, no_race: true, result });
+    broadcastFullState();
+    res.json({ success: true, data: result, message: result.message });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }

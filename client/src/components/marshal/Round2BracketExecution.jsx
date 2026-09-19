@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GitBranch, Trophy, Loader2, RefreshCw, AlertCircle, CheckCircle2, User } from 'lucide-react';
+import { GitBranch, Trophy, Loader2, RefreshCw, AlertCircle, CheckCircle2, User, XCircle, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 import { playSuccessChime, playErrorBuzz, playActionClick } from '../../utils/audioChime.js';
 
@@ -7,6 +7,7 @@ export function Round2BracketExecution({ activeMatch, onRefresh, loading }) {
   const [submitting, setSubmitting] = useState(false);
   const [lastAction, setLastAction] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [showNoRaceConfirm, setShowNoRaceConfirm] = useState(false);
 
   const handleSelectWinner = async (contestantId, contestantName, lane) => {
     if (!activeMatch || submitting) return;
@@ -35,6 +36,44 @@ export function Round2BracketExecution({ activeMatch, onRefresh, loading }) {
         lane,
         matchNumber: activeMatch.match_number
       });
+
+      if (onRefresh) {
+        onRefresh();
+      }
+    } catch (err) {
+      playErrorBuzz();
+      setErrorMsg(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeclareNoRace = async () => {
+    if (!activeMatch || submitting) return;
+    playActionClick();
+    setSubmitting(true);
+    setErrorMsg(null);
+
+    try {
+      const res = await fetch('/api/marshal/record-bracket-no-race', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          match_id: activeMatch.id
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal mendeklarasikan No Race');
+      }
+
+      playErrorBuzz();
+      setLastAction({
+        noRace: true,
+        matchNumber: activeMatch.match_number
+      });
+      setShowNoRaceConfirm(false);
 
       if (onRefresh) {
         onRefresh();
@@ -157,10 +196,23 @@ export function Round2BracketExecution({ activeMatch, onRefresh, loading }) {
 
         {/* Success Confirmation Toast */}
         {lastAction && (
-          <div className="mb-4 p-3 bg-green-950/80 border border-green-500 rounded flex items-center gap-2 text-xs font-mono text-green-200">
-            <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+          <div className={clsx(
+            "mb-4 p-3 border rounded flex items-center gap-2 text-xs font-mono",
+            lastAction.noRace 
+              ? "bg-rose-950/80 border-rose-500 text-rose-200" 
+              : "bg-green-950/80 border-green-500 text-green-200"
+          )}>
+            {lastAction.noRace ? (
+              <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0" />
+            )}
             <span>
-              Pemenang Match #{lastAction.matchNumber} ({lastAction.winnerName} - Jalur {lastAction.lane}) berhasil dimajukan ke putaran berikutnya!
+              {lastAction.noRace ? (
+                `Match #${lastAction.matchNumber} berhasil dinyatakan NO RACE (Semua peserta gugur). Slot babak berikutnya menjadi BYE.`
+              ) : (
+                `Pemenang Match #${lastAction.matchNumber} (${lastAction.winnerName} - Jalur ${lastAction.lane}) berhasil dimajukan ke putaran berikutnya!`
+              )}
             </span>
           </div>
         )}
@@ -233,7 +285,71 @@ export function Round2BracketExecution({ activeMatch, onRefresh, loading }) {
             );
           })}
         </div>
+
+        {/* No Race / All Kelontang Action Button */}
+        <div className="mt-4 pt-3 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-[11px] font-mono text-cyberSilver/60 flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 text-cyberSilver/50" />
+            <span>Jika semua mobil kelontang / CO / mogok sebelum finis:</span>
+          </div>
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={() => setShowNoRaceConfirm(true)}
+            className="w-full sm:w-auto px-4 py-2 rounded font-orbitron font-bold text-xs uppercase tracking-wider transition-all select-none flex items-center justify-center gap-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-600/60 hover:border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.15)] active:scale-95 cursor-pointer disabled:opacity-50"
+            title="Deklarasikan semua peserta gugur (No Race) tanpa pemenang"
+          >
+            <XCircle className="w-4 h-4 text-rose-400" />
+            <span>NO RACE / SEMUA KELONTANG (CO)</span>
+          </button>
+        </div>
       </div>
+
+      {/* Confirmation Modal for No Race */}
+      {showNoRaceConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-obsidian border-2 border-rose-500/80 rounded-lg p-5 shadow-[0_0_30px_rgba(244,63,94,0.3)] space-y-4">
+            <div className="flex items-center gap-3 border-b border-gray-800 pb-3">
+              <div className="w-10 h-10 rounded-full bg-rose-500/20 border border-rose-500 flex items-center justify-center text-rose-400">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-orbitron font-black text-white uppercase tracking-wider">
+                  Konfirmasi No Race (CO Semua)
+                </h3>
+                <p className="text-[11px] font-mono text-rose-300/80">
+                  Heat #{activeMatch.match_number} &bull; Putaran {activeMatch.round_number}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs font-mono text-cyberSilver/90 leading-relaxed">
+              Apakah Anda yakin mendeklarasikan <strong className="text-rose-400">NO RACE</strong> untuk heat ini? 
+              Seluruh mobil peserta dinyatakan gugur dan <strong className="text-white">tidak ada pemenang</strong> yang maju ke babak berikutnya (slot babak berikutnya otomatis menjadi BYE).
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={() => setShowNoRaceConfirm(false)}
+                className="px-4 py-2 bg-midnight border border-gray-700 hover:border-gray-500 text-cyberSilver hover:text-white text-xs font-mono rounded"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={handleDeclareNoRace}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-orbitron font-black uppercase tracking-wider rounded shadow-[0_0_15px_rgba(244,63,94,0.5)] flex items-center gap-2"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                <span>Ya, Tetapkan No Race</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

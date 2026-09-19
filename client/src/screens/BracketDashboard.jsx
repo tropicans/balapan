@@ -14,7 +14,9 @@ import {
   Users, 
   X,
   Sparkles,
-  UserCheck
+  UserCheck,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import clsx from 'clsx';
 import { WinnerRegistrationPanel } from '../components/bracket/WinnerRegistrationPanel.jsx';
@@ -245,6 +247,7 @@ export function BracketDashboard() {
   const renderMatchCard = (match) => {
     const isCompleted = match.status === 'completed';
     const isFinalMatch = match.is_final === 1 || (match.round_number === highestRound && highestRound > 2);
+    const isNoRace = isCompleted && !match.winner_id;
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
 
@@ -253,13 +256,15 @@ export function BracketDashboard() {
         key={match.id}
         className={clsx(
           "p-4 bg-obsidian border clip-cyber space-y-2.5 relative transition-all duration-200",
-          isAutoAdvanced
-            ? "border-neonAmber/80 bg-neonAmber/10 shadow-glowAmber"
-            : isCompleted 
-              ? "border-neonGreen/50 bg-neonGreen/5 shadow-glowGreen" 
-              : isFinalMatch 
-                ? "border-neonAmber/60 bg-neonAmber/5 shadow-glowAmber" 
-                : "border-gray-800 hover:border-neonCyan/50"
+          isNoRace
+            ? "border-rose-500/60 bg-rose-950/15 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
+            : isAutoAdvanced
+              ? "border-neonAmber/80 bg-neonAmber/10 shadow-glowAmber"
+              : isCompleted 
+                ? "border-neonGreen/50 bg-neonGreen/5 shadow-glowGreen" 
+                : isFinalMatch 
+                  ? "border-neonAmber/60 bg-neonAmber/5 shadow-glowAmber" 
+                  : "border-gray-800 hover:border-neonCyan/50"
         )}
       >
         {/* Match Header */}
@@ -289,10 +294,17 @@ export function BracketDashboard() {
           </div>
           <div className="flex items-center gap-1.5">
             {isCompleted ? (
-              <span className="flex items-center gap-1 text-neonGreen font-bold">
-                <CheckCircle className="w-3.5 h-3.5" />
-                SELESAI
-              </span>
+              isNoRace ? (
+                <span className="flex items-center gap-1 text-rose-400 font-bold">
+                  <XCircle className="w-3.5 h-3.5" />
+                  NO RACE
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-neonGreen font-bold">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  SELESAI
+                </span>
+              )
             ) : (
               <span className="flex items-center gap-1 text-neonAmber font-bold">
                 <Clock className="w-3.5 h-3.5 animate-pulse" />
@@ -301,6 +313,13 @@ export function BracketDashboard() {
             )}
           </div>
         </div>
+
+        {isNoRace && (
+          <div className="px-2.5 py-1 bg-rose-950/40 border border-rose-500/60 text-rose-300 font-mono text-[10px] flex items-center gap-1.5 clip-cyber">
+            <AlertCircle className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
+            <span>SEMUA PESERTA CO / DNF &bull; TIDAK ADA PEMENANG</span>
+          </div>
+        )}
 
         {isAutoAdvanced && (
           <div className="px-2.5 py-1 bg-neonAmber/15 border border-neonAmber/60 text-neonAmber font-mono text-[10px] flex items-center gap-1.5 clip-cyber">
