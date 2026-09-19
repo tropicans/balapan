@@ -137,6 +137,26 @@ export function Navbar({ activeScreen, setActiveScreen }) {
             </span>
             <span>•</span>
             <span className="uppercase">NEO-RACING HUD v3.2</span>
+            {isAuthenticated && user && ['admin', 'super_admin', 'cashier', 'race_director'].includes(user.role) && (
+              <>
+                <span>•</span>
+                <span 
+                  className="inline-flex items-center gap-1 text-emerald-400 bg-emerald-950/40 px-1.5 py-0.5 border border-emerald-500/40 clip-cyber cursor-default"
+                  title="Waktu Sinkronisasi Otomatis Google Sheet Terakhir (Interval: 60s)"
+                >
+                  <span className={clsx(
+                    "w-1.5 h-1.5 rounded-full",
+                    raceState?.sheetSyncStatus?.lastStatus === 'error' ? "bg-red-500" : "bg-emerald-400 animate-pulse"
+                  )} />
+                  <span className="text-gray-400">SHEET SYNC:</span>
+                  <span className="font-bold text-white">
+                    {raceState?.sheetSyncStatus?.lastRunAt
+                      ? new Date(raceState.sheetSyncStatus.lastRunAt).toLocaleTimeString('id-ID', { hour12: false })
+                      : 'BELUM'}
+                  </span>
+                </span>
+              </>
+            )}
           </div>
         </div>
 

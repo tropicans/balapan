@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { TicketEngine } from './ticketEngine.js';
 import { getActiveEvent, getActiveEventId } from './services/eventService.js';
 import { getBtoLeaderboard } from './services/btoService.js';
+import { getSchedulerStatus } from './services/sheetSyncScheduler.js';
 
 function checkTableExists(name) {
   try {
@@ -256,6 +257,7 @@ export class RaceManager {
       scrutineerQueue,
       bracketMatches,
       settings,
+      sheetSyncStatus: getSchedulerStatus(),
       round2_status: RaceManager.getRoundStatus(2),
       round2_progress: RaceManager.getRoundProgress(2),
       ticketStats: hasTickets ? TicketEngine.getTicketStats() : {

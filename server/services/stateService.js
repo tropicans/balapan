@@ -1,6 +1,7 @@
 import db from '../db.js';
 import { getActiveEvent, getActiveEventId } from './eventService.js';
 import { getBtoLeaderboard } from './btoService.js';
+import { getSchedulerStatus } from './sheetSyncScheduler.js';
 import { RaceManager } from '../raceManager.js';
 
 /**
@@ -104,6 +105,7 @@ export function getFullState() {
     btoLeaderboard,
     bestRaceLeaderboard,
     settings,
+    sheetSyncStatus: getSchedulerStatus(),
     round2_status: RaceManager.getRoundStatus(2),
     round2_progress: RaceManager.getRoundProgress(2),
     serverTime: new Date().toISOString(),
