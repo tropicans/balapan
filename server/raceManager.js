@@ -152,11 +152,11 @@ export class RaceManager {
         bracketMatches = db.prepare(`
           SELECT 
             bm.*,
-            u1.name as user_1_name, u1.team_name as user_1_team,
+            u1.name as user_1_name, u1.team_name as user_1_team, u1.participant_number as participant_number_1,
             t1.ticket_number as ticket_number_1, t1.racer_ticket_index as ticket_index_1,
-            u2.name as user_2_name, u2.team_name as user_2_team,
+            u2.name as user_2_name, u2.team_name as user_2_team, u2.participant_number as participant_number_2,
             t2.ticket_number as ticket_number_2, t2.racer_ticket_index as ticket_index_2,
-            u3.name as user_3_name, u3.team_name as user_3_team,
+            u3.name as user_3_name, u3.team_name as user_3_team, u3.participant_number as participant_number_3,
             t3.ticket_number as ticket_number_3, t3.racer_ticket_index as ticket_index_3,
             w.name as winner_name
           FROM bracket_matches bm

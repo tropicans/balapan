@@ -35,29 +35,28 @@ export function RealtimeTV() {
     return rounds.sort((a, b) => a - b);
   }, [bracketMatches]);
 
-  // Determine auto active round:
-  // If Babak 2 is completed or locked, or Babak 3 already has seeded racers, switch to Babak 3
+  // Determine auto active round dynamically:
+  // Checks higher rounds first, advancing to Babak 3 as soon as racers are seeded
   const autoActiveRound = useMemo(() => {
     if (availableRounds.length === 0) return 2;
 
-    const r2Matches = bracketMatches.filter(m => m.round_number === 2);
-    const r3Matches = bracketMatches.filter(m => m.round_number === 3);
+    // Check rounds from highest to lowest dynamically (Round 5, 4, 3, etc.)
+    const sortedRounds = [...availableRounds].sort((a, b) => b - a);
+    for (const r of sortedRounds) {
+      if (r <= 2) continue;
+      const rMatches = bracketMatches.filter(m => m.round_number === r);
+      const hasRacers = rMatches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
+      if (hasRacers) {
+        return r;
+      }
+    }
 
+    const r2Matches = bracketMatches.filter(m => m.round_number === 2);
     const isR2Locked = activeEvent?.is_round_2_locked === 1;
     const r2HasMatches = r2Matches.length > 0;
     const r2AllCompleted = r2HasMatches && r2Matches.every(m => m.status === 'completed' || !!m.winner_id);
-    const r3HasRacers = r3Matches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
 
-    // If R2 is locked, completed, or R3 has racers seeded, advance TV to Round 3
-    if ((isR2Locked || r2AllCompleted || r3HasRacers) && availableRounds.includes(3)) {
-      // Check higher rounds as well (Round 4, etc.)
-      const r4Matches = bracketMatches.filter(m => m.round_number === 4);
-      const r3AllCompleted = r3Matches.length > 0 && r3Matches.every(m => m.status === 'completed' || !!m.winner_id);
-      const r4HasRacers = r4Matches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
-
-      if ((r3AllCompleted || r4HasRacers) && availableRounds.includes(4)) {
-        return 4;
-      }
+    if ((isR2Locked || r2AllCompleted) && availableRounds.includes(3)) {
       return 3;
     }
 
@@ -67,6 +66,11 @@ export function RealtimeTV() {
   // Allow manual tab override or fallback to auto active round
   const [manualRound, setManualRound] = useState(null);
   const currentRound = manualRound ?? autoActiveRound;
+
+  // When autoActiveRound advances, reset manual override to keep TV synchronized with live action
+  useEffect(() => {
+    setManualRound(null);
+  }, [autoActiveRound]);
 
   // Active matches for the current round displayed
   const currentRoundMatches = useMemo(() => {
@@ -329,14 +333,17 @@ export function RealtimeTV() {
                 </div>
               ) : (
                 currentRoundMatches.map((m, idx) => {
-                  const isCompleted = !!m.winner_id;
+                  const isCompleted = m.status === 'completed' || !!m.winner_id;
+                  const isNoRace = m.status === 'completed' && !m.winner_id;
                   const heatNumber = m.round_heat_number || (idx + 1);
                   return (
                     <div 
                       key={m.id}
                       className={clsx(
                         "p-3.5 border-2 clip-cyber transition-all flex flex-col justify-between",
-                        isCompleted ? "bg-black/60 border-gray-800 opacity-80" : "bg-black/80 border-neonCyan/50 shadow-glowCyan"
+                        isNoRace
+                          ? "bg-rose-950/25 border-rose-500/60 shadow-[0_0_15px_rgba(244,63,94,0.2)]"
+                          : isCompleted ? "bg-black/60 border-gray-800 opacity-80" : "bg-black/80 border-neonCyan/50 shadow-glowCyan"
                       )}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -345,9 +352,11 @@ export function RealtimeTV() {
                         </span>
                         <span className={clsx(
                           "px-2 py-0.5 text-[9px] font-orbitron font-bold uppercase clip-cyber",
-                          isCompleted ? "bg-neonGreen/20 text-neonGreen border border-neonGreen" : "bg-neonAmber/20 text-neonAmber border border-neonAmber"
+                          isNoRace
+                            ? "bg-rose-950/40 text-rose-400 border border-rose-500/60"
+                            : isCompleted ? "bg-neonGreen/20 text-neonGreen border border-neonGreen" : "bg-neonAmber/20 text-neonAmber border border-neonAmber"
                         )}>
-                          {isCompleted ? 'SELESAI' : 'MENUNGGU START'}
+                          {isNoRace ? 'NO RACE' : (isCompleted ? 'SELESAI' : 'MENUNGGU START')}
                         </span>
                       </div>
 

@@ -75,6 +75,18 @@ export function RaceProvider({ children }) {
       }
     });
 
+    socketInstance.on('bracket_updated', async () => {
+      try {
+        const res = await fetchWithAuth('/api/state');
+        const data = await res.json();
+        if (data?.success && data?.data) {
+          setRaceState(data.data);
+        }
+      } catch (err) {
+        console.warn('Gagal fetch state on bracket_updated:', err);
+      }
+    });
+
     // Specialized Real-Time Events
     socketInstance.on('RACE_LOCKED', (data) => {
       sound.playLockSound();

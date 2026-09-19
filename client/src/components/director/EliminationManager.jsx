@@ -39,14 +39,44 @@ export function EliminationManager() {
     return availableRounds.length > 0 ? Math.max(...availableRounds) : 3;
   }, [availableRounds]);
 
+  // Determine active round automatically
+  const autoActiveRound = useMemo(() => {
+    if (availableRounds.length === 0) return 2;
+
+    const sortedRounds = [...availableRounds].sort((a, b) => b - a);
+    for (const r of sortedRounds) {
+      if (r <= 2) continue;
+      const rMatches = matches.filter(m => m.round_number === r);
+      const hasRacers = rMatches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
+      if (hasRacers) {
+        return r;
+      }
+    }
+
+    const r2Matches = matches.filter(m => m.round_number === 2);
+    const r2Completed = r2Matches.length > 0 && r2Matches.every(m => m.status === 'completed');
+    const isR2Locked = raceState?.round2_status === 'locked';
+
+    if ((isR2Locked || r2Completed) && availableRounds.includes(3)) {
+      return 3;
+    }
+
+    return availableRounds.includes(2) ? 2 : availableRounds[0];
+  }, [matches, raceState?.round2_status, availableRounds]);
+
   // View state
-  const [selectedRound, setSelectedRound] = useState(availableRounds[0] || 2);
+  const [selectedRound, setSelectedRound] = useState(autoActiveRound);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
   const [currentPage, setCurrentPage] = useState(1);
   const [advancingMatchId, setAdvancingMatchId] = useState(null);
   const [resettingMatchId, setResettingMatchId] = useState(null);
   const [declaringNoRaceId, setDeclaringNoRaceId] = useState(null);
+
+  // Auto-switch selectedRound when active round advances
+  useEffect(() => {
+    setSelectedRound(autoActiveRound);
+  }, [autoActiveRound]);
 
   // Modals state
   const [noRaceModalMatch, setNoRaceModalMatch] = useState(null);
@@ -503,6 +533,8 @@ export function EliminationManager() {
         {availableRounds.map(rNum => {
           const isSelected = selectedRound === rNum;
           const isGF = rNum === highestRound && highestRound >= 5;
+          const roundMatches = matches.filter(m => m.round_number === rNum);
+          const hasActiveRacers = roundMatches.some(m => (m.user_id_1 || m.user_id_2 || m.user_id_3) && m.status !== 'completed');
 
           return (
             <button
@@ -519,6 +551,11 @@ export function EliminationManager() {
             >
               {isGF ? <Trophy className="w-4 h-4" /> : <GitBranch className="w-4 h-4" />}
               <span>{getRoundLabel(rNum)}</span>
+              {hasActiveRacers && (
+                <span className="px-1.5 py-0.2 text-[8px] font-orbitron font-black bg-neonGreen/20 text-neonGreen border border-neonGreen clip-cyber animate-pulse">
+                  LIVE
+                </span>
+              )}
             </button>
           );
         })}

@@ -44,17 +44,29 @@ export function BracketDashboard() {
 
   // Determine active round automatically
   const autoActiveRound = useMemo(() => {
+    if (availableRounds.length === 0) return 2;
+
+    // Check rounds from highest to lowest (e.g. Grand Final, Round 4, Round 3)
+    const sortedRounds = [...availableRounds].sort((a, b) => b - a);
+    for (const r of sortedRounds) {
+      if (r <= 2) continue; // Check higher elimination rounds first
+      const rMatches = matches.filter(m => m.round_number === r);
+      const hasRacers = rMatches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
+      if (hasRacers) {
+        return r;
+      }
+    }
+
+    // Fallback: If Babak 2 is completed or locked, and Babak 3 exists, return 3
     const r2Matches = matches.filter(m => m.round_number === 2);
     const r2Completed = r2Matches.length > 0 && r2Matches.every(m => m.status === 'completed');
     const isR2Locked = raceState.round2_status === 'locked';
 
-    const r3Matches = matches.filter(m => m.round_number === 3);
-    const r3HasRacers = r3Matches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
-
-    if ((isR2Locked || r2Completed || (r3HasRacers && r2Completed)) && availableRounds.includes(3)) {
+    if ((isR2Locked || r2Completed) && availableRounds.includes(3)) {
       return 3;
     }
-    return availableRounds[0] || 2;
+
+    return availableRounds.includes(2) ? 2 : availableRounds[0];
   }, [matches, raceState.round2_status, availableRounds]);
 
   // Round Selector State (defaults to active round)
@@ -522,6 +534,7 @@ export function BracketDashboard() {
           const roundMatches = matches.filter(m => m.round_number === roundNum);
           const totalCount = roundMatches.length;
           const completedCount = roundMatches.filter(m => m.status === 'completed').length;
+          const hasActiveRacers = roundMatches.some(m => (m.user_id_1 || m.user_id_2 || m.user_id_3) && m.status !== 'completed');
           const isActive = selectedRound === roundNum;
           const isGrandFinal = roundNum === highestRound && highestRound >= 5;
 
@@ -544,6 +557,11 @@ export function BracketDashboard() {
                 <Zap className={clsx("w-4 h-4", isActive ? "text-neonCyan" : "text-cyberSilver/60")} />
               )}
               <span>{getRoundLabel(roundNum)}</span>
+              {hasActiveRacers && (
+                <span className="px-1.5 py-0.2 text-[8px] font-orbitron font-black bg-neonGreen/20 text-neonGreen border border-neonGreen clip-cyber animate-pulse">
+                  LIVE
+                </span>
+              )}
               <span className={clsx(
                 "px-2 py-0.5 text-[10px] font-mono clip-cyber ml-1",
                 isActive ? "bg-black/80 text-neonCyan border border-neonCyan/60 font-bold" : "bg-black/50 text-gray-400"
