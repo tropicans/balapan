@@ -301,10 +301,76 @@ export async function initDatabase() {
   // Run versioned migrations (replaces legacy try/catch ALTER block)
   runMigrations(db);
 
+  // Auto-reconcile legacy participant rename and duplicates
+  reconcileLegacyParticipants(db);
+
   // Demo/dummy data is opt-in only. Production and normal local runs start clean.
   // Enable with SEED_DEMO_DATA=true (the test suite sets this).
   if (process.env.SEED_DEMO_DATA === 'true') {
     seedInitialData();
+  }
+}
+
+export function reconcileLegacyParticipants(dbInstance) {
+  try {
+    // 1. Rename #21, #23, #24, #25 if they still hold old names
+    const renames = [
+      { num: 21, newName: 'PTMK', sourceKey: 'stc:presale:21' },
+      { num: 23, newName: 'papamiya', sourceKey: 'stc:presale:23' },
+      { num: 24, newName: 'kasetklasik', sourceKey: 'stc:presale:24' },
+      { num: 25, newName: 'slowdon', sourceKey: 'stc:presale:25' }
+    ];
+
+    for (const r of renames) {
+      dbInstance.prepare(`
+        UPDATE users 
+        SET name = ?, source_key = COALESCE(source_key, ?)
+        WHERE participant_number = ? AND role = 'participant'
+      `).run(r.newName, r.sourceKey, r.num);
+    }
+
+    // 2. Safely remove duplicate phantom participants (#41, #42, #43, #44)
+    const duplicateNumbers = [41, 42, 43, 44];
+    for (const num of duplicateNumbers) {
+      const user = dbInstance.prepare('SELECT id, name FROM users WHERE participant_number = ? AND role = "participant"').get(num);
+      if (user) {
+        let inMatch = false;
+        try {
+          const m = dbInstance.prepare(`
+            SELECT id FROM bracket_matches 
+            WHERE user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ? OR winner_id = ?
+            LIMIT 1
+          `).get(user.id, user.id, user.id, user.id);
+          if (m) inMatch = true;
+        } catch (_) {}
+
+        let inBto = false;
+        try {
+          const b = dbInstance.prepare('SELECT id FROM bto_records WHERE user_id = ? LIMIT 1').get(user.id);
+          if (b) inBto = true;
+        } catch (_) {}
+
+        if (!inMatch && !inBto) {
+          dbInstance.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+        }
+      }
+    }
+
+    // 3. Link source_key for participants #1 to #35 (presale) and #36 to #40 (ots)
+    for (let n = 1; n <= 35; n++) {
+      dbInstance.prepare(`
+        UPDATE users SET source_key = ? 
+        WHERE participant_number = ? AND role = 'participant' AND source_key IS NULL
+      `).run(`stc:presale:${n}`, n);
+    }
+    for (let n = 36; n <= 40; n++) {
+      dbInstance.prepare(`
+        UPDATE users SET source_key = ? 
+        WHERE participant_number = ? AND role = 'participant' AND source_key IS NULL
+      `).run(`stc:ots:${n}`, n);
+    }
+  } catch (err) {
+    // Non-fatal on newly created tables
   }
 }
 

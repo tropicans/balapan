@@ -214,6 +214,38 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
         const candidateNum = Number(candidate.source_no);
         const unlinkedUser = existingRows.find(u => !u.source_key && u.participant_number === candidateNum);
         if (unlinkedUser) {
+          // Check if an unreferenced phantom duplicate was previously inserted for this renamed candidate
+          const duplicateUser = existingRows.find(u => 
+            u.id !== unlinkedUser.id && 
+            String(u.name || '').trim().toLowerCase() === normName &&
+            u.participant_number > candidateNum
+          );
+
+          if (duplicateUser) {
+            let inMatch = false;
+            try {
+              const m = db.prepare(`
+                SELECT id FROM bracket_matches 
+                WHERE user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ? OR winner_id = ? 
+                LIMIT 1
+              `).get(duplicateUser.id, duplicateUser.id, duplicateUser.id, duplicateUser.id);
+              if (m) inMatch = true;
+            } catch (_) {}
+
+            let inBto = false;
+            try {
+              const b = db.prepare('SELECT id FROM bto_records WHERE user_id = ? LIMIT 1').get(duplicateUser.id);
+              if (b) inBto = true;
+            } catch (_) {}
+
+            if (!inMatch && !inBto) {
+              db.prepare('DELETE FROM users WHERE id = ?').run(duplicateUser.id);
+              existingByName.delete(normName);
+              const dIdx = existingRows.findIndex(u => u.id === duplicateUser.id);
+              if (dIdx !== -1) existingRows.splice(dIdx, 1);
+            }
+          }
+
           linkSourceKeyStmt.run(candidateSourceKey, unlinkedUser.id);
           unlinkedUser.source_key = candidateSourceKey;
           existingBySourceKey.set(candidateSourceKey, unlinkedUser);
