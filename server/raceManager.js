@@ -85,8 +85,8 @@ export class RaceManager {
     if ((!btoLeaderboard || btoLeaderboard.length === 0) && checkTableExists('race_registrations') && checkTableExists('races')) {
       btoLeaderboard = db.prepare(`
         SELECT 
-          rr.id, rr.finish_time, rr.lane, rr.race_id,
-          u.id as user_id, u.name as user_name, u.team_name,
+          rr.id, rr.finish_time, rr.finish_time as best_time, rr.lane, rr.race_id,
+          u.id as user_id, u.name as user_name, u.name as participant_name, u.name as name, u.team_name,
           r.race_number
         FROM race_registrations rr
         JOIN users u ON rr.user_id = u.id

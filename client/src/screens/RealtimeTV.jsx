@@ -237,7 +237,7 @@ export function RealtimeTV() {
                               "font-orbitron font-black text-base",
                               idx === 0 ? "text-yellow-300 text-glow-gold" : "text-white"
                             )}>
-                              #{item.participant_number} {item.participant_name || item.name}
+                              #{item.participant_number} {item.user_name || item.participant_name || item.name || ''}
                             </div>
                             {idx === 0 && (
                               <span className="px-1.5 py-0.5 text-[9px] font-orbitron font-black bg-yellow-400 text-black clip-cyber uppercase tracking-wider">
@@ -255,7 +255,7 @@ export function RealtimeTV() {
                         "text-2xl font-orbitron font-black",
                         idx === 0 ? "text-yellow-300 text-glow-gold" : "text-neonGreen text-glow-green"
                       )}>
-                        {parseFloat(item.best_time).toFixed(3)}s
+                        {parseFloat(item.finish_time ?? item.best_time ?? 0).toFixed(3)}s
                       </div>
                     </div>
                   );

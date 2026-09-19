@@ -177,7 +177,10 @@ export function getBtoLeaderboard({ event_id, limit = 10 } = {}) {
     user_id: row.user_id,
     participant_number: row.participant_number,
     finish_time: row.finish_time,
+    best_time: row.finish_time,
     user_name: row.user_name,
+    participant_name: row.user_name,
+    name: row.user_name,
     team_name: row.team_name,
     recorded_by: row.recorded_by,
     created_at: row.created_at
