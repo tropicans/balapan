@@ -68,6 +68,9 @@ export function RealtimeTV() {
     };
   }, [autoScrollEnabled, isHovered, round2Matches.length]);
   const totalSlots = round2Matches.length * 3;
+  const totalHeats = round2Matches.length;
+  const completedHeats = round2Matches.filter(m => !!m.winner_id).length;
+  const pendingHeats = totalHeats - completedHeats;
   const filledSlots = round2Matches.reduce((acc, m) => {
     let count = 0;
     if (m.user_id_1) count++;
@@ -355,7 +358,17 @@ export function RealtimeTV() {
             <div className="flex items-center shrink-0">
               <div className="inline-flex items-center gap-2 text-neonAmber font-orbitron text-xs md:text-sm tracking-wider uppercase px-4">
                 <Sparkles className="w-4 h-4 text-neonAmber animate-spin" />
-                <span>TURNAMEN NEO-TAMIYA // REGISTERED PARTICIPANTS: {participants.length} • ROUND 2 QUALIFIERS: {filledSlots} • SISTEM BALAP FISIK TANPA SCAN KUPON</span>
+                <span>
+                  {activeEvent?.nama ? activeEvent.nama.toUpperCase() : 'TURNAMEN NEO-TAMIYA'} // TOTAL: {totalHeats} HEAT ({completedHeats} SELESAI • {pendingHeats} MENUNGGU) • PESERTA TERDAFTAR: {participants.length} PEMBALAP • RACER TERSEEDING: {filledSlots}/{totalSlots} SLOT • SISTEM BALAP FISIK TANPA SCAN KUPON
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center shrink-0">
+              <div className="inline-flex items-center gap-2 text-neonAmber font-orbitron text-xs md:text-sm tracking-wider uppercase px-4">
+                <Sparkles className="w-4 h-4 text-neonAmber animate-spin" />
+                <span>
+                  {activeEvent?.nama ? activeEvent.nama.toUpperCase() : 'TURNAMEN NEO-TAMIYA'} // TOTAL: {totalHeats} HEAT ({completedHeats} SELESAI • {pendingHeats} MENUNGGU) • PESERTA TERDAFTAR: {participants.length} PEMBALAP • RACER TERSEEDING: {filledSlots}/{totalSlots} SLOT • SISTEM BALAP FISIK TANPA SCAN KUPON
+                </span>
               </div>
             </div>
           </div>
