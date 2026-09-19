@@ -13,7 +13,20 @@ import { registerParticipant, getParticipants, updateParticipant, importParticip
 import { recordBtoTime, getBtoLeaderboard, deleteBtoRecord } from './services/btoService.js';
 import { registerWinner, undoLastWinnerRegistration, getRegisteredWinners, checkWinnerEligibility } from './services/winnerService.js';
 import { parseParticipantCsv } from './utils/csvParser.js';
-import { syncParticipantsFromSheet, getSheetSyncConfig } from './services/googleSheetService.js';
+import { 
+  syncParticipantsFromSheet, 
+  syncBracketFromSheet, 
+  syncAllFromGoogleSheets, 
+  getSheetSyncConfig, 
+  getBracketSyncConfig 
+} from './services/googleSheetService.js';
+import { 
+  startSheetSyncScheduler, 
+  stopSheetSyncScheduler, 
+  getSchedulerStatus, 
+  updateSchedulerConfig, 
+  runSyncJob 
+} from './services/sheetSyncScheduler.js';
 import {
   authenticateGoogleUser,
   getUserByToken,
@@ -1401,11 +1414,15 @@ app.post('/api/participants/import', requireRole('cashier', 'admin', 'super_admi
 app.get('/api/participants/sync-sheet/status', (req, res) => {
   try {
     const config = getSheetSyncConfig();
+    const bracketConfig = getBracketSyncConfig();
+    const scheduler = getSchedulerStatus();
     const activeEvent = getActiveEvent();
     res.json({
       success: true,
       data: {
         ...config,
+        bracketConfig,
+        scheduler,
         activeEvent: activeEvent ? { id: activeEvent.id, nama: activeEvent.nama } : null
       }
     });
@@ -1414,7 +1431,27 @@ app.get('/api/participants/sync-sheet/status', (req, res) => {
   }
 });
 
-// 20g. Sync participants directly from Google Sheets (SYNC-01 to SYNC-07)
+// 20g. Update Google Sheet sync config (URLs, auto-sync toggle, interval)
+app.post('/api/participants/sync-sheet/config', requireRole('admin', 'super_admin'), (req, res) => {
+  try {
+    const { enabled, intervalSeconds, participantUrl, bracketUrl } = req.body || {};
+    const status = updateSchedulerConfig({
+      enabled,
+      intervalSeconds,
+      participantUrl,
+      bracketUrl
+    });
+    res.json({ 
+      success: true, 
+      message: 'Konfigurasi sinkronisasi Google Sheet berhasil disimpan.', 
+      data: status 
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 20h. Sync participants directly from Google Sheets (SYNC-01 to SYNC-07)
 app.post('/api/participants/sync-sheet', requireRole('cashier', 'admin', 'super_admin'), async (req, res) => {
   try {
     const { sheet_url, event_id, csv_override, allow_multi_entry } = req.body || {};
@@ -1439,11 +1476,63 @@ app.post('/api/participants/sync-sheet', requireRole('cashier', 'admin', 'super_
     if (result.updatedCount > 0) messageParts.push(`${result.updatedCount} pembalap diperbarui`);
     if (messageParts.length === 0) messageParts.push('0 perubahan');
 
-    const message = `Sinkronisasi selesai: ${messageParts.join(', ')}, ${result.skippedCount} dilewati/duplikat.`;
+    const message = `Sinkronisasi peserta selesai: ${messageParts.join(', ')}, ${result.skippedCount} dilewati/duplikat.`;
 
     res.json({
       success: true,
       message,
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 20i. Sync bracket elimination heats directly from Google Sheets Tab 2
+app.post('/api/participants/sync-bracket', requireRole('cashier', 'race_director', 'admin', 'super_admin'), async (req, res) => {
+  try {
+    const { sheet_url, event_id, csv_override } = req.body || {};
+    const result = await syncBracketFromSheet({
+      sheet_url,
+      event_id,
+      csv_override
+    });
+
+    if (result.addedCount > 0 || result.updatedCount > 0) {
+      io.emit('bracket_updated', {
+        addedCount: result.addedCount,
+        updatedCount: result.updatedCount,
+        event_id: result.targetEventId
+      });
+      broadcastFullState();
+    }
+
+    const messageParts = [];
+    if (result.addedCount > 0) messageParts.push(`${result.addedCount} heat baru dibuat`);
+    if (result.updatedCount > 0) messageParts.push(`${result.updatedCount} heat diperbarui`);
+    if (messageParts.length === 0) messageParts.push('0 perubahan');
+
+    const message = `Sinkronisasi bracket babak selesai: ${messageParts.join(', ')}, ${result.skippedCount} heat identik.`;
+
+    res.json({
+      success: true,
+      message,
+      data: result
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 20j. Sync all (participants and bracket heats)
+app.post('/api/participants/sync-all', requireRole('cashier', 'race_director', 'admin', 'super_admin'), async (req, res) => {
+  try {
+    const { force = true } = req.body || {};
+    const result = await runSyncJob({ force: Boolean(force) });
+
+    res.json({
+      success: true,
+      message: result.unchanged ? 'Kedua Google Sheet tidak mengalami perubahan.' : 'Sinkronisasi seluruh data berhasil diselesaikan.',
       data: result
     });
   } catch (err) {
@@ -1691,11 +1780,16 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📍 Listening on: http://0.0.0.0:${PORT}`);
   console.log(`⚡ Real-time Socket.IO and REST API Ready`);
   console.log(`====================================================`);
+
+  if (process.env.NODE_ENV !== 'test') {
+    startSheetSyncScheduler(io, broadcastFullState);
+  }
 });
 
 // Graceful Shutdown Handlers
 const shutdown = (signal) => {
   console.log(`\n🛑 [SHUTDOWN] Received ${signal}. Starting graceful termination...`);
+  stopSheetSyncScheduler();
   if (countdownInterval) {
     clearInterval(countdownInterval);
     countdownInterval = null;

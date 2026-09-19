@@ -1,9 +1,11 @@
+import crypto from 'crypto';
 import db from '../db.js';
 import { getActiveEventId } from './eventService.js';
-import { parseParticipantCsv } from '../utils/csvParser.js';
+import { parseParticipantCsv, tokenizeCsv } from '../utils/csvParser.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1FZC65RxP3XMZM4FtsCTSt3C-EabqYbky/edit?gid=1028020136#gid=1028020136';
+export const DEFAULT_BRACKET_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1FZC65RxP3XMZM4FtsCTSt3C-EabqYbky/edit?gid=1237789593#gid=1237789593';
 
 /**
  * Normalizes any Google Sheets URL into a direct CSV export endpoint.
@@ -92,6 +94,32 @@ export function getSheetSyncConfig() {
       configuredUrl: DEFAULT_SHEET_URL,
       lastSyncTime: null,
       lastSyncCount: 0
+    };
+  }
+}
+
+/**
+ * Retrieves the stored Google Sheets bracket sync configuration.
+ */
+export function getBracketSyncConfig() {
+  try {
+    const urlSetting = db.prepare("SELECT value FROM tournament_settings WHERE key = 'google_sheet_bracket_sync_url'").get();
+    const lastSyncSetting = db.prepare("SELECT value FROM tournament_settings WHERE key = 'google_sheet_bracket_last_sync_time'").get();
+    const lastCountSetting = db.prepare("SELECT value FROM tournament_settings WHERE key = 'google_sheet_bracket_last_sync_count'").get();
+    const lastUpdatedSetting = db.prepare("SELECT value FROM tournament_settings WHERE key = 'google_sheet_bracket_last_sync_updated_count'").get();
+
+    return {
+      configuredUrl: urlSetting?.value || DEFAULT_BRACKET_SHEET_URL,
+      lastSyncTime: lastSyncSetting?.value || null,
+      lastSyncCount: lastCountSetting?.value ? Number(lastCountSetting.value) : 0,
+      lastSyncUpdatedCount: lastUpdatedSetting?.value ? Number(lastUpdatedSetting.value) : 0
+    };
+  } catch (e) {
+    return {
+      configuredUrl: DEFAULT_BRACKET_SHEET_URL,
+      lastSyncTime: null,
+      lastSyncCount: 0,
+      lastSyncUpdatedCount: 0
     };
   }
 }
@@ -347,3 +375,367 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
     };
   })();
 }
+
+/**
+ * Parses bracket/heat CSV exported from Google Sheets (e.g., Tab 2 / Babak selanjutnya).
+ *
+ * @param {string} csvText
+ * @returns {Array<Object>}
+ */
+export function parseBracketCsv(csvText) {
+  const rows = tokenizeCsv(csvText);
+  let currentRound = { round_number: 2, is_final: 0, title: 'BABAK 1' };
+  const heats = [];
+
+  for (const rawRow of rows) {
+    const cells = rawRow.map(c => String(c || '').trim());
+    if (cells.every(c => !c)) continue;
+
+    const firstCell = cells[0];
+    const babakMatch = firstCell.match(/^BABAK\s*(\d+)/i);
+    if (babakMatch) {
+      const bNum = parseInt(babakMatch[1], 10);
+      const isFinal = /FINAL/i.test(firstCell) && !/SEMI/i.test(firstCell) ? 1 : 0;
+      currentRound = {
+        round_number: bNum + 1, // Babak 1 in tournament maps to round_number 2 in DGDASH
+        is_final: isFinal,
+        title: firstCell
+      };
+      continue;
+    }
+
+    const raceNum = parseInt(firstCell, 10);
+    if (!isNaN(raceNum) && raceNum > 0) {
+      const laneA = cells[1] || '';
+      const laneB = cells[2] || '';
+      const laneC = cells[3] || '';
+      const finisher = cells[4] || '';
+
+      if (laneA || laneB || laneC || finisher) {
+        heats.push({
+          round_number: currentRound.round_number,
+          match_number: raceNum,
+          is_final: currentRound.is_final,
+          lane_a: laneA,
+          lane_b: laneB,
+          lane_c: laneC,
+          finisher: finisher
+        });
+      }
+    }
+  }
+
+  return heats;
+}
+
+/**
+ * Robust participant resolver that matches sheet name strings against the active event roster.
+ * Supports exact match, participant number references (e.g. "no. 18"), substring containment, and token overlap.
+ *
+ * @param {string} rawName
+ * @param {Array<Object>} roster
+ * @returns {Object|null}
+ */
+export function resolveParticipantForBracket(rawName, roster) {
+  if (!rawName || !Array.isArray(roster) || roster.length === 0) return null;
+  const clean = String(rawName).trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!clean) return null;
+
+  // Strategy A: Exact name match
+  const exact = roster.find(p => String(p.name || '').trim().toLowerCase() === clean);
+  if (exact) return exact;
+
+  // Strategy B: Participant number reference (e.g. "no. 18", "#18")
+  const numMatch = clean.match(/^(?:no\.?|#)\s*(\d+)$/);
+  if (numMatch) {
+    const pNum = parseInt(numMatch[1], 10);
+    const byNum = roster.find(p => p.participant_number === pNum || Number(p.source_no) === pNum);
+    if (byNum) return byNum;
+  }
+
+  // Strategy C: Substring / Containment match
+  const containmentMatches = roster.filter(p => {
+    const pName = String(p.name || '').trim().toLowerCase();
+    return pName && (pName.includes(clean) || clean.includes(pName));
+  });
+  if (containmentMatches.length === 1) return containmentMatches[0];
+
+  // Strategy D: Token overlap (words of 3 or more characters)
+  const tokens = clean.split(' ').filter(t => t.length >= 3);
+  if (tokens.length > 0) {
+    const tokenMatches = roster.filter(p => {
+      const pTokens = String(p.name || '').trim().toLowerCase().split(' ').filter(t => t.length >= 3);
+      return tokens.some(t => pTokens.includes(t));
+    });
+    if (tokenMatches.length >= 1) return tokenMatches[0];
+  }
+
+  return null;
+}
+
+/**
+ * Synchronizes elimination heats/matches from Google Sheets Tab 2 into the active event bracket.
+ *
+ * @param {Object} [options]
+ * @param {string} [options.sheet_url]
+ * @param {string} [options.event_id]
+ * @param {string} [options.csv_override]
+ * @returns {Promise<Object>}
+ */
+export async function syncBracketFromSheet({ sheet_url, event_id, csv_override } = {}) {
+  const targetEventId = event_id || getActiveEventId();
+  if (!targetEventId) {
+    throw new Error('Tidak ada event aktif. Aktifkan atau buat event terlebih dahulu di Manajemen Event.');
+  }
+
+  const rawUrl = sheet_url || getBracketSyncConfig().configuredUrl || DEFAULT_BRACKET_SHEET_URL;
+  const exportUrl = normalizeGoogleSheetUrl(rawUrl);
+
+  const csvText = csv_override || await fetchGoogleSheetCsv(exportUrl);
+  const heats = parseBracketCsv(csvText);
+
+  return db.transaction(() => {
+    // 1. Fetch participants roster in active event
+    const roster = db.prepare(`
+      SELECT id, name, participant_number, source_key, team_name 
+      FROM users 
+      WHERE event_id = ? AND role = 'participant'
+    `).all(targetEventId);
+
+    // 2. Fetch existing bracket matches in active event
+    const existingMatches = db.prepare(`
+      SELECT * FROM bracket_matches 
+      WHERE event_id = ?
+    `).all(targetEventId);
+
+    const existingByRoundAndMatch = new Map();
+    for (const m of existingMatches) {
+      existingByRoundAndMatch.set(`${m.round_number}_${m.match_number}`, m);
+    }
+
+    const added = [];
+    const updated = [];
+    const skipped = [];
+
+    const insertStmt = db.prepare(`
+      INSERT INTO bracket_matches (
+        id, event_id, match_number, round_number, user_id_1, user_id_2, user_id_3, winner_id, status, is_final
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const updateStmt = db.prepare(`
+      UPDATE bracket_matches 
+      SET user_id_1 = ?, user_id_2 = ?, user_id_3 = ?, winner_id = ?, status = ?, is_final = ?
+      WHERE id = ?
+    `);
+
+    for (const heat of heats) {
+      const user1 = resolveParticipantForBracket(heat.lane_a, roster);
+      const user2 = resolveParticipantForBracket(heat.lane_b, roster);
+      const user3 = resolveParticipantForBracket(heat.lane_c, roster);
+
+      const userId1 = user1?.id || null;
+      const userId2 = user2?.id || null;
+      const userId3 = user3?.id || null;
+
+      let winnerId = null;
+      if (heat.finisher) {
+        const finisherUser = resolveParticipantForBracket(heat.finisher, roster);
+        if (finisherUser) {
+          winnerId = finisherUser.id;
+        }
+      }
+
+      // In SQLite, match_number has a UNIQUE constraint across the table.
+      // Babak 1 (round_number 2) uses match_number directly (1..25).
+      // Future rounds (Babak 2, 3) offset by (round_number - 1) * 100 to stay unique.
+      const dbMatchNumber = heat.round_number === 2 
+        ? heat.match_number 
+        : ((heat.round_number - 1) * 100 + heat.match_number);
+
+      const key = `${heat.round_number}_${dbMatchNumber}`;
+      const existing = existingByRoundAndMatch.get(key) || existingMatches.find(m => m.round_number === heat.round_number && m.match_number === dbMatchNumber);
+
+      if (existing) {
+        const currentWinnerId = existing.winner_id || null;
+        const newWinnerId = winnerId !== null ? winnerId : currentWinnerId;
+        const newStatus = newWinnerId ? 'completed' : (existing.status === 'completed' && !newWinnerId ? 'pending' : existing.status);
+
+        const changed = (
+          (existing.user_id_1 || null) !== (userId1 || null) ||
+          (existing.user_id_2 || null) !== (userId2 || null) ||
+          (existing.user_id_3 || null) !== (userId3 || null) ||
+          (currentWinnerId !== newWinnerId) ||
+          (existing.status !== newStatus) ||
+          Number(existing.is_final || 0) !== Number(heat.is_final || 0)
+        );
+
+        if (changed) {
+          updateStmt.run(userId1, userId2, userId3, newWinnerId, newStatus, heat.is_final, existing.id);
+          updated.push({
+            id: existing.id,
+            match_number: heat.match_number,
+            db_match_number: dbMatchNumber,
+            round_number: heat.round_number,
+            user_id_1: userId1,
+            user_id_2: userId2,
+            user_id_3: userId3,
+            winner_id: newWinnerId,
+            status: newStatus
+          });
+          // Update in-memory cache
+          existing.user_id_1 = userId1;
+          existing.user_id_2 = userId2;
+          existing.user_id_3 = userId3;
+          existing.winner_id = newWinnerId;
+          existing.status = newStatus;
+          existing.is_final = heat.is_final;
+        } else {
+          skipped.push({
+            match_number: heat.match_number,
+            round_number: heat.round_number,
+            reason: 'Data heat identik'
+          });
+        }
+      } else {
+        const matchId = uuidv4();
+        const status = winnerId ? 'completed' : 'pending';
+
+        insertStmt.run(
+          matchId,
+          targetEventId,
+          dbMatchNumber,
+          heat.round_number,
+          userId1,
+          userId2,
+          userId3,
+          winnerId,
+          status,
+          heat.is_final
+        );
+
+        const newRecord = {
+          id: matchId,
+          event_id: targetEventId,
+          match_number: heat.match_number,
+          db_match_number: dbMatchNumber,
+          round_number: heat.round_number,
+          user_id_1: userId1,
+          user_id_2: userId2,
+          user_id_3: userId3,
+          winner_id: winnerId,
+          status,
+          is_final: heat.is_final
+        };
+
+        added.push(newRecord);
+        existingMatches.push(newRecord);
+        existingByRoundAndMatch.set(key, newRecord);
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+    db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_bracket_sync_url', ?, CURRENT_TIMESTAMP)").run(rawUrl);
+    db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_bracket_last_sync_time', ?, CURRENT_TIMESTAMP)").run(nowIso);
+    db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_bracket_last_sync_count', ?, CURRENT_TIMESTAMP)").run(String(added.length));
+    db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_bracket_last_sync_updated_count', ?, CURRENT_TIMESTAMP)").run(String(updated.length));
+
+    return {
+      totalFound: heats.length,
+      addedCount: added.length,
+      updatedCount: updated.length,
+      skippedCount: skipped.length,
+      added,
+      updated,
+      skipped,
+      sheetUrl: rawUrl,
+      exportUrl,
+      targetEventId,
+      syncedAt: nowIso
+    };
+  })();
+}
+
+let lastParticipantCsvHash = null;
+let lastBracketCsvHash = null;
+
+/**
+ * Synchronizes both participants (Tab 1) and bracket elimination heats (Tab 2).
+ * Uses MD5 hash comparison to skip redundant database operations if sheets are unchanged.
+ *
+ * @param {Object} [options]
+ * @param {boolean} [options.force=false]
+ * @returns {Promise<Object>}
+ */
+export async function syncAllFromGoogleSheets({ force = false } = {}) {
+  const targetEventId = getActiveEventId();
+  if (!targetEventId) {
+    throw new Error('Tidak ada event aktif. Aktifkan atau buat event terlebih dahulu di Manajemen Event.');
+  }
+
+  const pUrlRaw = getSheetSyncConfig().configuredUrl || DEFAULT_SHEET_URL;
+  const bUrlRaw = getBracketSyncConfig().configuredUrl || DEFAULT_BRACKET_SHEET_URL;
+
+  const pExportUrl = normalizeGoogleSheetUrl(pUrlRaw);
+  const bExportUrl = normalizeGoogleSheetUrl(bUrlRaw);
+
+  const [pCsvText, bCsvText] = await Promise.all([
+    fetchGoogleSheetCsv(pExportUrl),
+    fetchGoogleSheetCsv(bExportUrl)
+  ]);
+
+  const pHash = crypto.createHash('md5').update(pCsvText).digest('hex');
+  const bHash = crypto.createHash('md5').update(bCsvText).digest('hex');
+
+  const pUnchanged = pHash === lastParticipantCsvHash;
+  const bUnchanged = bHash === lastBracketCsvHash;
+
+  if (!force && pUnchanged && bUnchanged) {
+    return {
+      unchanged: true,
+      hasChanges: false,
+      message: 'Kedua sheet tidak mengalami perubahan (konten sama persis)',
+      participants: { addedCount: 0, updatedCount: 0, skippedCount: 0 },
+      bracket: { addedCount: 0, updatedCount: 0, skippedCount: 0 },
+      syncedAt: new Date().toISOString()
+    };
+  }
+
+  // 1. Sync participants first so bracket resolver has the freshest participant roster
+  let participantResult = { addedCount: 0, updatedCount: 0, skippedCount: 0 };
+  if (force || !pUnchanged) {
+    participantResult = await syncParticipantsFromSheet({
+      sheet_url: pUrlRaw,
+      event_id: targetEventId,
+      csv_override: pCsvText
+    });
+    lastParticipantCsvHash = pHash;
+  }
+
+  // 2. Sync bracket heats
+  let bracketResult = { addedCount: 0, updatedCount: 0, skippedCount: 0 };
+  if (force || !bUnchanged || participantResult.addedCount > 0 || participantResult.updatedCount > 0) {
+    bracketResult = await syncBracketFromSheet({
+      sheet_url: bUrlRaw,
+      event_id: targetEventId,
+      csv_override: bCsvText
+    });
+    lastBracketCsvHash = bHash;
+  }
+
+  const hasChanges = (
+    (participantResult.addedCount || 0) > 0 ||
+    (participantResult.updatedCount || 0) > 0 ||
+    (bracketResult.addedCount || 0) > 0 ||
+    (bracketResult.updatedCount || 0) > 0
+  );
+
+  return {
+    unchanged: false,
+    hasChanges,
+    participants: participantResult,
+    bracket: bracketResult,
+    syncedAt: new Date().toISOString()
+  };
+}
+
