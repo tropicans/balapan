@@ -145,8 +145,8 @@ export function RealtimeTV() {
 
       {/* 2. Main 16:9 Screen Body */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-6 flex-1">
-        {/* Main Left Column (7/12 cols): Round 2 Elimination Bracket / Heat Status */}
-        <div className="lg:col-span-7 flex flex-col justify-between gap-4">
+        {/* Main Left Column (8/12 cols): Round 2 Elimination Bracket / Heat Status */}
+        <div className="lg:col-span-8 flex flex-col justify-between gap-4">
           <div className="bg-obsidian/90 border-2 border-neonCyan/40 shadow-glowCyan p-5 clip-cyber flex flex-col flex-1">
             <div className="flex items-center justify-between border-b border-neonCyan/30 pb-3 mb-4">
               <div className="flex items-center gap-2">
@@ -254,18 +254,18 @@ export function RealtimeTV() {
           </div>
         </div>
 
-        {/* Main Right Column (5/12 cols): Top 5 Leaderboard (BTO) */}
-        <div className="lg:col-span-5 bg-obsidian/95 border-2 border-neonAmber/60 shadow-glowAmber p-5 clip-cyber flex flex-col justify-between">
+        {/* Main Right Column (4/12 cols): Top 5 Leaderboard (BTO) */}
+        <div className="lg:col-span-4 bg-obsidian/95 border-2 border-neonAmber/60 shadow-glowAmber p-4 md:p-5 clip-cyber flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-neonAmber/30 pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-6 h-6 text-neonAmber" />
-                <h2 className="text-xl font-orbitron font-black text-white tracking-wider text-glow-amber">
-                  TOP 5 BEST TIME OVERALL
+              <div className="flex items-center gap-2 min-w-0">
+                <Trophy className="w-5 h-5 md:w-6 md:h-6 text-neonAmber shrink-0" />
+                <h2 className="text-lg md:text-xl font-orbitron font-black text-white tracking-wider text-glow-amber truncate">
+                  TOP 5 BEST TIME
                 </h2>
               </div>
-              <span className="text-[10px] font-mono bg-neonAmber/20 text-neonAmber px-2 py-0.5 clip-cyber">
-                MANUAL BTO (v3.0)
+              <span className="text-[10px] font-mono bg-neonAmber/20 text-neonAmber px-2 py-0.5 clip-cyber shrink-0">
+                MANUAL BTO
               </span>
             </div>
 
@@ -289,43 +289,43 @@ export function RealtimeTV() {
                     <div
                       key={item.id || idx}
                       className={clsx(
-                        "p-3 clip-cyber flex items-center justify-between transition-all",
+                        "p-2.5 md:p-3 clip-cyber flex items-center justify-between transition-all gap-2",
                         idx === 0
                           ? "gold-shimmer-border bg-gradient-to-r from-amber-950/40 via-black/80 to-black/90 shadow-[0_0_25px_rgba(255,215,0,0.35)]"
                           : "bg-black/60 border border-gray-800"
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className={clsx(
-                          "w-9 h-9 flex items-center justify-center font-orbitron font-black text-sm clip-cyber border",
+                          "w-8 h-8 md:w-9 md:h-9 shrink-0 flex items-center justify-center font-orbitron font-black text-xs md:text-sm clip-cyber border",
                           idx === 0
                             ? "bg-yellow-400 text-black border-yellow-300 shadow-[0_0_15px_rgba(255,215,0,0.8)] animate-pulse"
                             : (rankColors[idx] || rankColors[3])
                         )}>
-                          {idx === 0 ? <Crown className="w-5 h-5 text-black" /> : `#${idx + 1}`}
+                          {idx === 0 ? <Crown className="w-4 h-4 md:w-5 md:h-5 text-black" /> : `#${idx + 1}`}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
                             <div className={clsx(
-                              "font-orbitron font-black text-base",
+                              "font-orbitron font-black text-sm md:text-base truncate",
                               idx === 0 ? "text-yellow-300 text-glow-gold" : "text-white"
                             )}>
                               #{item.participant_number} {item.user_name || item.participant_name || item.name || ''}
                             </div>
                             {idx === 0 && (
-                              <span className="px-1.5 py-0.5 text-[9px] font-orbitron font-black bg-yellow-400 text-black clip-cyber uppercase tracking-wider">
-                                RECORD BTO #1
+                              <span className="px-1.5 py-0.5 text-[8px] font-orbitron font-black bg-yellow-400 text-black clip-cyber uppercase tracking-wider shrink-0">
+                                #1
                               </span>
                             )}
                           </div>
-                          <div className="text-xs font-mono text-neonPink">
+                          <div className="text-[11px] font-mono text-neonPink truncate">
                             [{item.team_name || 'INDIVIDUAL'}]
                           </div>
                         </div>
                       </div>
 
                       <div className={clsx(
-                        "text-2xl font-orbitron font-black",
+                        "text-xl md:text-2xl font-orbitron font-black shrink-0 pl-1",
                         idx === 0 ? "text-yellow-300 text-glow-gold" : "text-neonGreen text-glow-green"
                       )}>
                         {parseFloat(item.finish_time ?? item.best_time ?? 0).toFixed(3)}s
