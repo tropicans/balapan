@@ -1,11 +1,26 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { v4 as uuidv4 } from 'uuid';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uniqueTestDb = path.join(__dirname, `../../data/test_no_race_${Date.now()}.sqlite`);
+process.env.DB_PATH = uniqueTestDb;
+
 import db, { initDatabase } from '../db.js';
 import { RaceManager } from '../raceManager.js';
 
 test('Sequential advance into empty slot (such as Lane C) after a No Race heat', async (t) => {
   console.log('🧪 RUNNING NO RACE SEQUENTIAL ADVANCE (SLOT C RE-PACKING) TEST SUITE...\n');
+
+  t.after(() => {
+    try {
+      if (fs.existsSync(uniqueTestDb)) fs.unlinkSync(uniqueTestDb);
+    } catch (e) {}
+  });
 
   await initDatabase();
 

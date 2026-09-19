@@ -271,6 +271,13 @@ export function BracketDashboard() {
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
 
+    // Relative heat number per round (e.g. Babak 3 starts from Heat #1)
+    const roundMatches = matches
+      .filter(m => m.round_number === match.round_number)
+      .sort((a, b) => (a.match_number || 0) - (b.match_number || 0));
+    const heatIndex = roundMatches.findIndex(m => m.id === match.id);
+    const heatNumber = match.round_heat_number || (heatIndex !== -1 ? heatIndex + 1 : match.match_number);
+
     return (
       <div
         key={match.id}
@@ -291,7 +298,7 @@ export function BracketDashboard() {
         <div className="flex items-center justify-between text-[11px] font-orbitron border-b border-gray-800/80 pb-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-white font-bold tracking-wider">
-              HEAT #{match.match_number}
+              HEAT #{heatNumber}
             </span>
             {isFinalMatch && (
               <span className="px-1.5 py-0.2 bg-neonAmber/20 text-neonAmber border border-neonAmber clip-cyber text-[9px] font-black flex items-center gap-1">
@@ -435,7 +442,7 @@ export function BracketDashboard() {
           const totalCount = roundMatches.length;
           const completedCount = roundMatches.filter(m => m.status === 'completed').length;
           const isActive = selectedRound === roundNum;
-          const isGrandFinal = roundNum === highestRound && highestRound > 2;
+          const isGrandFinal = roundNum === highestRound && highestRound >= 5;
 
           return (
             <button

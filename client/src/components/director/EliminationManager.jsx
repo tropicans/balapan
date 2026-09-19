@@ -359,6 +359,13 @@ export function EliminationManager() {
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
     const isR2Locked = match.round_number === 2 && round2Progress.isLocked;
 
+    // Relative heat number per round (e.g. Babak 3 starts from Heat #1)
+    const roundMatches = matches
+      .filter(m => m.round_number === match.round_number)
+      .sort((a, b) => (a.match_number || 0) - (b.match_number || 0));
+    const heatIndex = roundMatches.findIndex(m => m.id === match.id);
+    const heatNumber = match.round_heat_number || (heatIndex !== -1 ? heatIndex + 1 : match.match_number);
+
     return (
       <div
         key={match.id}
@@ -379,7 +386,7 @@ export function EliminationManager() {
         <div className="flex items-center justify-between text-[11px] font-orbitron border-b border-gray-800/80 pb-2">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-white font-black tracking-wider">
-              HEAT #{match.match_number}
+              HEAT #{heatNumber}
             </span>
             {isFinalMatch && (
               <span className="px-1.5 py-0.2 bg-neonAmber/20 text-neonAmber border border-neonAmber clip-cyber text-[9px] font-black flex items-center gap-1">
@@ -495,7 +502,7 @@ export function EliminationManager() {
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {availableRounds.map(rNum => {
           const isSelected = selectedRound === rNum;
-          const isGF = rNum === highestRound && highestRound > 2;
+          const isGF = rNum === highestRound && highestRound >= 5;
 
           return (
             <button

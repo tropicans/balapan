@@ -158,6 +158,17 @@ export const MIGRATIONS = [
         DROP TABLE IF EXISTS coupons;
       `);
     }
+  },
+  {
+    version: 3,
+    name: 'normalize_round_3_not_final',
+    destructive: false,
+    up(db) {
+      db.prepare(`
+        UPDATE bracket_matches SET is_final = 0
+        WHERE round_number <= 4 AND is_final = 1;
+      `).run();
+    }
   }
 ];
 

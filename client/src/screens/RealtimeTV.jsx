@@ -328,8 +328,9 @@ export function RealtimeTV() {
                   Belum ada heat Babak {currentRound} yang dibentuk.
                 </div>
               ) : (
-                currentRoundMatches.map((m) => {
+                currentRoundMatches.map((m, idx) => {
                   const isCompleted = !!m.winner_id;
+                  const heatNumber = m.round_heat_number || (idx + 1);
                   return (
                     <div 
                       key={m.id}
@@ -340,7 +341,7 @@ export function RealtimeTV() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-orbitron font-bold text-xs text-neonCyan">
-                          HEAT #{m.match_number}
+                          HEAT #{heatNumber}
                         </span>
                         <span className={clsx(
                           "px-2 py-0.5 text-[9px] font-orbitron font-bold uppercase clip-cyber",

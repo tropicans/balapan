@@ -46,6 +46,14 @@ export function getFullState() {
       `).all(activeEventId)
     : [];
 
+  // Compute round_heat_number sequentially per round (so Babak 3 starts from Heat #1)
+  const roundCounters = {};
+  bracketMatches.forEach(m => {
+    const r = m.round_number || 2;
+    roundCounters[r] = (roundCounters[r] || 0) + 1;
+    m.round_heat_number = roundCounters[r];
+  });
+
   // 3. Canonical BTO Leaderboard (Phase 13)
   const btoLeaderboard = getBtoLeaderboard({ event_id: activeEventId, limit: 10 });
 

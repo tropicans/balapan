@@ -187,6 +187,14 @@ export class RaceManager {
           ORDER BY bm.round_number ASC, bm.match_number ASC
         `).all(activeEventId);
       }
+
+      // Compute round_heat_number sequentially per round (so Babak 3 starts from Heat #1)
+      const roundCounters = {};
+      bracketMatches.forEach(m => {
+        const r = m.round_number || 2;
+        roundCounters[r] = (roundCounters[r] || 0) + 1;
+        m.round_heat_number = roundCounters[r];
+      });
     }
 
     const activeEvent = getActiveEvent();
