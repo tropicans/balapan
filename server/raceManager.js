@@ -939,7 +939,8 @@ export class RaceManager {
     `).run(winnerId, matchId);
 
     // If marked as Grand Final or final match, complete tournament without advancing to next round
-    const isFinal = Boolean(options.isFinal || match.is_final);
+    // Note: Babak 2 and Babak 3 are never final.
+    const isFinal = Boolean(options.isFinal) || (match.round_number >= 5 && match.is_final === 1);
     if (isFinal) {
       return {
         success: true,
@@ -1006,12 +1007,20 @@ export class RaceManager {
       }
     }
 
+    const activeEvId = match.event_id || (typeof getActiveEventId === 'function' ? getActiveEventId() : null);
+
     // 2. Parent match does not exist or is already full -> find open match in nextRound
-    const openNextMatch = db.prepare(`
-      SELECT * FROM bracket_matches 
-      WHERE round_number = ? AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
-      ORDER BY match_number ASC
-    `).get(nextRound);
+    const openNextMatch = activeEvId
+      ? db.prepare(`
+          SELECT * FROM bracket_matches 
+          WHERE round_number = ? AND (event_id = ? OR event_id IS NULL) AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          ORDER BY match_number ASC
+        `).get(nextRound, activeEvId)
+      : db.prepare(`
+          SELECT * FROM bracket_matches 
+          WHERE round_number = ? AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          ORDER BY match_number ASC
+        `).get(nextRound);
 
     if (openNextMatch) {
       const slotAssigned = assignSlot(openNextMatch);
@@ -1023,7 +1032,7 @@ export class RaceManager {
     const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
     const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
     const newMatchId = uuidv4();
-    const matchEventId = match.event_id || null;
+    const matchEventId = match.event_id || activeEvId || null;
     db.prepare(`
       INSERT INTO bracket_matches (id, event_id, match_number, round_number, user_id_1, status)
       VALUES (?, ?, ?, ?, ?, 'pending')

@@ -1122,7 +1122,7 @@ app.post('/api/marshal/record-bracket-winner', (req, res) => {
       });
     }
 
-    const result = RaceManager.advanceBracketWinner(match_id, winner_id);
+    const result = RaceManager.advanceBracketWinner(match_id, winner_id, { autoAdvance: true });
     io.emit('bracket_updated', { match_id, winner_id, result });
     broadcastFullState();
 
@@ -1688,8 +1688,8 @@ app.post('/api/bracket/advance', requireRole('race_director', 'admin', 'super_ad
     const { match_id, matchId, winner_id, winnerId, isFinal, autoAdvance } = req.body || {};
     const mId = match_id || matchId;
     const wId = winner_id || winnerId;
-    // In physical tournament (v3.2), winners do not auto-advance to next round unless autoAdvance is explicitly true
-    const shouldAutoAdvance = autoAdvance === true;
+    // Default shouldAutoAdvance to true unless explicitly specified as false
+    const shouldAutoAdvance = autoAdvance !== false;
     const result = RaceManager.advanceBracketWinner(mId, wId, { isFinal, autoAdvance: shouldAutoAdvance });
 
     io.emit('bracket_updated');

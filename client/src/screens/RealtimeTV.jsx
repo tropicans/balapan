@@ -29,8 +29,49 @@ export function RealtimeTV() {
   const bracketMatches = raceState.bracketMatches || [];
   const participants = raceState.participants || [];
 
-  // Round 2 matches (or first round in elimination)
-  const round2Matches = bracketMatches.filter(m => m.round_number === 2 || m.round_number === 1);
+  // Available rounds in bracket
+  const availableRounds = useMemo(() => {
+    const rounds = Array.from(new Set(bracketMatches.map(m => m.round_number))).filter(Boolean);
+    return rounds.sort((a, b) => a - b);
+  }, [bracketMatches]);
+
+  // Determine auto active round:
+  // If Babak 2 is completed or locked, or Babak 3 already has seeded racers, switch to Babak 3
+  const autoActiveRound = useMemo(() => {
+    if (availableRounds.length === 0) return 2;
+
+    const r2Matches = bracketMatches.filter(m => m.round_number === 2);
+    const r3Matches = bracketMatches.filter(m => m.round_number === 3);
+
+    const isR2Locked = activeEvent?.is_round_2_locked === 1;
+    const r2HasMatches = r2Matches.length > 0;
+    const r2AllCompleted = r2HasMatches && r2Matches.every(m => m.status === 'completed' || !!m.winner_id);
+    const r3HasRacers = r3Matches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
+
+    // If R2 is locked, completed, or R3 has racers seeded, advance TV to Round 3
+    if ((isR2Locked || r2AllCompleted || r3HasRacers) && availableRounds.includes(3)) {
+      // Check higher rounds as well (Round 4, etc.)
+      const r4Matches = bracketMatches.filter(m => m.round_number === 4);
+      const r3AllCompleted = r3Matches.length > 0 && r3Matches.every(m => m.status === 'completed' || !!m.winner_id);
+      const r4HasRacers = r4Matches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
+
+      if ((r3AllCompleted || r4HasRacers) && availableRounds.includes(4)) {
+        return 4;
+      }
+      return 3;
+    }
+
+    return availableRounds.includes(2) ? 2 : availableRounds[0];
+  }, [availableRounds, bracketMatches, activeEvent]);
+
+  // Allow manual tab override or fallback to auto active round
+  const [manualRound, setManualRound] = useState(null);
+  const currentRound = manualRound ?? autoActiveRound;
+
+  // Active matches for the current round displayed
+  const currentRoundMatches = useMemo(() => {
+    return bracketMatches.filter(m => m.round_number === currentRound);
+  }, [bracketMatches, currentRound]);
 
   // Auto-scroll loop for elimination heats on circuit TV
   useEffect(() => {
@@ -66,12 +107,13 @@ export function RealtimeTV() {
       clearInterval(interval);
       if (pauseTimeout) clearTimeout(pauseTimeout);
     };
-  }, [autoScrollEnabled, isHovered, round2Matches.length]);
-  const totalSlots = round2Matches.length * 3;
-  const totalHeats = round2Matches.length;
-  const completedHeats = round2Matches.filter(m => !!m.winner_id).length;
+  }, [autoScrollEnabled, isHovered, currentRoundMatches.length]);
+
+  const totalSlots = currentRoundMatches.length * 3;
+  const totalHeats = currentRoundMatches.length;
+  const completedHeats = currentRoundMatches.filter(m => m.status === 'completed' || !!m.winner_id).length;
   const pendingHeats = totalHeats - completedHeats;
-  const filledSlots = round2Matches.reduce((acc, m) => {
+  const filledSlots = currentRoundMatches.reduce((acc, m) => {
     let count = 0;
     if (m.user_id_1) count++;
     if (m.user_id_2) count++;
@@ -79,13 +121,13 @@ export function RealtimeTV() {
     return acc + count;
   }, 0);
 
-  // Best Race Leaderboard: Racers with most coupons / entries in Babak 2
+  // Best Race Leaderboard: Racers with most coupons / entries in currently displayed round
   const bestRaceLeaderboard = useMemo(() => {
     if (raceState.bestRaceLeaderboard && raceState.bestRaceLeaderboard.length > 0) {
       return raceState.bestRaceLeaderboard;
     }
     const counts = new Map();
-    for (const m of round2Matches) {
+    for (const m of currentRoundMatches) {
       if (m.user_id_1) {
         const item = counts.get(m.user_id_1) || {
           user_id: m.user_id_1,
@@ -121,8 +163,7 @@ export function RealtimeTV() {
       }
     }
     return Array.from(counts.values())
-      .sort((a, b) => b.coupon_count - a.coupon_count || (a.participant_number || 0) - (b.participant_number || 0));
-  }, [raceState.bestRaceLeaderboard, round2Matches]);
+  }, [raceState.bestRaceLeaderboard, currentRoundMatches]);
 
   return (
     <div className="min-h-[calc(100vh-70px)] bg-gradient-to-br from-midnight via-obsidian to-black text-cyberSilver cyber-grid p-4 md:p-6 flex flex-col justify-between select-none">
@@ -148,13 +189,54 @@ export function RealtimeTV() {
           </div>
         </div>
 
-        {/* Right: Round 2 Progress & Clock */}
+        {/* Right: Round Progress, Round Selector Tabs & Clock */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Round Selector Tabs */}
+          {availableRounds.length > 1 && (
+            <div className="flex items-center gap-1 bg-black/70 p-1 border border-neonCyan/40 clip-cyber">
+              {availableRounds.map((r) => {
+                const isSelected = currentRound === r;
+                const isAutoActive = autoActiveRound === r;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setManualRound(r)}
+                    className={clsx(
+                      "px-2.5 py-1 text-xs font-orbitron font-bold clip-cyber transition-all flex items-center gap-1.5 cursor-pointer",
+                      isSelected
+                        ? "bg-neonCyan text-black shadow-glowCyan"
+                        : "text-gray-400 hover:text-neonCyan bg-black/40"
+                    )}
+                  >
+                    <span>BABAK {r}</span>
+                    {isAutoActive && (
+                      <span className={clsx(
+                        "w-1.5 h-1.5 rounded-full animate-pulse",
+                        isSelected ? "bg-black" : "bg-neonCyan"
+                      )} />
+                    )}
+                  </button>
+                );
+              })}
+              {manualRound !== null && (
+                <button
+                  type="button"
+                  onClick={() => setManualRound(null)}
+                  className="px-1.5 py-0.5 text-[9px] font-mono text-neonAmber hover:underline cursor-pointer"
+                  title="Kembali ke Mode Otomatis"
+                >
+                  AUTO
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col justify-center px-3.5 py-1.5 clip-cyber border bg-black/70 border-neonAmber/60 text-cyberSilver shadow-glowAmber min-w-[190px]">
             <div className="flex items-center justify-between gap-2 text-[10px] font-mono uppercase tracking-wider">
               <span className="flex items-center gap-1">
                 <Users className="w-3.5 h-3.5 text-neonAmber shrink-0" />
-                <span className="font-bold text-white">PESERTA BABAK 2</span>
+                <span className="font-bold text-white">PESERTA BABAK {currentRound}</span>
               </span>
               <span className="font-orbitron font-black text-neonAmber">
                 {filledSlots} TERDAFTAR
@@ -193,14 +275,14 @@ export function RealtimeTV() {
 
       {/* 2. Main 16:9 Screen Body */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 my-6 flex-1">
-        {/* Main Left Column (8/12 cols): Round 2 Elimination Bracket / Heat Status */}
+        {/* Main Left Column (8/12 cols): Elimination Bracket / Heat Status */}
         <div className="lg:col-span-8 flex flex-col justify-between gap-4">
           <div className="bg-obsidian/90 border-2 border-neonCyan/40 shadow-glowCyan p-5 clip-cyber flex flex-col flex-1">
             <div className="flex items-center justify-between border-b border-neonCyan/30 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <GitBranch className="w-6 h-6 text-neonCyan" />
                 <h2 className="text-xl font-orbitron font-black text-white tracking-wider text-glow-cyan">
-                  SKEMA HEAT BABAK 2 (ELIMINASI)
+                  SKEMA HEAT BABAK {currentRound} (ELIMINASI)
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -241,12 +323,12 @@ export function RealtimeTV() {
               onTouchEnd={() => setIsHovered(false)}
               className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[500px] pr-1 scroll-smooth"
             >
-              {round2Matches.length === 0 ? (
+              {currentRoundMatches.length === 0 ? (
                 <div className="col-span-2 text-center py-16 text-sm font-mono text-cyberSilver/40">
-                  Belum ada heat Babak 2 yang dibentuk. Menunggu pendaftaran pemenang dari Babak 1.
+                  Belum ada heat Babak {currentRound} yang dibentuk.
                 </div>
               ) : (
-                round2Matches.map((m) => {
+                currentRoundMatches.map((m) => {
                   const isCompleted = !!m.winner_id;
                   return (
                     <div 
@@ -396,7 +478,7 @@ export function RealtimeTV() {
               <div className="flex items-center gap-2 min-w-0">
                 <Flame className="w-5 h-5 text-neonGreen shrink-0 animate-pulse" />
                 <h2 className="text-base md:text-lg font-orbitron font-black text-white tracking-wider text-glow-green truncate">
-                  BEST RACE (BABAK 2)
+                  BEST RACE (BABAK {currentRound})
                 </h2>
               </div>
               <span className="text-[9px] font-mono bg-neonGreen/20 text-neonGreen px-2 py-0.5 clip-cyber shrink-0 font-bold border border-neonGreen/40">
@@ -408,7 +490,7 @@ export function RealtimeTV() {
             <div className="space-y-2 flex-1">
               {bestRaceLeaderboard.length === 0 ? (
                 <div className="text-center py-6 text-xs font-mono text-cyberSilver/40">
-                  Belum ada data kupon pembalap di Babak 2.
+                  Belum ada data kupon pembalap di Babak {currentRound}.
                 </div>
               ) : (
                 bestRaceLeaderboard.slice(0, 5).map((item, idx) => {
@@ -474,7 +556,7 @@ export function RealtimeTV() {
             </div>
 
             <div className="mt-2.5 pt-2 border-t border-gray-800/80 text-[9px] font-mono text-cyberSilver/50 text-center uppercase">
-              REKAPITULASI KUPON LOLOS BABAK 2 TERBANYAK
+              REKAPITULASI KUPON LOLOS BABAK {currentRound} TERBANYAK
             </div>
           </div>
         </div>

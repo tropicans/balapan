@@ -452,9 +452,9 @@ function seedInitialData() {
       }
     }
 
-    // Create Initial Tournament Bracket (3-Lane Elimination: 3 Heats in Round 2 -> 1 Grand Final in Round 3)
+    // Create Initial Tournament Bracket (3-Lane Elimination: 3 Heats in Round 2 -> Babak 3)
     const gfId = uuidv4();
-    db.prepare(`INSERT INTO bracket_matches (id, event_id, match_number, round_number, is_final, status) VALUES (?, ?, 4, 3, 1, 'pending')`).run(gfId, activeEventId);
+    db.prepare(`INSERT INTO bracket_matches (id, event_id, match_number, round_number, is_final, status) VALUES (?, ?, 4, 3, 0, 'pending')`).run(gfId, activeEventId);
 
     const m1Id = uuidv4();
     const m2Id = uuidv4();

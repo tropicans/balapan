@@ -41,8 +41,23 @@ export function BracketDashboard() {
     return availableRounds.length > 0 ? Math.max(...availableRounds) : 3;
   }, [availableRounds]);
 
-  // Round Selector State (defaults to first available round, usually Round 2)
-  const [selectedRound, setSelectedRound] = useState(availableRounds[0] || 2);
+  // Determine active round automatically
+  const autoActiveRound = useMemo(() => {
+    const r2Matches = matches.filter(m => m.round_number === 2);
+    const r2Completed = r2Matches.length > 0 && r2Matches.every(m => m.status === 'completed');
+    const isR2Locked = raceState.round2_status === 'locked';
+
+    const r3Matches = matches.filter(m => m.round_number === 3);
+    const r3HasRacers = r3Matches.some(m => m.user_id_1 || m.user_id_2 || m.user_id_3);
+
+    if ((isR2Locked || r2Completed || (r3HasRacers && r2Completed)) && availableRounds.includes(3)) {
+      return 3;
+    }
+    return availableRounds[0] || 2;
+  }, [matches, raceState.round2_status, availableRounds]);
+
+  // Round Selector State (defaults to active round)
+  const [selectedRound, setSelectedRound] = useState(autoActiveRound);
   const [activeTab, setActiveTab] = useState('bracket'); // 'bracket' or 'winners'
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
@@ -50,6 +65,11 @@ export function BracketDashboard() {
   const [advancingMatchId, setAdvancingMatchId] = useState(null);
 
   const ITEMS_PER_PAGE = 12;
+
+  // Auto-switch selectedRound when active round advances
+  useEffect(() => {
+    setSelectedRound(autoActiveRound);
+  }, [autoActiveRound]);
 
   // Ensure selectedRound remains valid if matches update
   useEffect(() => {
@@ -112,8 +132,8 @@ export function BracketDashboard() {
     if (!winnerId || match.status === 'completed' || advancingMatchId) return;
     setAdvancingMatchId(match.id);
     try {
-      const isFinal = match.is_final === 1 || match.round_number === highestRound;
-      await apiAdvanceBracket(match.id, winnerId, { isFinal });
+      const isFinal = match.round_number >= 5 && Boolean(match.is_final);
+      await apiAdvanceBracket(match.id, winnerId, { isFinal, autoAdvance: true });
     } catch (err) {
       alert(err.message || 'Gagal memajukan pemenang bracket');
     } finally {
@@ -123,17 +143,17 @@ export function BracketDashboard() {
 
   // Helper to format tab label
   const getRoundLabel = (roundNum) => {
-    if (roundNum === highestRound && highestRound > 2) {
-      return `GRAND FINAL (BABAK ${roundNum})`;
-    }
     if (roundNum === 2) {
       return `BABAK 2 // PENYISIHAN 3-JALUR`;
     }
-    if (roundNum === 3 && highestRound > 3) {
-      return `BABAK 3 // PEREMPAT FINAL`;
+    if (roundNum === 3) {
+      return `BABAK 3 // ELIMINASI`;
     }
-    if (roundNum === 3 && highestRound === 3) {
-      return `GRAND FINAL (BABAK 3)`;
+    if (roundNum === 4) {
+      return `BABAK 4 // SEMIFINAL`;
+    }
+    if (roundNum >= 5 && roundNum === highestRound) {
+      return `GRAND FINAL (BABAK ${roundNum})`;
     }
     return `BABAK ${roundNum} // ELIMINASI`;
   };
@@ -246,7 +266,7 @@ export function BracketDashboard() {
   // Render Match Card for a 3-lane match
   const renderMatchCard = (match) => {
     const isCompleted = match.status === 'completed';
-    const isFinalMatch = match.is_final === 1 || (match.round_number === highestRound && highestRound > 2);
+    const isFinalMatch = (match.is_final === 1 && match.round_number >= 5) || (match.round_number === highestRound && highestRound >= 5);
     const isNoRace = isCompleted && !match.winner_id;
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;

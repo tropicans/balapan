@@ -66,10 +66,10 @@ export function WinnerRegistrationPanel() {
   // Round label generator
   const getRoundLabel = (rNum) => {
     const roundMatches = matches.filter(m => m.round_number === rNum);
-    const isSingleFinalHeat = roundMatches.length === 1 && Boolean(roundMatches[0].is_final);
+    const isSingleFinalHeat = rNum >= 5 && roundMatches.length === 1 && Boolean(roundMatches[0].is_final);
     if (isSingleFinalHeat) return `GRAND FINAL (BABAK ${rNum})`;
     if (rNum === 2) return 'BABAK 2 // PENYISIHAN';
-    if (rNum === 3) return 'BABAK 3 // PEREMPAT FINAL';
+    if (rNum === 3) return 'BABAK 3 // ELIMINASI';
     if (rNum === 4) return 'BABAK 4 // SEMI FINAL';
     return `BABAK ${rNum}`;
   };

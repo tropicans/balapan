@@ -131,7 +131,13 @@ export const MIGRATIONS = [
         WHERE event_id IS NULL;
       `).run(DEFAULT_EVENT_ID);
 
-      // 7. Indexes
+      // 7. Ensure round <= 3 matches are not marked as final (Babak 3 is not Grand Final)
+      db.prepare(`
+        UPDATE bracket_matches SET is_final = 0
+        WHERE round_number <= 3 AND is_final = 1;
+      `).run();
+
+      // 8. Indexes
       db.exec(`
         CREATE INDEX IF NOT EXISTS idx_bracket_matches_event ON bracket_matches(event_id);
         CREATE UNIQUE INDEX IF NOT EXISTS idx_users_event_participant_number ON users(event_id, participant_number);

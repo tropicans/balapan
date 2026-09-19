@@ -137,8 +137,9 @@ export function EliminationManager() {
 
     setAdvancingMatchId(match.id);
     try {
-      const isFinal = match.is_final === 1 || match.round_number === highestRound;
-      await apiAdvanceBracket(match.id, winnerId, { isFinal });
+      // Babak 2 and Babak 3 are never final. Only higher round final matches can be isFinal.
+      const isFinal = match.round_number >= 5 && Boolean(match.is_final);
+      await apiAdvanceBracket(match.id, winnerId, { isFinal, autoAdvance: true });
       setFeedbackMsg({ type: 'success', text: `Pemenang Heat #${match.match_number} berhasil ditentukan!` });
       setTimeout(() => setFeedbackMsg(null), 3000);
     } catch (err) {
@@ -230,19 +231,21 @@ export function EliminationManager() {
 
   // Tab label helper
   const getRoundLabel = (roundNum) => {
-    const roundMatches = matches.filter(m => m.round_number === roundNum);
-    const isSingleFinalHeat = roundMatches.length === 1 && Boolean(roundMatches[0].is_final);
-    if (isSingleFinalHeat) {
-      return `GRAND FINAL (BABAK ${roundNum})`;
-    }
     if (roundNum === 2) {
       return `BABAK 2 // PENYISIHAN 3-JALUR`;
     }
     if (roundNum === 3) {
-      return `BABAK 3 // PEREMPAT FINAL`;
+      return `BABAK 3 // ELIMINASI`;
     }
     if (roundNum === 4) {
       return `BABAK 4 // SEMIFINAL`;
+    }
+    if (roundNum >= 5) {
+      const roundMatches = matches.filter(m => m.round_number === roundNum);
+      const isSingleFinalHeat = roundMatches.length === 1 && Boolean(roundMatches[0].is_final);
+      if (isSingleFinalHeat || roundNum === highestRound) {
+        return `GRAND FINAL (BABAK ${roundNum})`;
+      }
     }
     return `BABAK ${roundNum} // ELIMINASI`;
   };
@@ -351,7 +354,7 @@ export function EliminationManager() {
   const renderMatchCard = (match) => {
     const isCompleted = match.status === 'completed';
     const isNoRace = isCompleted && !match.winner_id;
-    const isFinalMatch = match.is_final === 1 || (match.round_number === highestRound && highestRound > 2);
+    const isFinalMatch = match.round_number >= 5 && (match.is_final === 1 || match.round_number === highestRound);
     const isAutoAdvanced = match.is_auto_advanced === 1;
     const contestantCount = [match.user_id_1, match.user_id_2, match.user_id_3].filter(Boolean).length;
     const isR2Locked = match.round_number === 2 && round2Progress.isLocked;
