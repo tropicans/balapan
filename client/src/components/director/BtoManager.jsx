@@ -32,6 +32,18 @@ export function BtoManager() {
 
   const timeInputRef = useRef(null);
   const participantInputRef = useRef(null);
+  const dropdownRef = useRef(null);
+
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const activeEvent = raceState?.activeEvent;
 
@@ -155,8 +167,9 @@ export function BtoManager() {
     setFeedbackMsg(null);
 
     const cleanNum = participantInput.trim().replace(/^#/, '').split(' - ')[0];
-    const targetNumber = selectedParticipant ? selectedParticipant.participant_number : (isNaN(cleanNum) ? null : parseInt(cleanNum, 10));
-    const targetUserId = selectedParticipant?.id;
+    const resolvedParticipant = selectedParticipant || (suggestions.length === 1 ? suggestions[0] : null);
+    const targetNumber = resolvedParticipant ? resolvedParticipant.participant_number : (isNaN(cleanNum) ? null : parseInt(cleanNum, 10));
+    const targetUserId = resolvedParticipant?.id;
 
     if (!targetNumber && !targetUserId) {
       setErrorMsg('Pilih atau masukkan nomor/nama pembalap terdaftar');
@@ -274,7 +287,7 @@ export function BtoManager() {
                 <label className="block text-xs font-mono text-cyberSilver/80 uppercase mb-1">
                   Cari Nomor (#) atau Nama Pembalap
                 </label>
-                <div className="relative">
+                <div ref={dropdownRef} className="relative">
                   <Search className="w-4 h-4 text-cyberSilver/50 absolute left-3 top-3 pointer-events-none" />
                   <input
                     ref={participantInputRef}
