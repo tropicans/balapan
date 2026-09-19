@@ -996,29 +996,21 @@ export class RaceManager {
       return null;
     };
 
-    // 1. If match has a parent_match_id, try placing winner in parent match
-    if (match.parent_match_id) {
-      const parent = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(match.parent_match_id);
-      if (parent) {
-        const slotAssigned = assignSlot(parent);
-        if (slotAssigned) {
-          return { success: true, matchId, winnerId, nextRound, targetMatchId: parent.id, slot: slotAssigned };
-        }
-      }
-    }
-
     const activeEvId = match.event_id || (typeof getActiveEventId === 'function' ? getActiveEventId() : null);
 
-    // 2. Parent match does not exist or is already full -> find open match in nextRound
+    // 1. Sequential Slot Packing (Prioritized):
+    // Find the earliest match in nextRound that is not completed and still has an open slot (A, B, or C).
+    // This ensures that if a previous heat was No Race (leaving e.g. slot C open while A & B are occupied),
+    // the winner of the subsequent heat will immediately pack into slot C before new heats are created.
     const openNextMatch = activeEvId
       ? db.prepare(`
           SELECT * FROM bracket_matches 
-          WHERE round_number = ? AND (event_id = ? OR event_id IS NULL) AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          WHERE round_number = ? AND (event_id = ? OR event_id IS NULL) AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
           ORDER BY match_number ASC
         `).get(nextRound, activeEvId)
       : db.prepare(`
           SELECT * FROM bracket_matches 
-          WHERE round_number = ? AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          WHERE round_number = ? AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
           ORDER BY match_number ASC
         `).get(nextRound);
 
@@ -1026,6 +1018,17 @@ export class RaceManager {
       const slotAssigned = assignSlot(openNextMatch);
       db.prepare('UPDATE bracket_matches SET parent_match_id = ? WHERE id = ?').run(openNextMatch.id, matchId);
       return { success: true, matchId, winnerId, nextRound, targetMatchId: openNextMatch.id, slot: slotAssigned };
+    }
+
+    // 2. Fallback to parent_match_id if specified and has an open slot
+    if (match.parent_match_id) {
+      const parent = db.prepare('SELECT * FROM bracket_matches WHERE id = ?').get(match.parent_match_id);
+      if (parent && parent.status !== 'completed') {
+        const slotAssigned = assignSlot(parent);
+        if (slotAssigned) {
+          return { success: true, matchId, winnerId, nextRound, targetMatchId: parent.id, slot: slotAssigned };
+        }
+      }
     }
 
     // 3. No open match in nextRound -> dynamically create a new match in nextRound

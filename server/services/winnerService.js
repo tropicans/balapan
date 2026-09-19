@@ -103,11 +103,17 @@ export function registerWinner({ participant_number, round = 2, event_id }) {
     }
 
     // 3. Find open slot in targetRound matches
-    const openMatches = db.prepare(`
-      SELECT * FROM bracket_matches 
-      WHERE event_id = ? AND round_number = ? AND status = 'pending' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
-      ORDER BY match_number ASC
-    `).all(targetEventId, targetRound);
+    const openMatches = targetEventId
+      ? db.prepare(`
+          SELECT * FROM bracket_matches 
+          WHERE (event_id = ? OR event_id IS NULL) AND round_number = ? AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          ORDER BY match_number ASC
+        `).all(targetEventId, targetRound)
+      : db.prepare(`
+          SELECT * FROM bracket_matches 
+          WHERE round_number = ? AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+          ORDER BY match_number ASC
+        `).all(targetRound);
 
     let targetMatch = null;
     let targetSlot = null;
