@@ -79,6 +79,13 @@ export class RaceManager {
 
   // Get full state snapshot for TV, RD, and Clients
   static getFullState() {
+    try {
+      RaceManager.reconcileRoundAdvances(2);
+      RaceManager.reconcileRoundAdvances(3);
+    } catch (_) {
+      // safe fallback if schema tables initializing
+    }
+
     const activeRace = this.getActiveRace();
 
     // Top 5 Best Time Overall (BTO) - Sourced from bto_records (Phase 13), fallback to legacy race_registrations
@@ -973,14 +980,37 @@ export class RaceManager {
     }
 
     const nextRound = match.round_number + 1;
+    const activeEvId = match.event_id || (typeof getActiveEventId === 'function' ? getActiveEventId() : null);
 
-    // Check if winnerId is already registered in nextRound (prevents duplicate promotion)
-    const alreadyInNext = db.prepare(`
-      SELECT id FROM bracket_matches 
-      WHERE round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
-    `).get(nextRound, winnerId, winnerId, winnerId);
+    // Multi-entry / multi-ticket support (STC Vol 8 / GTA / Elimination):
+    // Racers can qualify and win multiple heats in the current round.
+    // Each completed win entitles the winner to 1 slot in the next round.
+    const winsInCurrentRound = activeEvId
+      ? db.prepare(`
+          SELECT COUNT(*) as win_count 
+          FROM bracket_matches 
+          WHERE (event_id = ? OR event_id IS NULL) AND round_number = ? AND winner_id = ? AND status = 'completed'
+        `).get(activeEvId, match.round_number, winnerId)?.win_count || 1
+      : db.prepare(`
+          SELECT COUNT(*) as win_count 
+          FROM bracket_matches 
+          WHERE round_number = ? AND winner_id = ? AND status = 'completed'
+        `).get(match.round_number, winnerId)?.win_count || 1;
 
-    if (alreadyInNext) {
+    const slotsInNextRound = activeEvId
+      ? db.prepare(`
+          SELECT COUNT(*) as slot_count 
+          FROM bracket_matches 
+          WHERE (event_id = ? OR event_id IS NULL) AND round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
+        `).get(activeEvId, nextRound, winnerId, winnerId, winnerId)?.slot_count || 0
+      : db.prepare(`
+          SELECT COUNT(*) as slot_count 
+          FROM bracket_matches 
+          WHERE round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
+        `).get(nextRound, winnerId, winnerId, winnerId)?.slot_count || 0;
+
+    // If winner already has slots in nextRound equal to or exceeding their win count, stop (idempotency guard)
+    if (slotsInNextRound >= winsInCurrentRound) {
       return {
         success: true,
         matchId,
@@ -1003,8 +1033,6 @@ export class RaceManager {
       }
       return null;
     };
-
-    const activeEvId = match.event_id || (typeof getActiveEventId === 'function' ? getActiveEventId() : null);
 
     // 1. Sequential Slot Packing (Prioritized):
     // Find the earliest match in nextRound that is not completed and still has an open slot (A, B, or C).
@@ -1060,6 +1088,86 @@ export class RaceManager {
       slot: 'user_id_1',
       createdNewMatch: true
     };
+  }
+
+  /**
+   * Automatically backfills / advances any completed heats whose winners have not yet
+   * been slotted into the next round (e.g. from previous single-entry guard or race imports).
+   */
+  static reconcileRoundAdvances(fromRound = 2) {
+    const nextRound = fromRound + 1;
+    const activeEvId = typeof getActiveEventId === 'function' ? getActiveEventId() : null;
+
+    const completedMatches = activeEvId
+      ? db.prepare(`
+          SELECT * FROM bracket_matches 
+          WHERE (event_id = ? OR event_id IS NULL) AND round_number = ? AND status = 'completed' AND winner_id IS NOT NULL
+          ORDER BY match_number ASC
+        `).all(activeEvId, fromRound)
+      : db.prepare(`
+          SELECT * FROM bracket_matches 
+          WHERE round_number = ? AND status = 'completed' AND winner_id IS NOT NULL
+          ORDER BY match_number ASC
+        `).all(fromRound);
+
+    let advancedCount = 0;
+    for (const match of completedMatches) {
+      const winnerId = match.winner_id;
+      const winsCount = activeEvId
+        ? db.prepare(`
+            SELECT COUNT(*) as cnt FROM bracket_matches 
+            WHERE (event_id = ? OR event_id IS NULL) AND round_number = ? AND winner_id = ? AND status = 'completed'
+          `).get(activeEvId, fromRound, winnerId)?.cnt || 0
+        : db.prepare(`
+            SELECT COUNT(*) as cnt FROM bracket_matches 
+            WHERE round_number = ? AND winner_id = ? AND status = 'completed'
+          `).get(fromRound, winnerId)?.cnt || 0;
+
+      const slotsInNext = activeEvId
+        ? db.prepare(`
+            SELECT COUNT(*) as cnt FROM bracket_matches 
+            WHERE (event_id = ? OR event_id IS NULL) AND round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
+          `).get(activeEvId, nextRound, winnerId, winnerId, winnerId)?.cnt || 0
+        : db.prepare(`
+            SELECT COUNT(*) as cnt FROM bracket_matches 
+            WHERE round_number = ? AND (user_id_1 = ? OR user_id_2 = ? OR user_id_3 = ?)
+          `).get(nextRound, winnerId, winnerId, winnerId)?.cnt || 0;
+
+      if (slotsInNext < winsCount) {
+        let openMatch = activeEvId
+          ? db.prepare(`
+              SELECT * FROM bracket_matches 
+              WHERE round_number = ? AND (event_id = ? OR event_id IS NULL) AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+              ORDER BY match_number ASC
+            `).get(nextRound, activeEvId)
+          : db.prepare(`
+              SELECT * FROM bracket_matches 
+              WHERE round_number = ? AND status != 'completed' AND (user_id_1 IS NULL OR user_id_2 IS NULL OR user_id_3 IS NULL)
+              ORDER BY match_number ASC
+            `).get(nextRound);
+
+        if (!openMatch) {
+          const maxMatchRow = db.prepare('SELECT MAX(match_number) as max_match FROM bracket_matches').get();
+          const nextMatchNumber = (maxMatchRow?.max_match || 0) + 1;
+          const newMatchId = uuidv4();
+          db.prepare(`
+            INSERT INTO bracket_matches (id, event_id, match_number, round_number, user_id_1, status)
+            VALUES (?, ?, ?, ?, ?, 'pending')
+          `).run(newMatchId, match.event_id || activeEvId || null, nextMatchNumber, nextRound, winnerId);
+          advancedCount++;
+        } else {
+          if (!openMatch.user_id_1) {
+            db.prepare('UPDATE bracket_matches SET user_id_1 = ? WHERE id = ?').run(winnerId, openMatch.id);
+          } else if (!openMatch.user_id_2) {
+            db.prepare('UPDATE bracket_matches SET user_id_2 = ? WHERE id = ?').run(winnerId, openMatch.id);
+          } else if (!openMatch.user_id_3) {
+            db.prepare('UPDATE bracket_matches SET user_id_3 = ? WHERE id = ?').run(winnerId, openMatch.id);
+          }
+          advancedCount++;
+        }
+      }
+    }
+    return { advancedCount };
   }
 
   // Reset / Reopen Bracket Match for re-race or winner revision
