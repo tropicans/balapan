@@ -149,6 +149,25 @@ export const MIGRATIONS = [
         DROP TABLE IF EXISTS coupons;
       `);
     }
+  },
+  {
+    version: 3,
+    name: 'add_source_key_to_users',
+    up(db) {
+      const cols = (tableName) => {
+        try {
+          const res = db.rawDb.exec(`PRAGMA table_info(${tableName});`);
+          return (res[0]?.values || []).map(r => r[1]);
+        } catch (_) {
+          return [];
+        }
+      };
+      const userCols = cols('users');
+      if (!userCols.includes('source_key')) {
+        db.exec('ALTER TABLE users ADD COLUMN source_key TEXT;');
+      }
+      db.exec('CREATE INDEX IF NOT EXISTS idx_users_event_source_key ON users(event_id, source_key);');
+    }
   }
 ];
 

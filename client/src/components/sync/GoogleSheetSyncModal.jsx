@@ -205,20 +205,54 @@ export function GoogleSheetSyncModal({ isOpen, onClose, onSuccess }) {
               </div>
 
               {/* Stats Counters */}
-              <div className="grid grid-cols-2 gap-2 text-center font-mono">
+              <div className="grid grid-cols-3 gap-2 text-center font-mono">
                 <div className="p-2 bg-black/40 border border-emerald-500/30 clip-cyber">
                   <div className="text-[10px] text-emerald-400 font-orbitron uppercase">Pembalap Baru</div>
                   <div className="text-xl font-orbitron font-bold text-emerald-300 mt-0.5">
                     +{syncResult.addedCount}
                   </div>
                 </div>
+                <div className="p-2 bg-black/40 border border-neonAmber/40 clip-cyber">
+                  <div className="text-[10px] text-neonAmber font-orbitron uppercase">Diperbarui</div>
+                  <div className="text-xl font-orbitron font-bold text-neonAmber mt-0.5">
+                    {syncResult.updatedCount || 0}
+                  </div>
+                </div>
                 <div className="p-2 bg-black/40 border border-gray-800 clip-cyber">
-                  <div className="text-[10px] text-gray-400 font-orbitron uppercase">Dilewati (Duplikat/Unpaid)</div>
+                  <div className="text-[10px] text-gray-400 font-orbitron uppercase">Dilewati (Duplikat)</div>
                   <div className="text-xl font-orbitron font-bold text-gray-300 mt-0.5">
                     {syncResult.skippedCount}
                   </div>
                 </div>
               </div>
+
+              {/* Updated Racers Scroll List */}
+              {syncResult.updated && syncResult.updated.length > 0 && (
+                <div className="mt-2">
+                  <div className="text-[11px] font-orbitron font-bold text-neonAmber uppercase mb-1 flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3 text-neonAmber" />
+                    <span>Pembalap Diperbarui ({syncResult.updated.length})</span>
+                  </div>
+                  <div className="max-h-28 overflow-y-auto space-y-1 pr-1 font-mono text-xs">
+                    {syncResult.updated.map((r) => (
+                      <div
+                        key={r.id}
+                        className="px-2.5 py-1 bg-black/60 border border-neonAmber/30 flex items-center justify-between text-cyberSilver"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white">#{r.participant_number}</span>
+                          <span className="line-through text-gray-500 text-[11px]">{r.old_name}</span>
+                          <span className="text-neonAmber">→</span>
+                          <span className="font-bold text-neonAmber">{r.new_name}</span>
+                        </div>
+                        {r.new_team && (
+                          <span className="text-[10px] text-cyberSilver/70">[{r.new_team}]</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Added Racers Scroll List */}
               {syncResult.added && syncResult.added.length > 0 && (

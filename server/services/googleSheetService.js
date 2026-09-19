@@ -125,14 +125,27 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
   return db.transaction(() => {
     // 1. Fetch existing participants in the target active event
     const existingRows = db.prepare(`
-      SELECT id, name, team_name, participant_number 
+      SELECT id, name, team_name, participant_number, source_key 
       FROM users 
       WHERE event_id = ? AND role = 'participant'
     `).all(targetEventId);
 
-    const existingNamesSet = new Set(
-      existingRows.map(r => String(r.name || '').trim().toLowerCase())
-    );
+    const existingBySourceKey = new Map();
+    const existingByName = new Map();
+    const existingNamesSet = new Set();
+
+    for (const r of existingRows) {
+      const norm = String(r.name || '').trim().toLowerCase();
+      if (norm) {
+        existingNamesSet.add(norm);
+        if (!existingByName.has(norm)) {
+          existingByName.set(norm, r);
+        }
+      }
+      if (r.source_key) {
+        existingBySourceKey.set(r.source_key, r);
+      }
+    }
 
     // 2. Query highest participant number in active event
     const row = db.prepare(`
@@ -144,20 +157,110 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
     let nextNum = (row?.max_num || 0) + 1;
 
     const added = [];
+    const updated = [];
     const skipped = [...parseSkipped];
 
     const insertStmt = db.prepare(`
       INSERT INTO users (
-        id, name, email, google_sub_id, team_name, role, is_virtual, event_id, participant_number
-      ) VALUES (?, ?, NULL, NULL, ?, 'participant', 0, ?, ?)
+        id, name, email, google_sub_id, team_name, role, is_virtual, event_id, participant_number, source_key
+      ) VALUES (?, ?, NULL, NULL, ?, 'participant', 0, ?, ?, ?)
     `);
 
-    // 3. Process candidate participants with optional multi-entry support (ENH-04)
+    const updateStmt = db.prepare(`
+      UPDATE users 
+      SET name = ?, team_name = ?, source_key = COALESCE(source_key, ?) 
+      WHERE id = ?
+    `);
+
+    const linkSourceKeyStmt = db.prepare(`
+      UPDATE users 
+      SET source_key = ? 
+      WHERE id = ? AND source_key IS NULL
+    `);
+
+    // 3. Process candidate participants with auto-update by source_key / name
     for (const candidate of candidateParticipants) {
       const trimmedName = String(candidate.name || '').trim();
       if (!trimmedName) continue;
 
       const normName = trimmedName.toLowerCase();
+      const candidateSourceKey = candidate.source_key || null;
+      const team = candidate.team_name ? String(candidate.team_name).trim().substring(0, 50) : null;
+
+      // 3a. Match by source_key if available
+      let matchedUser = candidateSourceKey ? existingBySourceKey.get(candidateSourceKey) : null;
+
+      // 3b. If not matched by source_key, check exact name match (links legacy unkeyed DB rows)
+      if (!matchedUser && existingByName.has(normName)) {
+        const userByName = existingByName.get(normName);
+        if (!userByName.source_key) {
+          if (candidateSourceKey) {
+            linkSourceKeyStmt.run(candidateSourceKey, userByName.id);
+            userByName.source_key = candidateSourceKey;
+            existingBySourceKey.set(candidateSourceKey, userByName);
+          }
+          matchedUser = userByName;
+        } else if (!allow_multi_entry) {
+          skipped.push({
+            name: trimmedName,
+            reason: 'Sudah terdaftar di event aktif (dilewati untuk cegah duplikasi)'
+          });
+          continue;
+        }
+      }
+
+      // 3c. If still not matched, check if an unlinked row has matching participant_number / source_no
+      if (!matchedUser && candidateSourceKey && candidate.source_no && !isNaN(Number(candidate.source_no))) {
+        const candidateNum = Number(candidate.source_no);
+        const unlinkedUser = existingRows.find(u => !u.source_key && u.participant_number === candidateNum);
+        if (unlinkedUser) {
+          linkSourceKeyStmt.run(candidateSourceKey, unlinkedUser.id);
+          unlinkedUser.source_key = candidateSourceKey;
+          existingBySourceKey.set(candidateSourceKey, unlinkedUser);
+          matchedUser = unlinkedUser;
+        }
+      }
+
+      // 3d. If matched user found -> UPDATE if name or team changed, or SKIP if identical
+      if (matchedUser) {
+        const currentName = String(matchedUser.name || '').trim();
+        const currentTeam = matchedUser.team_name ? String(matchedUser.team_name).trim() : null;
+
+        const nameChanged = currentName !== trimmedName;
+        const teamChanged = (currentTeam || null) !== (team || null);
+
+        if (nameChanged || teamChanged) {
+          updateStmt.run(trimmedName, team, candidateSourceKey, matchedUser.id);
+
+          updated.push({
+            id: matchedUser.id,
+            participant_number: matchedUser.participant_number,
+            old_name: currentName,
+            new_name: trimmedName,
+            old_team: currentTeam,
+            new_team: team,
+            event_id: targetEventId
+          });
+
+          // Update memory maps
+          existingNamesSet.delete(currentName.toLowerCase());
+          existingNamesSet.add(normName);
+          matchedUser.name = trimmedName;
+          matchedUser.team_name = team;
+          if (candidateSourceKey && !matchedUser.source_key) {
+            matchedUser.source_key = candidateSourceKey;
+          }
+          existingByName.set(normName, matchedUser);
+        } else {
+          skipped.push({
+            name: trimmedName,
+            reason: 'Sudah terdaftar di event aktif (data sama persis)'
+          });
+        }
+        continue;
+      }
+
+      // 3e. If not matched, check allow_multi_entry
       if (!allow_multi_entry && existingNamesSet.has(normName)) {
         skipped.push({
           name: trimmedName,
@@ -166,22 +269,26 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
         continue;
       }
 
-      // Add new participant
+      // 3f. Truly new participant: INSERT
       const uId = uuidv4();
-      const team = candidate.team_name ? String(candidate.team_name).trim().substring(0, 50) : null;
+      insertStmt.run(uId, trimmedName, team, targetEventId, nextNum, candidateSourceKey);
 
-      insertStmt.run(uId, trimmedName, team, targetEventId, nextNum);
-      if (!allow_multi_entry) {
-        existingNamesSet.add(normName);
-      }
-
-      added.push({
+      const newRecord = {
         id: uId,
         name: trimmedName,
         team_name: team,
         participant_number: nextNum,
+        source_key: candidateSourceKey,
         event_id: targetEventId
-      });
+      };
+
+      added.push(newRecord);
+      existingRows.push(newRecord);
+      if (candidateSourceKey) {
+        existingBySourceKey.set(candidateSourceKey, newRecord);
+      }
+      existingByName.set(normName, newRecord);
+      existingNamesSet.add(normName);
 
       nextNum++;
     }
@@ -191,12 +298,15 @@ export async function syncParticipantsFromSheet({ sheet_url, event_id, csv_overr
     db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_sync_url', ?, CURRENT_TIMESTAMP)").run(rawUrl);
     db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_last_sync_time', ?, CURRENT_TIMESTAMP)").run(nowIso);
     db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_last_sync_count', ?, CURRENT_TIMESTAMP)").run(String(added.length));
+    db.prepare("INSERT OR REPLACE INTO tournament_settings (key, value, updated_at) VALUES ('google_sheet_last_sync_updated_count', ?, CURRENT_TIMESTAMP)").run(String(updated.length));
 
     return {
       totalFound: candidateParticipants.length,
       addedCount: added.length,
+      updatedCount: updated.length,
       skippedCount: skipped.length,
       added,
+      updated,
       skipped,
       sheetUrl: rawUrl,
       exportUrl,

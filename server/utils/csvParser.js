@@ -92,6 +92,7 @@ export function parseParticipantCsv(csvText) {
 
   if (isStcFormat) {
     // Parser STC Vol 8
+    let currentSection = 'presale';
     for (let r = 0; r < rows.length; r++) {
       const cells = rows[r].map(c => (c || '').trim());
       const c0 = cells[0] || '';
@@ -102,7 +103,13 @@ export function parseParticipantCsv(csvText) {
         continue;
       }
       // Check if row is a section header (e.g. "Presale (40 Runs)")
-      if (/presale|ots|top up/i.test(c0)) continue;
+      if (/presale|ots|top up/i.test(c0)) {
+        if (/presale/i.test(c0)) currentSection = 'presale';
+        else if (/ots/i.test(c0)) currentSection = 'ots';
+        else if (/top up/i.test(c0)) currentSection = 'topup';
+        else currentSection = c0.toLowerCase().replace(/[^a-z0-9]/g, '');
+        continue;
+      }
 
       const isPaid = /lunas/i.test(status) && !/belum/i.test(status);
       const isComp = !status && (cells[2] === '' || cells[2] === undefined) && /rp0/i.test(cells[3] || '');
@@ -113,17 +120,29 @@ export function parseParticipantCsv(csvText) {
       }
 
       if (isPaid || isComp) {
-        valid.push({ name: c1, team_name: null });
+        const source_key = c0 ? `stc:${currentSection}:${c0}` : `stc:row:${r + 1}`;
+        valid.push({
+          name: c1,
+          team_name: null,
+          source_key,
+          sheet_row: r + 1,
+          source_no: c0 || null,
+          section: currentSection
+        });
       } else {
         skipped.push({ row: r + 1, reason: `Status belum lunas (${status || 'Belum Lunas'})` });
       }
     }
   } else if (headerIndex !== -1) {
     // Standard format with header
+    const headerRow = rows[headerIndex].map(c => (c || '').trim().toLowerCase());
+    const noIdx = headerRow.findIndex(c => ['no', 'no.', 'nomor', 'number', '#', 'id'].includes(c));
+
     for (let r = headerIndex + 1; r < rows.length; r++) {
       const cells = rows[r];
       const name = (cells[nameColIdx] || '').trim();
       const team = teamColIdx !== -1 ? (cells[teamColIdx] || '').trim() : null;
+      const noVal = noIdx !== -1 ? (cells[noIdx] || '').trim() : null;
 
       if (!name) {
         if (cells.some(c => (c || '').trim().length > 0)) {
@@ -132,7 +151,14 @@ export function parseParticipantCsv(csvText) {
         continue;
       }
 
-      valid.push({ name, team_name: team || null });
+      const source_key = noVal ? `no:${noVal}` : `row:${r + 1}`;
+      valid.push({
+        name,
+        team_name: team || null,
+        source_key,
+        sheet_row: r + 1,
+        source_no: noVal || null
+      });
     }
   } else {
     // Fallback: headerless (col 0 = name, col 1 = team)
@@ -142,7 +168,13 @@ export function parseParticipantCsv(csvText) {
       const team = cells[1] ? cells[1].trim() : null;
 
       if (!name) continue;
-      valid.push({ name, team_name: team || null });
+      valid.push({
+        name,
+        team_name: team || null,
+        source_key: `row:${r + 1}`,
+        sheet_row: r + 1,
+        source_no: null
+      });
     }
   }
 

@@ -149,6 +149,7 @@ export async function initDatabase() {
       role TEXT DEFAULT 'participant',
       is_virtual INTEGER DEFAULT 0,
       side_event_gta INTEGER DEFAULT 0,
+      source_key TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 

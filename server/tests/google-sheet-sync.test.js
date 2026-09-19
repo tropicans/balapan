@@ -127,6 +127,29 @@ Total OTS,,,Rp200,000,,,
     console.log('✓ Incremental sync passed\n');
 
     // ----------------------------------------------------
+    // Test 3b: Auto-Update on Name Change in Google Sheet
+    // ----------------------------------------------------
+    console.log('--- Test 3b: Auto-Update on Name Change without Duplicate (BUGFIX) ---');
+    const modifiedCsv = expandedCsv.replace('1,om sandi,1,', '1,om sandi MKZ,1,');
+    const syncUpdate = await syncParticipantsFromSheet({
+      csv_override: modifiedCsv,
+      event_id: activeEventId
+    });
+
+    assert.strictEqual(syncUpdate.addedCount, 0, 'Should NOT add a new racer when existing racer name is edited');
+    assert.strictEqual(syncUpdate.updatedCount, 1, 'Should update exactly 1 racer');
+    assert.strictEqual(syncUpdate.updated[0].old_name, 'om sandi');
+    assert.strictEqual(syncUpdate.updated[0].new_name, 'om sandi MKZ');
+    assert.strictEqual(syncUpdate.updated[0].participant_number, 1, 'Participant number must remain unchanged (#1)');
+
+    const countRowAfterUpdate = db.prepare('SELECT count(*) as cnt FROM users WHERE event_id = ? AND role = "participant"').get(activeEventId);
+    assert.strictEqual(countRowAfterUpdate.cnt, 6, 'Total participant count must remain strictly 6');
+
+    const updatedUserInDb = db.prepare('SELECT name, participant_number FROM users WHERE event_id = ? AND participant_number = 1').get(activeEventId);
+    assert.strictEqual(updatedUserInDb.name, 'om sandi MKZ');
+    console.log('✓ Auto-update on name change passed\n');
+
+    // ----------------------------------------------------
     // Test 4: HTTP API Endpoints (SYNC-05, SYNC-06, SYNC-07)
     // ----------------------------------------------------
     console.log('--- Test 4: HTTP API /api/participants/sync-sheet & status ---');

@@ -1425,17 +1425,25 @@ app.post('/api/participants/sync-sheet', requireRole('cashier', 'admin', 'super_
       allow_multi_entry: Boolean(allow_multi_entry)
     });
 
-    if (result.addedCount > 0) {
+    if (result.addedCount > 0 || result.updatedCount > 0) {
       io.emit('participants_imported', {
         count: result.addedCount,
+        updatedCount: result.updatedCount,
         event_id: result.targetEventId
       });
       broadcastFullState();
     }
 
+    const messageParts = [];
+    if (result.addedCount > 0) messageParts.push(`${result.addedCount} pembalap baru ditambahkan`);
+    if (result.updatedCount > 0) messageParts.push(`${result.updatedCount} pembalap diperbarui`);
+    if (messageParts.length === 0) messageParts.push('0 perubahan');
+
+    const message = `Sinkronisasi selesai: ${messageParts.join(', ')}, ${result.skippedCount} dilewati/duplikat.`;
+
     res.json({
       success: true,
-      message: `Sinkronisasi selesai: ${result.addedCount} pembalap baru ditambahkan, ${result.skippedCount} dilewati/duplikat.`,
+      message,
       data: result
     });
   } catch (err) {
