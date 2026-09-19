@@ -16,14 +16,15 @@ import {
   Sparkles,
   UserCheck,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 import clsx from 'clsx';
 import { WinnerRegistrationPanel } from '../components/bracket/WinnerRegistrationPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export function BracketDashboard() {
-  const { raceState, apiAdvanceBracket } = useRace();
+  const { raceState, apiAdvanceBracket, apiDeclareBracketNoRace, apiResetBracketMatch } = useRace();
   const { user } = useAuth();
   const isDirectorOrAdmin = Boolean(user && user.status === 'approved' && ['race_director', 'admin', 'super_admin'].includes(user.role));
   const matches = raceState.bracketMatches || [];
@@ -63,6 +64,10 @@ export function BracketDashboard() {
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
   const [currentPage, setCurrentPage] = useState(1);
   const [advancingMatchId, setAdvancingMatchId] = useState(null);
+  const [declaringNoRaceId, setDeclaringNoRaceId] = useState(null);
+  const [resettingMatchId, setResettingMatchId] = useState(null);
+  const [noRaceModalMatch, setNoRaceModalMatch] = useState(null);
+  const [actionFeedback, setActionFeedback] = useState(null);
 
   const ITEMS_PER_PAGE = 12;
 
@@ -138,6 +143,39 @@ export function BracketDashboard() {
       alert(err.message || 'Gagal memajukan pemenang bracket');
     } finally {
       setAdvancingMatchId(null);
+    }
+  };
+
+  // Declare Bracket Match No Race Action
+  const handleConfirmNoRace = async () => {
+    if (!noRaceModalMatch || declaringNoRaceId) return;
+    setDeclaringNoRaceId(noRaceModalMatch.id);
+    try {
+      const res = await apiDeclareBracketNoRace(noRaceModalMatch.id);
+      setActionFeedback({ type: 'success', text: res?.message || `Heat dinyatakan No Race!` });
+      setTimeout(() => setActionFeedback(null), 3500);
+      setNoRaceModalMatch(null);
+    } catch (err) {
+      setActionFeedback({ type: 'error', text: err.message || 'Gagal mendeklarasikan No Race.' });
+      setTimeout(() => setActionFeedback(null), 5000);
+    } finally {
+      setDeclaringNoRaceId(null);
+    }
+  };
+
+  // Reset / Reopen Bracket Match Action
+  const handleResetMatch = async (match) => {
+    if (!match || resettingMatchId) return;
+    setResettingMatchId(match.id);
+    try {
+      const res = await apiResetBracketMatch(match.id);
+      setActionFeedback({ type: 'success', text: res?.message || 'Heat berhasil dibuka kembali.' });
+      setTimeout(() => setActionFeedback(null), 3500);
+    } catch (err) {
+      setActionFeedback({ type: 'error', text: err.message || 'Gagal mereset heat.' });
+      setTimeout(() => setActionFeedback(null), 5000);
+    } finally {
+      setResettingMatchId(null);
     }
   };
 
@@ -319,24 +357,50 @@ export function BracketDashboard() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {isCompleted ? (
-              isNoRace ? (
-                <span className="flex items-center gap-1 text-rose-400 font-bold">
-                  <XCircle className="w-3.5 h-3.5" />
-                  NO RACE
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-neonGreen font-bold">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  SELESAI
-                </span>
-              )
+              <>
+                {isNoRace ? (
+                  <span className="flex items-center gap-1 text-rose-400 font-bold px-2 py-0.5 bg-rose-950/30 border border-rose-500/50 clip-cyber text-[10px]">
+                    <XCircle className="w-3.5 h-3.5" />
+                    NO RACE
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-neonGreen font-bold px-2 py-0.5 bg-neonGreen/10 border border-neonGreen/40 clip-cyber text-[10px]">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    SELESAI
+                  </span>
+                )}
+                {isDirectorOrAdmin && (
+                  <button
+                    onClick={() => handleResetMatch(match)}
+                    disabled={resettingMatchId === match.id}
+                    className="px-2 py-0.5 text-[9px] font-orbitron font-bold text-cyberSilver/70 hover:text-white bg-black/50 hover:bg-rose-500/20 border border-gray-700 hover:border-rose-500/60 clip-cyber flex items-center gap-1 transition-all cursor-pointer"
+                    title="Buka kembali heat ini untuk balap ulang (Re-Race) atau revisi pemenang"
+                  >
+                    <RotateCcw className="w-3 h-3 text-rose-400" />
+                    <span>{resettingMatchId === match.id ? '...' : 'RESET HEAT'}</span>
+                  </button>
+                )}
+              </>
             ) : (
-              <span className="flex items-center gap-1 text-neonAmber font-bold">
-                <Clock className="w-3.5 h-3.5 animate-pulse" />
-                PENDING
-              </span>
+              <>
+                <span className="flex items-center gap-1 text-neonAmber font-bold px-2 py-0.5 bg-neonAmber/10 border border-neonAmber clip-cyber text-[10px]">
+                  <Clock className="w-3.5 h-3.5 animate-pulse" />
+                  PENDING
+                </span>
+                {isDirectorOrAdmin && contestantCount > 0 && (
+                  <button
+                    onClick={() => setNoRaceModalMatch(match)}
+                    disabled={declaringNoRaceId === match.id}
+                    className="px-2 py-0.5 text-[9px] font-orbitron font-bold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-900/60 border border-rose-700/60 hover:border-rose-500 clip-cyber flex items-center gap-1 transition-all cursor-pointer shadow-[0_0_10px_rgba(244,63,94,0.15)]"
+                    title="Deklarasikan semua peserta heat ini gugur (No Race / CO)"
+                  >
+                    <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                    <span>NO RACE</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -428,6 +492,23 @@ export function BracketDashboard() {
             <UserCheck className="w-4 h-4" />
             <span>REGISTRASI PEMENANG BABAK 2 (v3.0)</span>
           </button>
+        </div>
+      )}
+
+      {/* Feedback Toast Notification */}
+      {actionFeedback && (
+        <div className={clsx(
+          "p-3 text-xs font-mono clip-cyber flex items-center gap-2 transition-all",
+          actionFeedback.type === 'success' 
+            ? "bg-neonGreen/10 border border-neonGreen text-neonGreen shadow-glowGreen" 
+            : "bg-red-950/40 border border-red-500 text-red-400"
+        )}>
+          {actionFeedback.type === 'success' ? (
+            <CheckCircle className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{actionFeedback.text}</span>
         </div>
       )}
 
@@ -591,6 +672,57 @@ export function BracketDashboard() {
         </div>
       )}
         </>
+      )}
+
+      {/* No Race Confirmation Modal */}
+      {noRaceModalMatch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-obsidian border-2 border-rose-500/80 clip-cyber p-5 shadow-[0_0_30px_rgba(244,63,94,0.3)] space-y-4">
+            <div className="flex items-center gap-3 border-b border-gray-800 pb-3">
+              <div className="w-10 h-10 clip-cyber bg-rose-500/20 border border-rose-500 flex items-center justify-center text-rose-400">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-orbitron font-black text-white uppercase tracking-wider">
+                  DEKLARASI NO RACE (SEMUA GUGUR)
+                </h3>
+                <div className="text-xs font-mono text-cyberSilver/70">
+                  Heat #{noRaceModalMatch.round_heat_number || noRaceModalMatch.match_number} &bull; Babak {noRaceModalMatch.round_number}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs font-mono text-cyberSilver/90 space-y-2">
+              <p>
+                Apakah Anda yakin mendeklarasikan <strong className="text-rose-400">NO RACE</strong> untuk heat ini?
+              </p>
+              <p className="text-[11px] text-cyberSilver/60">
+                &bull; Seluruh pembalap di heat ini dinyatakan gugur (CO / DNF).<br />
+                &bull; Tidak ada pemenang yang lolos dari heat ini.<br />
+                &bull; Pemenang dari heat berikutnya yang menang akan menempati slot kosong berikutnya di babak selanjutnya.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-800">
+              <button
+                type="button"
+                disabled={declaringNoRaceId === noRaceModalMatch.id}
+                onClick={() => setNoRaceModalMatch(null)}
+                className="px-4 py-2 text-xs font-orbitron font-bold text-cyberSilver hover:text-white bg-black/60 border border-gray-700 clip-cyber transition-all cursor-pointer"
+              >
+                BATAL
+              </button>
+              <button
+                type="button"
+                disabled={declaringNoRaceId === noRaceModalMatch.id}
+                onClick={handleConfirmNoRace}
+                className="px-4 py-2 text-xs font-orbitron font-black text-white bg-rose-600 hover:bg-rose-500 border border-rose-400 clip-cyber shadow-[0_0_15px_rgba(244,63,94,0.4)] transition-all cursor-pointer"
+              >
+                {declaringNoRaceId === noRaceModalMatch.id ? 'MEMPROSES...' : 'YA, TETAPKAN NO RACE'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
