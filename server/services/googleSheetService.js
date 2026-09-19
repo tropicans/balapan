@@ -411,7 +411,15 @@ export function parseBracketCsv(csvText) {
       const laneC = cells[3] || '';
       const finisher = cells[4] || '';
 
-      if (laneA || laneB || laneC || finisher) {
+      // In Babak 1 (round_number 2 in DGDASH): only import heats with contestants/finishers (e.g. 1..103, skipping blank template rows 104..140).
+      // In Babak 2 and higher (round_number >= 3 in DGDASH, e.g. Babak 3 with 50 heats):
+      // import all defined heats from the sheet so that upcoming elimination heats (Heats 5..50 in Babak 3) are complete.
+      const hasContestants = Boolean(laneA || laneB || laneC || finisher);
+      const shouldInclude = currentRound.round_number === 2 
+        ? hasContestants 
+        : (currentRound.round_number === 3 || hasContestants);
+
+      if (shouldInclude) {
         heats.push({
           round_number: currentRound.round_number,
           match_number: raceNum,
@@ -525,7 +533,7 @@ export async function syncBracketFromSheet({ sheet_url, event_id, csv_override }
 
     const updateStmt = db.prepare(`
       UPDATE bracket_matches 
-      SET user_id_1 = ?, user_id_2 = ?, user_id_3 = ?, winner_id = ?, status = ?, is_final = ?
+      SET user_id_1 = ?, user_id_2 = ?, user_id_3 = ?, winner_id = ?, status = ?, is_final = ?, event_id = ?
       WHERE id = ?
     `);
 
@@ -554,39 +562,46 @@ export async function syncBracketFromSheet({ sheet_url, event_id, csv_override }
         : ((heat.round_number - 1) * 100 + heat.match_number);
 
       const key = `${heat.round_number}_${dbMatchNumber}`;
-      const existing = existingByRoundAndMatch.get(key) || existingMatches.find(m => m.round_number === heat.round_number && m.match_number === dbMatchNumber);
+      const existing = existingByRoundAndMatch.get(key) || 
+        existingMatches.find(m => m.round_number === heat.round_number && m.match_number === dbMatchNumber) ||
+        db.prepare('SELECT * FROM bracket_matches WHERE match_number = ?').get(dbMatchNumber);
 
       if (existing) {
         const currentWinnerId = existing.winner_id || null;
         const newWinnerId = winnerId !== null ? winnerId : currentWinnerId;
         const newStatus = newWinnerId ? 'completed' : (existing.status === 'completed' && !newWinnerId ? 'pending' : existing.status);
 
+        // If sheet has a racer in this lane, use that racer; if sheet lane is blank, preserve any in-app advanced racer.
+        const effectiveUser1 = heat.lane_a ? userId1 : (existing.user_id_1 || null);
+        const effectiveUser2 = heat.lane_b ? userId2 : (existing.user_id_2 || null);
+        const effectiveUser3 = heat.lane_c ? userId3 : (existing.user_id_3 || null);
+
         const changed = (
-          (existing.user_id_1 || null) !== (userId1 || null) ||
-          (existing.user_id_2 || null) !== (userId2 || null) ||
-          (existing.user_id_3 || null) !== (userId3 || null) ||
+          (existing.user_id_1 || null) !== (effectiveUser1 || null) ||
+          (existing.user_id_2 || null) !== (effectiveUser2 || null) ||
+          (existing.user_id_3 || null) !== (effectiveUser3 || null) ||
           (currentWinnerId !== newWinnerId) ||
           (existing.status !== newStatus) ||
           Number(existing.is_final || 0) !== Number(heat.is_final || 0)
         );
 
         if (changed) {
-          updateStmt.run(userId1, userId2, userId3, newWinnerId, newStatus, heat.is_final, existing.id);
+          updateStmt.run(effectiveUser1, effectiveUser2, effectiveUser3, newWinnerId, newStatus, heat.is_final, targetEventId, existing.id);
           updated.push({
             id: existing.id,
             match_number: heat.match_number,
             db_match_number: dbMatchNumber,
             round_number: heat.round_number,
-            user_id_1: userId1,
-            user_id_2: userId2,
-            user_id_3: userId3,
+            user_id_1: effectiveUser1,
+            user_id_2: effectiveUser2,
+            user_id_3: effectiveUser3,
             winner_id: newWinnerId,
             status: newStatus
           });
           // Update in-memory cache
-          existing.user_id_1 = userId1;
-          existing.user_id_2 = userId2;
-          existing.user_id_3 = userId3;
+          existing.user_id_1 = effectiveUser1;
+          existing.user_id_2 = effectiveUser2;
+          existing.user_id_3 = effectiveUser3;
           existing.winner_id = newWinnerId;
           existing.status = newStatus;
           existing.is_final = heat.is_final;

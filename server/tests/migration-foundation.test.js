@@ -191,17 +191,17 @@ async function runTests() {
 
     // 3.4 schema_version row verification & idempotency
     const maxVer = db.prepare('SELECT MAX(version) as max_v, COUNT(*) as cnt FROM schema_version').get();
-    assert.strictEqual(maxVer.max_v, 1, 'Max version in schema_version must be 1');
-    assert.strictEqual(maxVer.cnt, 1, 'schema_version must have exactly 1 row');
+    assert.strictEqual(maxVer.max_v, 3, 'Max version in schema_version must be 3');
+    assert.strictEqual(maxVer.cnt, 2, 'schema_version must have 2 rows (v1 and v3; v2 skipped)');
 
     const rerunRes = runMigrations(db);
     assert.strictEqual(rerunRes.applied, 0, 'Re-running migrations on up-to-date schema returns applied: 0');
-    assert.strictEqual(db.prepare('SELECT COUNT(*) as cnt FROM schema_version').get().cnt, 1, 'schema_version count remains 1');
+    assert.strictEqual(db.prepare('SELECT COUNT(*) as cnt FROM schema_version').get().cnt, 2, 'schema_version count remains 2');
 
-    // Delete schema_version and re-run (should re-apply version 1)
+    // Delete schema_version and re-run (should re-apply non-destructive migrations: 1 and 3)
     db.exec('DELETE FROM schema_version;');
     const reapplyRes = runMigrations(db);
-    assert.strictEqual(reapplyRes.applied, 1, 'Re-running migrations after deleting schema_version returns applied: 1');
+    assert.strictEqual(reapplyRes.applied, 2, 'Re-running migrations after deleting schema_version returns applied: 2');
     console.log('✓ [13/16] Versioned migration runner idempotency and schema_version tracking verified');
 
     // 3.5 Backfill assertions (participants and bracket_matches)
@@ -368,7 +368,7 @@ async function runTests() {
 
       // 3. Schema checks: schema_version has version 1, users has participant_number, legacy tables coupons and races survive
       const bootVer = db.prepare('SELECT MAX(version) as max_v FROM schema_version').get();
-      assert.strictEqual(bootVer.max_v, 1, 'schema_version must be version 1');
+      assert.strictEqual(bootVer.max_v, 3, 'schema_version must be version 3');
 
       const userColsBoot = (db.rawDb.exec('PRAGMA table_info(users)')[0]?.values || []).map(r => r[1]);
       assert.ok(userColsBoot.includes('participant_number'), 'users table must have participant_number column');

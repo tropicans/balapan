@@ -183,7 +183,6 @@ async function runTests() {
 
     console.log('\n🎉 ALL 7 MANUAL BTO BACKEND & LEADERBOARD TESTS PASSED (100% GREEN)!\n');
     server.close();
-    process.exit(0);
   } catch (err) {
     console.error('\n❌ TEST FAILED:', err);
     server.close();

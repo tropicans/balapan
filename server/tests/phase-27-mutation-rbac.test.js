@@ -154,4 +154,4 @@ assert.notStrictEqual(resBracketSuper.status, 403, 'Super Admin must pass 403 ro
 console.log('✓ Winners & Bracket RBAC verified (401 without auth, 403 for cashier, super admin passes guard)');
 
 console.log('\n🎉 ALL PHASE 27 MUTATION RBAC TESTS PASSED SUCCESSFULLY (100% GREEN)!');
-process.exit(0);
+server.close();

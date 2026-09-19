@@ -164,7 +164,6 @@ async function runTests() {
     console.log('✓ Test 8: Undo Round 3 winner registration verified');
 
     console.log('\n🎉 ALL MULTI-ROUND WINNER REGISTRATION TESTS PASSED (100% GREEN)!\n');
-    process.exit(0);
   } catch (err) {
     console.error('\n❌ TEST FAILED:', err);
     process.exit(1);
