@@ -383,13 +383,13 @@ export async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_token ON auth_sessions(token);
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id);
   `);
-  }
 
   // Run versioned migrations (replaces legacy try/catch ALTER block)
   runMigrations(db);
 
   // Auto-reconcile legacy participant rename and duplicates
   reconcileLegacyParticipants(db);
+  }
 
   // Demo/dummy data is opt-in only. Production and normal local runs start clean.
   // Enable with SEED_DEMO_DATA=true (the test suite sets this).
