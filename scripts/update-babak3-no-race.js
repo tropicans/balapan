@@ -1,3 +1,9 @@
+import 'dotenv/config';
+
+if (!process.env.DB_DRIVER && (process.env.POSTGRES_USER || process.env.POSTGRES_HOST || process.env.POSTGRES_URL)) {
+  process.env.DB_DRIVER = 'postgres';
+}
+
 import db, { initDatabase } from '../server/db.js';
 
 await initDatabase();

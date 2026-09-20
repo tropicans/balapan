@@ -145,7 +145,8 @@ class PostgresWrapper {
   }
 
   async init(customPath = null) {
-    await this.internalSqlite.init(customPath || ':memory:');
+    const sqlitePath = customPath || process.env.DB_PATH || path.join(dbDir, 'tamiya.sqlite');
+    await this.internalSqlite.init(sqlitePath);
     this.rawDb = this.internalSqlite.rawDb;
 
     try {
@@ -173,7 +174,31 @@ class PostgresWrapper {
           database: 'dgdash'
         };
       }
-      this.pool = new Pool(pgConfig);
+      
+      let testPool = new Pool(pgConfig);
+      try {
+        const client = await testPool.connect();
+        client.release();
+        this.pool = testPool;
+      } catch (connErr) {
+        if (defaultHost === 'postgres') {
+          try {
+            if (pgConfig.connectionString) {
+              pgConfig.connectionString = pgConfig.connectionString.replace('@postgres:', '@localhost:');
+            } else {
+              pgConfig.host = 'localhost';
+            }
+            testPool = new Pool(pgConfig);
+            const client = await testPool.connect();
+            client.release();
+            this.pool = testPool;
+          } catch (_) {
+            throw connErr;
+          }
+        } else {
+          throw connErr;
+        }
+      }
 
       const schemaPath = path.join(__dirname, 'schemas/postgres-schema.sql');
       if (fs.existsSync(schemaPath)) {

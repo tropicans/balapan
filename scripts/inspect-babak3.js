@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import db, { initDatabase } from '../server/db.js';
 
 await initDatabase();
