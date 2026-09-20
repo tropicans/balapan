@@ -247,39 +247,6 @@ export function CashierDashboard() {
             </span>
           </div>
 
-          {/* Last Sync Info Pill */}
-          <button
-            type="button"
-            onClick={() => setSyncModalOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-black/60 border border-emerald-500/40 hover:border-emerald-400 clip-cyber transition text-left cursor-pointer"
-            title="Klik untuk membuka detail sinkronisasi Google Sheet"
-          >
-            <span className={clsx(
-              "w-2 h-2 rounded-full",
-              raceState?.sheetSyncStatus?.lastStatus === 'error' ? "bg-red-500" : "bg-neonGreen animate-pulse"
-            )} />
-            <div className="flex flex-col leading-tight">
-              <span className="text-[9px] font-orbitron font-bold text-cyberSilver/70 uppercase">
-                LAST SYNC ({raceState?.sheetSyncStatus?.intervalSeconds || 60}s):
-              </span>
-              <span className="font-orbitron font-black text-emerald-300 text-xs">
-                {raceState?.sheetSyncStatus?.lastRunAt 
-                  ? new Date(raceState.sheetSyncStatus.lastRunAt).toLocaleTimeString('id-ID', { hour12: false })
-                  : 'BELUM'}
-              </span>
-            </div>
-          </button>
-
-          {/* Sync Google Sheet Button (SYNC-08) */}
-          <CyberButton
-            variant="green"
-            size="sm"
-            icon={FileSpreadsheet}
-            onClick={() => setSyncModalOpen(true)}
-          >
-            SYNC GOOGLE SHEET
-          </CyberButton>
-
           {/* Import CSV Button */}
           <CyberButton
             variant="cyan"

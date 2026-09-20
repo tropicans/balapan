@@ -216,38 +216,6 @@ export function AdminUserDashboard() {
 
         {/* Global Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* Last Sync Indicator Pill */}
-          <button
-            type="button"
-            onClick={() => setSyncModalOpen(true)}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-black/60 border border-emerald-500/40 hover:border-emerald-400 clip-cyber cursor-pointer transition text-left"
-            title="Klik untuk membuka detail sinkronisasi Google Sheet"
-          >
-            <span className={clsx(
-              "w-2 h-2 rounded-full",
-              raceState?.sheetSyncStatus?.lastStatus === 'error' ? "bg-red-500" : "bg-neonGreen animate-pulse"
-            )} />
-            <div className="flex flex-col text-left leading-tight">
-              <span className="text-[9px] font-orbitron font-bold text-cyberSilver/70 uppercase">
-                LAST SYNC ({raceState?.sheetSyncStatus?.intervalSeconds || 60}s):
-              </span>
-              <span className="font-orbitron font-black text-emerald-300 text-[11px]">
-                {raceState?.sheetSyncStatus?.lastRunAt 
-                  ? new Date(raceState.sheetSyncStatus.lastRunAt).toLocaleTimeString('id-ID', { hour12: false })
-                  : 'BELUM'}
-              </span>
-            </div>
-          </button>
-
-          {/* Sync Google Sheet (SYNC-09) */}
-          <button
-            onClick={() => setSyncModalOpen(true)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-950/40 border border-emerald-500/60 hover:border-emerald-400 text-emerald-300 hover:text-emerald-200 text-xs font-orbitron font-bold clip-cyber transition shadow"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-            <span>SYNC GOOGLE SHEET</span>
-          </button>
-
           <button
             onClick={fetchUsers}
             disabled={loading}
