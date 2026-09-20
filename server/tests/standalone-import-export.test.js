@@ -1,4 +1,4 @@
-import test from 'node.test';
+import test from 'node:test';
 import assert from 'node:assert';
 import express from 'express';
 import http from 'http';
