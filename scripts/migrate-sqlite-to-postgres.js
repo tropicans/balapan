@@ -21,10 +21,16 @@ async function migrate() {
   }
   console.log(`📁 Reading SQLite database from: ${sqlitePath}`);
 
-  // 2. Load SQLite database
-  const SQL = await initSqlJs();
-  const fileBuffer = fs.readFileSync(sqlitePath);
-  const sqliteDb = new SQL.Database(fileBuffer);
+  let sqliteDb;
+  try {
+    const SQL = await initSqlJs();
+    const fileBuffer = fs.readFileSync(sqlitePath);
+    sqliteDb = new SQL.Database(fileBuffer);
+    console.log('📖 SQLite database loaded successfully.');
+  } catch (e) {
+    console.error('❌ Failed to load SQLite database with sql.js:', e.message || e);
+    process.exit(1);
+  }
 
   // Helper to read all rows from a table in SQLite
   const readSqliteTable = (tableName) => {
@@ -37,7 +43,7 @@ async function migrate() {
       stmt.free();
       return rows;
     } catch (e) {
-      console.warn(`  ⚠️ Table ${tableName} missing or unreadable in SQLite:`, e.message);
+      console.warn(`  ⚠️ Table [${tableName}] missing or unreadable in SQLite:`, e.message);
       return [];
     }
   };
@@ -49,22 +55,40 @@ async function migrate() {
     : {
         user: process.env.POSTGRES_USER || 'postgres',
         password: process.env.POSTGRES_PASSWORD || 'postgres123',
-        host: process.env.POSTGRES_HOST || 'localhost',
+        host: process.env.POSTGRES_HOST || 'postgres',
         port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
         database: process.env.POSTGRES_DB || 'dgdash'
       };
 
+  console.log(`🔌 Connecting to PostgreSQL at ${pgConfig.host || 'URL'}...`);
   const pool = new pg.Pool(pgConfig);
-  const pgClient = await pool.connect();
-  console.log('⚡ Connected to PostgreSQL instance successfully!');
+  
+  let pgClient;
+  try {
+    pgClient = await pool.connect();
+    console.log('⚡ Connected to PostgreSQL instance successfully!');
+  } catch (e) {
+    console.error('❌ Failed to connect to PostgreSQL:', e.message || e);
+    await pool.end();
+    process.exit(1);
+  }
 
   try {
     // 4. Initialize PostgreSQL DDL Schema
-    const schemaPath = path.join(__dirname, '../server/schemas/postgres-schema.sql');
-    if (fs.existsSync(schemaPath)) {
+    const possibleSchemaPaths = [
+      path.join(__dirname, '../server/schemas/postgres-schema.sql'),
+      path.join(__dirname, 'server/schemas/postgres-schema.sql'),
+      '/app/server/schemas/postgres-schema.sql'
+    ];
+    const schemaPath = possibleSchemaPaths.find(p => fs.existsSync(p));
+
+    if (schemaPath) {
+      console.log(`📋 Found schema DDL at: ${schemaPath}`);
       const ddl = fs.readFileSync(schemaPath, 'utf-8');
       await pgClient.query(ddl);
       console.log('📋 PostgreSQL DDL schema initialized.');
+    } else {
+      console.warn('⚠️ Could not find postgres-schema.sql file, proceeding with existing table structure...');
     }
 
     await pgClient.query('BEGIN');
@@ -97,7 +121,12 @@ async function migrate() {
       const colList = columns.map(c => `"${c}"`).join(', ');
 
       for (const row of rows) {
-        const values = columns.map(col => row[col]);
+        const values = columns.map(col => {
+          const val = row[col];
+          if (val === undefined) return null;
+          return val;
+        });
+
         const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
         
         // Build ON CONFLICT DO UPDATE clause
@@ -127,7 +156,7 @@ async function migrate() {
 
   } catch (err) {
     await pgClient.query('ROLLBACK');
-    console.error('❌ Migration failed:', err);
+    console.error('❌ Migration failed:', err.message || err);
     throw err;
   } finally {
     pgClient.release();
@@ -136,6 +165,6 @@ async function migrate() {
 }
 
 migrate().catch(err => {
-  console.error('Migration execution error:', err);
+  console.error('Migration execution uncaught error:', err);
   process.exit(1);
 });
