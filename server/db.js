@@ -148,9 +148,17 @@ class PostgresWrapper {
     try {
       const pgModule = await import('pg');
       const Pool = pgModule.default?.Pool || pgModule.Pool;
-      this.pool = new Pool({
-        connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/dgdash'
-      });
+      const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+      const pgConfig = connectionString
+        ? { connectionString }
+        : {
+            user: process.env.POSTGRES_USER || 'postgres',
+            password: process.env.POSTGRES_PASSWORD || 'postgres123',
+            host: process.env.POSTGRES_HOST || 'localhost',
+            port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+            database: process.env.POSTGRES_DB || 'dgdash'
+          };
+      this.pool = new Pool(pgConfig);
       this.rawDb = this.pool;
     } catch (e) {
       console.warn('PostgreSQL client init failed, falling back to SQLite driver:', e?.message || e);
