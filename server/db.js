@@ -160,6 +160,12 @@ class PostgresWrapper {
           };
       this.pool = new Pool(pgConfig);
       this.rawDb = this.pool;
+
+      const schemaPath = path.join(__dirname, 'schemas/postgres-schema.sql');
+      if (fs.existsSync(schemaPath)) {
+        const ddl = fs.readFileSync(schemaPath, 'utf-8');
+        await this.pool.query(ddl);
+      }
     } catch (e) {
       console.warn('PostgreSQL client init failed, falling back to SQLite driver:', e?.message || e);
       this.driverName = 'sqlite';
@@ -218,7 +224,8 @@ const db = driverChoice === 'postgres' ? new PostgresWrapper() : new SqliteWrapp
 export async function initDatabase() {
   await db.init();
 
-  db.exec(`
+  if (db.driverName === 'sqlite') {
+    db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -376,6 +383,7 @@ export async function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_token ON auth_sessions(token);
     CREATE INDEX IF NOT EXISTS idx_auth_sessions_user_id ON auth_sessions(user_id);
   `);
+  }
 
   // Run versioned migrations (replaces legacy try/catch ALTER block)
   runMigrations(db);
