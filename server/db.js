@@ -43,7 +43,7 @@ class SqliteWrapper {
   }
 
   save() {
-    if (!this.rawDb || !this.currentPath) return;
+    if (!this.rawDb || !this.currentPath || this.currentPath === ':memory:') return;
     if (this._txDepth > 0) return; // CRITICAL: export() would terminate open transaction
     try {
       const targetDir = path.dirname(this.currentPath);
