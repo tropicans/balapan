@@ -65,7 +65,15 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 
 ### Active
 
-Ready to define requirements for the next milestone cycle via `/gsd-new-milestone`.
+## Current Milestone: v4.0 Postgres DB Driver, Redis Adapter, Rate Limiting & Decoupled Standalone System
+
+**Goal:** Mengimplementasikan infrastruktur PostgreSQL DB driver, Redis Socket.IO adapter untuk scaling horizontal, proteksi API Rate Limiting, serta independensi total dari Google Sheets.
+
+**Target features:**
+- PostgreSQL DB Driver (abstraksi database driver switchable Postgres & SQLite WASM fallback)
+- Redis Socket.IO Adapter untuk horizontal scaling & pub/sub real-time
+- API Rate Limiting middleware (Redis/Memory backed) untuk proteksi endpoint API
+- Decoupled Standalone System (pengelolaan peserta murni DB/CSV lokal, tanpa ketergantungan Google Sheets)
 
 ## Current State: v3.4 Shipped (2026-09-20)
 
