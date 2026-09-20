@@ -3,8 +3,11 @@
 CREATE TABLE IF NOT EXISTS events (
   id VARCHAR(64) PRIMARY KEY,
   nama VARCHAR(255) NOT NULL,
+  tanggal VARCHAR(100),
+  catatan TEXT,
   deskripsi TEXT,
-  status VARCHAR(50) DEFAULT 'draft',
+  jumlah_lap INTEGER DEFAULT 3,
+  status VARCHAR(50) DEFAULT 'active',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -61,6 +64,10 @@ CREATE TABLE IF NOT EXISTS bracket_matches (
   user_id_3 VARCHAR(64) REFERENCES users(id),
   winner_id VARCHAR(64) REFERENCES users(id),
   parent_match_id VARCHAR(64) REFERENCES bracket_matches(id),
+  ticket_id_1 VARCHAR(64),
+  ticket_id_2 VARCHAR(64),
+  ticket_id_3 VARCHAR(64),
+  is_auto_advanced INTEGER DEFAULT 0,
   status VARCHAR(50) DEFAULT 'pending',
   is_final INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

@@ -127,7 +127,21 @@ async function migrate() {
         continue;
       }
 
-      const columns = Object.keys(rows[0]);
+      // Fetch existing columns in target PostgreSQL table
+      const pgColsRes = await pgClient.query(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = $1`,
+        [tableName]
+      );
+      const validPgCols = new Set(pgColsRes.rows.map(r => r.column_name.toLowerCase()));
+
+      const sqliteCols = Object.keys(rows[0]);
+      const columns = sqliteCols.filter(c => validPgCols.has(c.toLowerCase()));
+
+      if (columns.length === 0) {
+        console.warn(`  ⚠️ No matching columns found between SQLite and Postgres for [${tableName}]`);
+        continue;
+      }
+
       const colList = columns.map(c => `"${c}"`).join(', ');
 
       for (const row of rows) {
