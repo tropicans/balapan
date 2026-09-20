@@ -101,6 +101,7 @@ async function migrate() {
       console.warn('⚠️ Could not find postgres-schema.sql file, proceeding with existing table structure...');
     }
 
+    await pgClient.query("SET session_replication_role = 'replica';");
     await pgClient.query('BEGIN');
 
     // 5. Order of tables to migrate (respecting foreign key relationships)
@@ -176,10 +177,12 @@ async function migrate() {
     }
 
     await pgClient.query('COMMIT');
+    await pgClient.query("SET session_replication_role = 'origin';");
     console.log('🎉 MIGRATION COMPLETED SUCCESSFULLY! All SQLite data moved to PostgreSQL.');
 
   } catch (err) {
-    await pgClient.query('ROLLBACK');
+    try { await pgClient.query('ROLLBACK'); } catch (_) {}
+    try { await pgClient.query("SET session_replication_role = 'origin';"); } catch (_) {}
     console.error('❌ Migration failed:', err.message || err);
     throw err;
   } finally {
