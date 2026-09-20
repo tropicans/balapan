@@ -141,10 +141,13 @@ class PostgresWrapper {
     this.pool = null;
     this.rawDb = null;
     this._txDepth = 0;
-    this.fallbackSqlite = null;
+    this.internalSqlite = new SqliteWrapper();
   }
 
   async init(customPath = null) {
+    await this.internalSqlite.init(customPath || ':memory:');
+    this.rawDb = this.internalSqlite.rawDb;
+
     try {
       const pgModule = await import('pg');
       const Pool = pgModule.default?.Pool || pgModule.Pool;
@@ -169,61 +172,124 @@ class PostgresWrapper {
         };
       }
       this.pool = new Pool(pgConfig);
-      this.rawDb = this.pool;
 
       const schemaPath = path.join(__dirname, 'schemas/postgres-schema.sql');
       if (fs.existsSync(schemaPath)) {
         const ddl = fs.readFileSync(schemaPath, 'utf-8');
         await this.pool.query(ddl);
       }
+
+      await this.syncFromPostgres();
     } catch (e) {
-      console.warn('PostgreSQL client init failed, falling back to SQLite driver:', e?.message || e);
-      this.driverName = 'sqlite';
-      this.fallbackSqlite = new SqliteWrapper();
-      await this.fallbackSqlite.init(customPath);
-      this.rawDb = this.fallbackSqlite.rawDb;
+      console.warn('PostgreSQL client init failed, operating in SQLite mode:', e?.message || e);
     }
   }
 
+  async syncFromPostgres() {
+    if (!this.pool || !this.internalSqlite) return;
+    const tables = [
+      'users', 'events', 'coupons', 'races', 'race_registrations',
+      'bracket_matches', 'coupon_packages', 'marshal_winner_logs',
+      'next_round_tickets', 'tournament_settings', 'app_users',
+      'auth_sessions', 'bto_records', 'winner_registrations', 'side_event_brackets'
+    ];
+
+    for (const table of tables) {
+      try {
+        const res = await this.pool.query(`SELECT * FROM ${table}`);
+        if (res.rows && res.rows.length > 0) {
+          try { this.internalSqlite.exec(`DELETE FROM ${table};`); } catch (_) {}
+          
+          const columns = Object.keys(res.rows[0]);
+          const placeholders = columns.map(() => '?').join(', ');
+          const insertSql = `INSERT OR REPLACE INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`;
+          
+          for (const row of res.rows) {
+            const vals = columns.map(c => {
+              let v = row[c];
+              if (v instanceof Date) v = v.toISOString();
+              return v;
+            });
+            try {
+              this.internalSqlite.prepare(insertSql).run(...vals);
+            } catch (e) {
+              // Ignore single row insert issue if columns differ
+            }
+          }
+        }
+      } catch (e) {
+        // Table might not exist yet or empty
+      }
+    }
+  }
+
+  _syncToPostgres(sql, params = []) {
+    if (!this.pool) return;
+    const trimmed = sql.trim().toUpperCase();
+    if (trimmed.startsWith('SELECT') || trimmed.startsWith('PRAGMA') || trimmed.startsWith('WITH')) {
+      return;
+    }
+
+    let pgSql = sql;
+    
+    if (/INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO/i.test(pgSql)) {
+      if (/tournament_settings/i.test(pgSql)) {
+        pgSql = pgSql.replace(/INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO/i, 'INSERT INTO');
+        pgSql += ' ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at';
+      } else if (/events/i.test(pgSql)) {
+        pgSql = pgSql.replace(/INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO/i, 'INSERT INTO');
+        pgSql += ' ON CONFLICT (id) DO UPDATE SET nama = EXCLUDED.nama, status = EXCLUDED.status';
+      } else if (/users/i.test(pgSql)) {
+        pgSql = pgSql.replace(/INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO/i, 'INSERT INTO');
+        pgSql += ' ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, role = EXCLUDED.role';
+      } else if (/bracket_matches/i.test(pgSql)) {
+        pgSql = pgSql.replace(/INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO/i, 'INSERT INTO');
+        pgSql += ' ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, winner_id = EXCLUDED.winner_id';
+      } else {
+        pgSql = pgSql.replace(/INSERT\s+OR\s+REPLACE\s+INTO|REPLACE\s+INTO/i, 'INSERT INTO');
+        pgSql += ' ON CONFLICT DO NOTHING';
+      }
+    }
+
+    let paramIdx = 1;
+    pgSql = pgSql.replace(/\?/g, () => `$${paramIdx++}`);
+
+    this.pool.query(pgSql, params).catch(() => {});
+  }
+
   exec(sql) {
-    if (this.fallbackSqlite) return this.fallbackSqlite.exec(sql);
-    if (this.pool) return this.pool.query(sql);
+    const res = this.internalSqlite.exec(sql);
+    this._syncToPostgres(sql);
+    return res;
+  }
+
+  pragma(p) {
+    return this.internalSqlite.pragma(p);
   }
 
   prepare(sql) {
-    if (this.fallbackSqlite) return this.fallbackSqlite.prepare(sql);
     const self = this;
-    let paramIndex = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+    const stmt = this.internalSqlite.prepare(sql);
     return {
       all(...params) {
-        return self.pool.query(pgSql, params).then(res => res.rows);
+        return stmt.all(...params);
       },
       get(...params) {
-        return self.pool.query(pgSql, params).then(res => res.rows[0] || null);
+        return stmt.get(...params);
       },
       run(...params) {
-        return self.pool.query(pgSql, params).then(res => ({ changes: res.rowCount }));
+        const res = stmt.run(...params);
+        self._syncToPostgres(sql, params);
+        return res;
       }
     };
   }
 
   transaction(fn) {
-    if (this.fallbackSqlite) return this.fallbackSqlite.transaction(fn);
     const self = this;
-    return async (...args) => {
-      const client = await self.pool.connect();
-      try {
-        await client.query('BEGIN');
-        const res = await fn(...args);
-        await client.query('COMMIT');
-        return res;
-      } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-      } finally {
-        client.release();
-      }
+    const tx = this.internalSqlite.transaction(fn);
+    return (...args) => {
+      return tx(...args);
     };
   }
 }
@@ -234,8 +300,7 @@ const db = driverChoice === 'postgres' ? new PostgresWrapper() : new SqliteWrapp
 export async function initDatabase() {
   await db.init();
 
-  if (db.driverName === 'sqlite') {
-    db.exec(`
+  db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -399,7 +464,6 @@ export async function initDatabase() {
 
   // Auto-reconcile legacy participant rename and duplicates
   reconcileLegacyParticipants(db);
-  }
 
   // Demo/dummy data is opt-in only. Production and normal local runs start clean.
   // Enable with SEED_DEMO_DATA=true (the test suite sets this).
