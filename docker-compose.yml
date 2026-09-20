@@ -11,10 +11,20 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - DB_DRIVER=${DB_DRIVER:-sqlite}
       - DB_PATH=/app/data/tamiya.sqlite
+      - POSTGRES_URL=${POSTGRES_URL:-postgresql://postgres:postgres123@postgres:5432/dgdash}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - ALLOW_DESTRUCTIVE_MIGRATION=false
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-tropicans@gmail.com}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+      redis:
+        condition: service_healthy
+        required: false
     volumes:
       - dgdash_data:/app/data
     develop:
@@ -39,7 +49,45 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: dgdash-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres123}
+      - POSTGRES_DB=${POSTGRES_DB:-dgdash}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: dgdash-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   dgdash_data:
     driver: local
     name: dgdash_racing_data
+  postgres_data:
+    driver: local
+    name: dgdash_postgres_data
+  redis_data:
+    driver: local
+    name: dgdash_redis_data
