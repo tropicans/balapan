@@ -152,11 +152,13 @@ class PostgresWrapper {
       const pgModule = await import('pg');
       const Pool = pgModule.default?.Pool || pgModule.Pool;
       let pgConfig;
+      const isDocker = fs.existsSync('/.dockerenv');
+      const defaultHost = process.env.POSTGRES_HOST || (isDocker ? 'postgres' : 'localhost');
       if (process.env.POSTGRES_USER && process.env.POSTGRES_PASSWORD) {
         pgConfig = {
           user: process.env.POSTGRES_USER,
           password: process.env.POSTGRES_PASSWORD,
-          host: process.env.POSTGRES_HOST || 'localhost',
+          host: defaultHost,
           port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
           database: process.env.POSTGRES_DB || 'dgdash'
         };
@@ -166,7 +168,7 @@ class PostgresWrapper {
         pgConfig = {
           user: 'postgres',
           password: 'postgres123',
-          host: 'localhost',
+          host: defaultHost,
           port: 5432,
           database: 'dgdash'
         };
