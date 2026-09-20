@@ -1,28 +1,28 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": "v4.0",
+  "milestone": "v4.0 — Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Phases 29-31)",
   "phases": [
     {
-      "number": "26",
-      "name": "Critical Bug Fixes & Public Bracket Security Gate",
-      "status": "complete"
+      "number": "29",
+      "name": "Standalone Decoupled System & Local CSV Import/Export",
+      "status": "pending"
     },
     {
-      "number": "27",
-      "name": "End-to-End RBAC Backend Protection & Frontend Role Guarding",
-      "status": "complete"
+      "number": "30",
+      "name": "PostgreSQL DB Driver & Dual-Database Abstraction Layer",
+      "status": "pending"
     },
     {
-      "number": "28",
-      "name": "Multi-Round Lock Hardening, Event Isolation & Offline Capabilities",
-      "status": "complete"
+      "number": "31",
+      "name": "Redis Socket Adapter & API Rate Limiting Infrastructure",
+      "status": "pending"
     }
   ],
   "next": {
-    "command": "/gsd-discuss-phase",
-    "label": "Discuss the first phase",
-    "reason": "Project initialized — plan your first phase"
+    "command": "/gsd-progress",
+    "label": "Show progress",
+    "reason": "Unsure of state — showing progress"
   },
-  "updated_at": "2026-09-20T05:27:11.564Z"
+  "updated_at": "2026-09-20T08:40:33.121Z"
 }

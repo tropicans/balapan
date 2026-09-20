@@ -2,11 +2,11 @@
 
 ## What This Is
 
-Sistem manajemen turnamen balap Tamiya Mini 4WD berbasis 100% web, ringan, dan bebas scanning: registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor kupon fisik, manajemen bracket eliminasi 3-jalur, kontrol pusat Race Director, serta siaran HUD real-time ke layar TV sirkuit. Seluruh alur Babak 1, verifikasi fisik, dan kupon berjalan manual di lapangan tanpa pemindaian.
+Sistem manajemen turnamen balap Tamiya Mini 4WD berbasis 100% web, mandiri (*standalone*), berkinerja tinggi, dan bebas scanning: registrasi peserta bernomor, pendaftaran pemenang Babak 2 berdasarkan nomor kupon fisik, manajemen bracket eliminasi 3-jalur, kontrol pusat Race Director, siaran HUD real-time ke layar TV sirkuit, dukungan dual database (PostgreSQL & SQLite WASM), serta scaling horizontal Redis. Seluruh alur Babak 1, verifikasi fisik, dan kupon berjalan manual di lapangan tanpa pemindaian.
 
 ## Core Value
 
-Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi.
+Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, mandiri tanpa ketergantungan cloud/sheets eksternal, dan nol biaya hardware tambahan melalui alur digital real-time terintegrasi.
 
 ## Business Context
 
@@ -62,45 +62,39 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **AUTH-01..06, APPR-01..06**: Google OAuth 2.0 Sign-In, `tropicans@gmail.com` Super Admin auto-provisioning & immunity, Pending Approval Gate, Dasbor Manajemen Pengguna (`/admin`), RBAC middleware, dan public route bypass (`/tv`, `/bracket`) — Shipped in v3.2
 - ✓ **SYNC-01..10**: Google Sheets Live Fetch, Idempotent Racer Deduplication, Sequential Numbering, Protected Endpoints, dan Tombol Sync di Kasir & Admin — Shipped in v3.3
 - ✓ **FIX-01..04, SEC-01..04, ENH-01..04**: Client ID OAuth security, BTO memory leak fix, TV event title fix, public bracket read-only protection, backend RBAC middleware & auto-bearer injection, event setting isolation, dynamic round locking, emergency offline login, and multi-entry sync — Shipped in v3.4
+- ✓ **STANDALONE-01..04**: Decoupled standalone system with local CSV/JSON import/export, preserved Google OAuth & offline fallback — Shipped in v4.0
+- ✓ **PG-01..04**: Switchable dual database driver (`DB_DRIVER=postgres|sqlite`), PostgreSQL DDL schema, ACID transactions & health check — Shipped in v4.0
+- ✓ **REDIS-01..03, RATELIM-01..03**: Redis Socket.IO adapter horizontal pub/sub scaling, auto-fallback, and API rate limiting middleware — Shipped in v4.0
 
 ### Active
 
-## Current Milestone: v4.0 Postgres DB Driver, Redis Adapter, Rate Limiting & Decoupled Standalone System
+*Planning next milestone.*
 
-**Goal:** Mengimplementasikan infrastruktur PostgreSQL DB driver, Redis Socket.IO adapter untuk scaling horizontal, proteksi API Rate Limiting, serta independensi total dari Google Sheets.
+## Current State: v4.0 Shipped (2026-09-20)
 
-**Target features:**
-- PostgreSQL DB Driver (abstraksi database driver switchable Postgres & SQLite WASM fallback)
-- Redis Socket.IO Adapter untuk horizontal scaling & pub/sub real-time
-- API Rate Limiting middleware (Redis/Memory backed) untuk proteksi endpoint API
-- Decoupled Standalone System (pengelolaan peserta murni DB/CSV lokal, tanpa ketergantungan Google Sheets)
-
-## Current State: v3.4 Shipped (2026-09-20)
-
-Sistem telah dilengkapi dengan pengamanan menyeluruh, RBAC backend & frontend, mode darurat offline, dan sinkronisasi lanjutan:
-1. **Keamanan & Perbaikan Kritis**: Sanitasi kredensial OAuth, perbaikan memory leak Socket.IO pada BTO Manager, perbaikan tampilan nama event sirkuit TV, dan proteksi read-only pada rute publik `/bracket`.
-2. **RBAC Menyeluruh & Auto-Bearer**: Seluruh endpoint mutasi backend dilindungi middleware otorisasi berbasis peran, dan client menyertakan token Bearer secara otomatis pada seluruh request mutasi.
-3. **Penguncian Ronde Dinamis & Isolasi Event**: Penguncian putaran digeneralisasi untuk seluruh ronde eliminasi (Babak 2, 3, dst.), dan setting operasional turnamen otomatis direset saat berganti event aktif.
-4. **Resiliensi Operasional Lapangan**: Mode Login Darurat Offline untuk mengantisipasi gangguan koneksi internet di venue turnamen, serta dukungan multi-entry pada sinkronisasi Google Sheets.
-5. **Multi-Round Bracket & Babak 3**: Pembatasan Babak 3 maksimal 21 heat (63 slot), auto-advance multi-entry, repacking slot berurutan setelah deklarasi NO RACE, dan proteksi hasil in-app dari sinkronisasi Google Sheets.
+Sistem telah bertransformasi menjadi arsitektur enterprise & standalone berkinerja tinggi:
+1. **Decoupled Standalone Data Management**: Pelepasan total ketergantungan dari Google Sheets dengan modul Impor/Ekspor CSV & JSON lokal di Kasir (`/cashier`) dan Admin (`/admin`), sembari mempertahankan Google OAuth 2.0 & Emergency Offline Login.
+2. **Dual Database Driver Abstraction**: Penggunaan abstraksi database switchable (`DB_DRIVER=postgres|sqlite`) yang mendukung PostgreSQL connection pool (`pg`) dan SQLite WASM fallback otomatis, dilengkapi skema DDL PostgreSQL lengkap (`server/schemas/postgres-schema.sql`), ACID transaction guard, dan database health check endpoint (`/api/health`).
+3. **Redis Socket.IO Scaling & Rate Limiting**: Integrasi `@socket.io/redis-adapter` dan `ioredis` untuk pub/sub WebSocket real-time lintas multi-container node, auto-fallback ke in-memory socket adapter untuk venue offline, serta proteksi API Rate Limiting middleware (`authRateLimiter`, `apiRateLimiter`) dengan response HTTP 429 & header `RateLimit-*` standar.
 
 ### Out of Scope
 
 - Integrasi sensor perangkat keras RFID/NFC fisik — *Desain sistem sengaja 100% paperless & zero-hardware untuk menekan biaya sirkuit*.
 - Buzzer pelepas start otomatis di akhir countdown — *Pelepasan mobil diserahkan manual kepada Marshal di lapangan agar aman dan adil*.
 - Smartphone scan mandiri oleh peserta saat antre race — *Dialihkan 100% ke operasional panitia (Marshal Start Box) agar alur antrean fisik tidak macet*.
+- Direct Google Sheets Real-time Two-Way Sync — *Digantikan 100% oleh Local DB & CSV/JSON Import/Export mandiri untuk independensi total*.
 
 ## Context
 
-- Beroperasi di jaringan tertutup sirkuit (LAN / Wi-Fi Hotspot) atau cloud.
-- WebSocket latensi rendah (<50ms) untuk sinkronisasi HP peserta, dasbor RD, tablet juri, dasbor marshal, dan TV sirkuit.
+- Beroperasi di jaringan tertutup sirkuit (LAN / Wi-Fi Hotspot) atau multi-container cloud cluster.
+- WebSocket latensi rendah (<50ms) dengan dukungan Redis Pub/Sub scaling.
 - Estetika Cyberpunk / Neo-Racing: Midnight Obsidian (`#0a0b10`), Neon Pink (`#ff0055`), Electric Cyan (`#00f0ff`), Acid Green (`#39ff14`).
 
 ## Constraints
 
-- **Tech Stack**: Node.js ESM + Express, Socket.IO, sql.js (WASM SQLite) di backend; React 18, Vite, TailwindCSS di frontend.
+- **Tech Stack**: Node.js ESM + Express, Socket.IO + Redis Adapter, PostgreSQL / sql.js (WASM SQLite) di backend; React 18, Vite, TailwindCSS di frontend.
 - **UI/UX**: Keterbacaan kontras tinggi, tombol aksi mobile thumb-friendly (>30% tinggi layar).
-- **Integritas Transaksi**: Saldo kupon tidak boleh terpotong ganda atau hilang saat re-race/batal valid.
+- **Integritas Transaksi**: Saldo kupon tidak boleh terpotong ganda atau hilang saat re-race/batal valid, dilindungi transaksi ACID database.
 
 ## Key Decisions
 
@@ -121,12 +115,13 @@ Sistem telah dilengkapi dengan pengamanan menyeluruh, RBAC backend & frontend, m
 | Atomic Coupon Debit & 60s Undo Window | Menjamin integritas pemotongan kupon fisik dan toleransi salah klik panitia | ✓ Shipped v2.0 |
 | Automatic Sequential Ticket Seeding | Menempatkan pemenang tiket Babak 2 secara adil dan otomatis tanpa manipulasi | ✓ Shipped v2.0 |
 | Realtime Neon TV Ticker & Progress HUD | Memacu atmosfer kompetitif dan transparansi sisa tiket turnamen | ✓ Shipped v2.0 |
-| Physical-Only Race Flow (Tanpa Scan Kupon) | Panitia di lapangan lebih cepat mencatat manual; scanning kupon & QR jalur dinilai memperlambat antrean dan tak diperlukan | — Pending v3.0 |
-| Panel Registrasi Berbasis Nomor | Kupon Babak 2 fisik diberi nomor agar panitia cukup memasukkan angka, nama pembalap otomatis terdaftar | — Pending v3.0 |
-| BTO Input Manual | Waktu terbaik dicatat panitia secara manual, menghilangkan ketergantungan stopwatch digital terintegrasi | — Pending v3.0 |
+| Decoupled Standalone Rest Data Transfer | Melepaskan 100% ketergantungan dari Google Sheets dengan REST import/export CSV/JSON lokal | ✓ Shipped v4.0 |
+| Dual-Database Driver Abstraction | Mendukung DB_DRIVER=postgres\|sqlite dengan WASM SQLite fallback saat Postgres tidak dikonfigurasi | ✓ Shipped v4.0 |
+| Redis Socket Adapter & API Rate Limiting | Horizontal WebSocket scaling & sliding-window IP rate limiting untuk proteksi DDoS | ✓ Shipped v4.0 |
 
 ## Shipped Milestones
 
+- **v4.0**: Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Standalone Decoupled) (Shipped 2026-09-20) — [Archive](milestones/v4.0-ROADMAP.md)
 - **v3.4**: System Hardening, Security & Operational Reliability (Shipped 2026-09-20) — [Archive](milestones/v3.4-ROADMAP.md)
 - **v3.3**: Google Sheets Racer Sync & Admin Integration (Shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
 - **v3.2**: Google OAuth Authentication & Admin Approval System (Shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
@@ -141,18 +136,5 @@ Sistem telah dilengkapi dengan pengamanan menyeluruh, RBAC backend & frontend, m
 
 This document evolves at phase transitions and milestone boundaries.
 
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
-
 ---
-*Last updated: 2026-09-20 after v3.4 milestone*
+*Last updated: 2026-09-20 after v4.0 milestone*

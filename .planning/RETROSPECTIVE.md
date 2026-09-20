@@ -51,6 +51,25 @@
 1. Fitur venue offline darurat sangat esensial untuk turnamen fisik karena sirkuit sering kali berada di basement mall atau area dengan penetrasi sinyal seluler/Wi-Fi yang tidak stabil.
 2. Endpoint publik seperti `/bracket` dan `/tv` harus selalu dirancang aman secara read-only sejak awal, bukan hanya disembunyikan navigasinya.
 
+## Milestone: v4.0 — Postgres DB Driver + Redis Socket Adapter & API Rate Limiting
+
+**Shipped:** 2026-09-20  
+**Phases:** 3 | **Plans:** 3 | **Requirements:** 14/14  
+
+### What Was Built
+- Pelepasan total ketergantungan dari Google Sheets dengan modul Impor/Ekspor CSV & JSON lokal di Kasir (`/cashier`) dan Admin (`/admin`), sembari mempertahankan Google OAuth 2.0 & Emergency Offline Login.
+- Abstraksi database driver switchable (`DB_DRIVER=postgres|sqlite`) yang mendukung PostgreSQL connection pool (`pg`) dan SQLite WASM fallback otomatis, dilengkapi skema DDL PostgreSQL lengkap (`server/schemas/postgres-schema.sql`), ACID transaction guard, dan database health check endpoint (`/api/health`).
+- Integrasi `@socket.io/redis-adapter` dan `ioredis` untuk pub/sub WebSocket real-time lintas multi-container node, auto-fallback ke in-memory socket adapter untuk venue offline, serta proteksi API Rate Limiting middleware (`authRateLimiter`, `apiRateLimiter`) dengan response HTTP 429 & header `RateLimit-*` standar.
+
+### What Worked
+- Pola wrapper `SqliteWrapper` / `PostgresWrapper` mengizinkan transisi transparan antar driver tanpa harus mengubah query di service layer.
+- Pemisahan fallback otomatis (Redis & Postgres) menjamin aplikasi tetap dapat berjalan 100% offline tanpa perlu server external dependency saat digunakan di sirkuit venue lokal.
+- Suite pengujian otomatis yang komprehensif (34 backend test suites) mengonfirmasi 100% fungsionalitas backend dan driver tanpa kendala.
+
+### Key Lessons
+1. Merancang abstraksi dual-driver dan socket fallback sejak awal memastikan portabilitas tinggi (bisa berjalan di laptop lokal venue tanpa internet maupun di cluster cloud terdistribusi).
+2. Proteksi rate limiting sangat krusial untuk mencegah overload WebSocket dan endpoint auth sensitif di lingkungan public venue.
+
 ---
 
 ## Cross-Milestone Trends
@@ -68,6 +87,7 @@
 | v3.2 | 4 | 4 | 12 | Google OAuth & Admin Approval System (GIS Auth, RBAC Middleware, User Mgmt) |
 | v3.3 | 2 | 2 | 10 | Google Sheets Racer Sync & Admin Integration (Idempotent Sync, Admin & Cashier UI) |
 | v3.4 | 3 | 3 | 12 | System Hardening, Security & Operational Reliability (RBAC Hardening, Event Reset, Offline Mode) |
+| v4.0 | 3 | 3 | 14 | Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Standalone Decoupled) |
 
 ### Cumulative Quality
 
@@ -82,10 +102,10 @@
 | v3.2 | 20 | 100% | Clean |
 | v3.3 | 21 | 100% | Clean |
 | v3.4 | 31 | 100% | Clean |
+| v4.0 | 34 | 100% | Clean |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Zero-external-hardware (memaksimalkan web & audio sintetis) menghemat jutaan rupiah biaya turnamen Mini 4WD.
-2. Sinkronisasi WebSocket real-time terbukti andal mengelola puluhan heat dan multi-screen tanpa latency lag.
-3. Arsitektur modular services mempermudah ekspansi fitur (seperti background cron scheduler dan Google Sheet sync) tanpa regresi pada core race engine.
-
+2. Sinkronisasi WebSocket real-time terbukti andal mengelola puluhan heat dan multi-screen tanpa latency lag, kini diperkuat scaling horizontal Redis.
+3. Arsitektur modular services & DB abstraction layer mempermudah ekspansi infrastruktur enterprise tanpa merusak logika bisnis race engine.

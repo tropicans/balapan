@@ -1,5 +1,17 @@
 # Project Milestones
 
+## v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Shipped: 2026-09-20)
+
+**Phases completed:** 3 phases, 3 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Completed Phase 29: Decoupled tournament system from mandatory Google Sheets sync with standalone CSV & JSON import/export APIs and venue fallback capabilities.
+- Completed Phase 30: Switchable dual-database driver abstraction (`DB_DRIVER=postgres|sqlite`), PostgreSQL DDL schema, ACID transaction protection, and database health reporting.
+- Completed Phase 31: Integrated `@socket.io/redis-adapter` for horizontal WebSocket scaling with auto-fallback and implemented API Rate Limiting middleware.
+
+---
+
 ## v3.4 System Hardening, Security & Operational Reliability (Shipped: 2026-09-20)
 
 **Phases completed:** 3 phases, 3 plans, 0 tasks

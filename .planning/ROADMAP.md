@@ -15,19 +15,14 @@
 
 ## Phases
 
-### v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Phases 29-31)
+<details>
+<summary>✅ v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Phases 29-31) — SHIPPED 2026-09-20</summary>
 
-- [x] **Phase 29: Standalone Decoupled System & Local CSV Import/Export** (1/1 plan) — completed 2026-09-20
-  - Goal: Melepaskan dependensi dari Google Sheets dengan modul manajemen data peserta mandiri & import/export CSV/JSON lokal di Kasir (`/cashier`) dan Admin (`/admin`), sembari mempertahankan Google OAuth & Offline Login.
-  - Requirements: STANDALONE-01, STANDALONE-02, STANDALONE-03, STANDALONE-04
+- [x] Phase 29: Standalone Decoupled System & Local CSV Import/Export (1/1 plan) — completed 2026-09-20
+- [x] Phase 30: PostgreSQL DB Driver & Dual-Database Abstraction Layer (1/1 plan) — completed 2026-09-20
+- [x] Phase 31: Redis Socket Adapter & API Rate Limiting Infrastructure (1/1 plan) — completed 2026-09-20
 
-- [x] **Phase 30: PostgreSQL DB Driver & Dual-Database Abstraction Layer** (1/1 plan) — completed 2026-09-20
-  - Goal: Mengembangkan abstraksi database driver switchable (`DB_DRIVER=postgres|sqlite`), skema PostgreSQL lengkap dengan migrasi & seeder, transaksi ACID, dan SQLite WASM fallback.
-  - Requirements: PG-01, PG-02, PG-03, PG-04
-
-- [x] **Phase 31: Redis Socket Adapter & API Rate Limiting Infrastructure** (1/1 plan) — completed 2026-09-20
-  - Goal: Mengintegrasikan `@socket.io/redis-adapter` untuk scaling horizontal real-time WebSocket pub/sub serta mengimplementasikan API Rate Limiting middleware (Redis & in-memory backed).
-  - Requirements: REDIS-01, REDIS-02, REDIS-03, RATELIM-01, RATELIM-02, RATELIM-03
+</details>
 
 <details>
 <summary>✅ v3.4 System Hardening, Security & Operational Reliability (Phases 26-28) — SHIPPED 2026-09-20</summary>
@@ -43,13 +38,7 @@
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 29 → 30 → 31
-
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|----------------|--------|-----------|
-| 29. Standalone Decoupled System & Local CSV Import/Export | v4.0 | 1/1 | Completed | 2026-09-20 |
-| 30. PostgreSQL DB Driver & Dual-Database Abstraction Layer | v4.0 | 1/1 | Completed | 2026-09-20 |
-| 31. Redis Socket Adapter & API Rate Limiting Infrastructure | v4.0 | 1/1 | Completed | 2026-09-20 |
+Milestone v4.0 Shipped. Future phases will be planned with `/gsd-new-milestone`.
 
 ---
-*Roadmap updated: 2026-09-20 for Milestone v4.0 initialization*
+*Roadmap updated: 2026-09-20 for Milestone v4.0 completion*
