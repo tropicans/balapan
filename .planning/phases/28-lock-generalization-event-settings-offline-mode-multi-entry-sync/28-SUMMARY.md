@@ -1,4 +1,12 @@
-﻿# Phase 28 Summary: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities
+---
+requirements-completed:
+  - ENH-01
+  - ENH-02
+  - ENH-03
+  - ENH-04
+---
+
+# Phase 28 Summary: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities
 
 ## Work Delivered
 
