@@ -2,7 +2,8 @@
 
 ## Milestones
 
-- ✅ **v3.4 System Hardening, Security & Operational Reliability** — Phases 26-28 (shipped 2026-09-18) — [Archive](milestones/v3.4-ROADMAP.md)
+- 🔄 **v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Standalone Decoupled)** — Phases 29-31 (In Progress)
+- ✅ **v3.4 System Hardening, Security & Operational Reliability** — Phases 26-28 (shipped 2026-09-20) — [Archive](milestones/v3.4-ROADMAP.md)
 - ✅ **v3.3 Google Sheets Racer Sync & Admin Integration** — Phases 24-25 (shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
 - ✅ **v3.2 Google OAuth Authentication & Admin Approval System** — Phases 20-23 (shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
 - ✅ **v3.1 Race Director Elimination Command Center** — Phases 18-19 (shipped 2026-09-18) — [Archive](milestones/v3.1-ROADMAP.md)
@@ -14,67 +15,26 @@
 
 ## Phases
 
-<details>
-<summary>✅ v3.4 System Hardening, Security & Operational Reliability (Phases 26-28) — SHIPPED 2026-09-18</summary>
+### v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Phases 29-31)
 
-- [x] **Phase 26: Critical Bug Fixes & Public Bracket Security Gate** (1/1 plan) — completed 2026-09-18
-  - Goal: Resolve immediate security leak, memory leak, TV display bug, public bracket mutation vulnerability, and test coverage gap.
-  - Requirements: FIX-01, FIX-02, FIX-03, FIX-04, SEC-01
-- [x] **Phase 27: End-to-End RBAC Backend Protection & Frontend Role Guarding** (1/1 plan) — completed 2026-09-18
-  - Goal: Secure all backend mutation endpoints with role middleware, integrate token forwarding across all frontend fetch requests, and enforce role-based UI access control.
-  - Requirements: SEC-02, SEC-03, SEC-04
-- [x] **Phase 28: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities** (1/1 plan) — completed 2026-09-18
-  - Goal: Prevent cross-event settings leakage, generalize dynamic round locks to all elimination rounds, enable local offline admin login, and enhance Google Sheets multi-entry support.
-  - Requirements: ENH-01, ENH-02, ENH-03, ENH-04
+- [ ] **Phase 29: Standalone Decoupled System & Local CSV Import/Export**
+  - Goal: Melepaskan dependensi dari Google Sheets dengan modul manajemen data peserta mandiri & import/export CSV/JSON lokal di Kasir (`/cashier`) dan Admin (`/admin`), sembari mempertahankan Google OAuth & Offline Login.
+  - Requirements: STANDALONE-01, STANDALONE-02, STANDALONE-03, STANDALONE-04
 
-</details>
+- [ ] **Phase 30: PostgreSQL DB Driver & Dual-Database Abstraction Layer**
+  - Goal: Mengembangkan abstraksi database driver switchable (`DB_DRIVER=postgres|sqlite`), skema PostgreSQL lengkap dengan migrasi & seeder, transaksi ACID, dan SQLite WASM fallback.
+  - Requirements: PG-01, PG-02, PG-03, PG-04
 
-<details>
-<summary>✅ v3.3 Google Sheets Racer Sync & Admin Integration (Phases 24-25) — SHIPPED 2026-09-18</summary>
-
-- [x] Phase 24: Google Sheets Live Fetch, Idempotent Sync Service & API Endpoints (1/1 plan) — completed 2026-09-18
-- [x] Phase 25: Cashier & Admin Dashboard UI Integration (1/1 plan) — completed 2026-09-18
-
-</details>
+- [ ] **Phase 31: Redis Socket Adapter & API Rate Limiting Infrastructure**
+  - Goal: Mengintegrasikan `@socket.io/redis-adapter` untuk scaling horizontal real-time WebSocket pub/sub serta mengimplementasikan API Rate Limiting middleware (Redis & in-memory backed).
+  - Requirements: REDIS-01, REDIS-02, REDIS-03, RATELIM-01, RATELIM-02, RATELIM-03
 
 <details>
-<summary>✅ v3.2 Google OAuth Authentication & Admin Approval System (Phases 20-23) — SHIPPED 2026-09-18</summary>
+<summary>✅ v3.4 System Hardening, Security & Operational Reliability (Phases 26-28) — SHIPPED 2026-09-20</summary>
 
-- [x] Phase 20: Database Schema, Google Auth Verification & Session Backend (1/1 plan) — completed 2026-09-18
-- [x] Phase 21: Admin Approval Engine & RBAC Middleware (1/1 plan) — completed 2026-09-18
-- [x] Phase 22: Frontend Google Login, Pending Gate & Public Route Bypass (1/1 plan) — completed 2026-09-18
-- [x] Phase 23: Admin Approval Dashboard UI & Role-Based UI Controls (1/1 plan) — completed 2026-09-18
-
-</details>
-
-<details>
-<summary>✅ v3.1 Race Director Elimination Command Center (Phases 18-19) — SHIPPED 2026-09-18</summary>
-
-- [x] Phase 18: Backend Services, Round 2 Finalization & State Contract (1/1 plan) — completed 2026-09-18
-- [x] Phase 19: Race Director Elimination Command Center UI (1/1 plan) — completed 2026-09-18
-
-</details>
-
-<details>
-<summary>✅ v3.0 Alur Balap Fisik Tanpa Scan Kupon (Phases 11-17) — SHIPPED 2026-09-17</summary>
-
-- [x] Phase 11: Event & Schema Migration Foundation (3/3 plans) — completed 2026-09-17
-- [x] Phase 12: Participant Registration & Auto-Numbering (2/2 plans) — completed 2026-09-17
-- [x] Phase 13: Manual BTO Backend & Leaderboard (1/1 plan) — completed 2026-09-17
-- [x] Phase 14: Winner Registration & Bracket Execution (1/1 plan) — completed 2026-09-17
-- [x] Phase 15: State Contract Switch & Backend Decoupling/Removal (1/1 plan) — completed 2026-09-17
-- [x] Phase 16: Frontend Rewrite & Monitoring Screens (1/1 plan) — completed 2026-09-17
-- [x] Phase 17: Destructive Cleanup, Tests & Seed (1/1 plan) — completed 2026-09-17
-
-</details>
-
-<details>
-<summary>✅ v2.0 Physical Coupon & Marshal-Driven Tournament System (Phases 07-10) — SHIPPED 2026-09-04</summary>
-
-- [x] Phase 07: Pre-Printed Coupon Package Registration & Cashier Flow (2/2 plans) — completed 2026-09-04
-- [x] Phase 08: Marshal Start Box Rapid Line-Up & Coupon Check-off Dashboard (2/2 plans) — completed 2026-09-04
-- [x] Phase 09: Finish-to-Next-Round Ticket Engine & Multi-Round Bracket Integration (2/2 plans) — completed 2026-09-04
-- [x] Phase 10: Realtime Circuit TV Ticket HUD Showcase & Polish (2/2 plans) — completed 2026-09-04
+- [x] Phase 26: Critical Bug Fixes & Public Bracket Security Gate (1/1 plan) — completed 2026-09-20
+- [x] Phase 27: End-to-End RBAC Backend Protection & Frontend Role Guarding (1/1 plan) — completed 2026-09-20
+- [x] Phase 28: Multi-Round Lock Hardening, Event Isolation & Offline Capabilities (1/1 plan) — completed 2026-09-20
 
 </details>
 
@@ -83,13 +43,13 @@
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 26 → 27 → 28
+Phases execute in numeric order: 29 → 30 → 31
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 26. Critical Bug Fixes & Public Bracket Security Gate | v3.4 | 1/1 | Complete | 2026-09-18 |
-| 27. End-to-End RBAC Backend Protection & Frontend Role Guarding | v3.4 | 1/1 | Complete | 2026-09-18 |
-| 28. Multi-Round Lock Hardening, Event Isolation & Offline Capabilities | v3.4 | 1/1 | Complete | 2026-09-18 |
+| 29. Standalone Decoupled System & Local CSV Import/Export | v4.0 | 0/1 | Not started | — |
+| 30. PostgreSQL DB Driver & Dual-Database Abstraction Layer | v4.0 | 0/1 | Not started | — |
+| 31. Redis Socket Adapter & API Rate Limiting Infrastructure | v4.0 | 0/1 | Not started | — |
 
 ---
-*Roadmap updated: 2026-09-18 for Milestone v3.4 completion*
+*Roadmap updated: 2026-09-20 for Milestone v4.0 initialization*

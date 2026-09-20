@@ -36,4 +36,20 @@ Implementasi infrastruktur PostgreSQL DB driver, Redis Socket.IO adapter untuk s
 - Hardware Sensor Interfacing — *Tetap menggunakan alur semi-manual/Marshal di lapangan*.
 
 ## Traceability
-*Mapped to Roadmap phases in ROADMAP.md*
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| **STANDALONE-01** | Phase 29 | Pending |
+| **STANDALONE-02** | Phase 29 | Pending |
+| **STANDALONE-03** | Phase 29 | Pending |
+| **STANDALONE-04** | Phase 29 | Pending |
+| **PG-01** | Phase 30 | Pending |
+| **PG-02** | Phase 30 | Pending |
+| **PG-03** | Phase 30 | Pending |
+| **PG-04** | Phase 30 | Pending |
+| **REDIS-01** | Phase 31 | Pending |
+| **REDIS-02** | Phase 31 | Pending |
+| **REDIS-03** | Phase 31 | Pending |
+| **RATELIM-01** | Phase 31 | Pending |
+| **RATELIM-02** | Phase 31 | Pending |
+| **RATELIM-03** | Phase 31 | Pending |
