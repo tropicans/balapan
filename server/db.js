@@ -148,16 +148,26 @@ class PostgresWrapper {
     try {
       const pgModule = await import('pg');
       const Pool = pgModule.default?.Pool || pgModule.Pool;
-      const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-      const pgConfig = connectionString
-        ? { connectionString }
-        : {
-            user: process.env.POSTGRES_USER || 'postgres',
-            password: process.env.POSTGRES_PASSWORD || 'postgres123',
-            host: process.env.POSTGRES_HOST || 'localhost',
-            port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
-            database: process.env.POSTGRES_DB || 'dgdash'
-          };
+      let pgConfig;
+      if (process.env.POSTGRES_USER && process.env.POSTGRES_PASSWORD) {
+        pgConfig = {
+          user: process.env.POSTGRES_USER,
+          password: process.env.POSTGRES_PASSWORD,
+          host: process.env.POSTGRES_HOST || 'localhost',
+          port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
+          database: process.env.POSTGRES_DB || 'dgdash'
+        };
+      } else if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
+        pgConfig = { connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL };
+      } else {
+        pgConfig = {
+          user: 'postgres',
+          password: 'postgres123',
+          host: 'localhost',
+          port: 5432,
+          database: 'dgdash'
+        };
+      }
       this.pool = new Pool(pgConfig);
       this.rawDb = this.pool;
 
