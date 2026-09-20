@@ -61,37 +61,20 @@ Operasional turnamen balap Mini 4WD Tamiya yang cepat, adil, bebas antrean, dan 
 - ✓ **MON-01..05**: TV sirkuit HUD & race director monitoring dari state v3.0 — Shipped in v3.0
 - ✓ **AUTH-01..06, APPR-01..06**: Google OAuth 2.0 Sign-In, `tropicans@gmail.com` Super Admin auto-provisioning & immunity, Pending Approval Gate, Dasbor Manajemen Pengguna (`/admin`), RBAC middleware, dan public route bypass (`/tv`, `/bracket`) — Shipped in v3.2
 - ✓ **SYNC-01..10**: Google Sheets Live Fetch, Idempotent Racer Deduplication, Sequential Numbering, Protected Endpoints, dan Tombol Sync di Kasir & Admin — Shipped in v3.3
+- ✓ **FIX-01..04, SEC-01..04, ENH-01..04**: Client ID OAuth security, BTO memory leak fix, TV event title fix, public bracket read-only protection, backend RBAC middleware & auto-bearer injection, event setting isolation, dynamic round locking, emergency offline login, and multi-entry sync — Shipped in v3.4
 
 ### Active
 
-## Current Milestone: v3.4 System Hardening, Security & Operational Reliability
+Ready to define requirements for the next milestone cycle via `/gsd-new-milestone`.
 
-**Goal:** Memperkuat keamanan sistem, memperbaiki celah keamanan rute publik & kredensial OAuth, mengeliminasi memory leak pada modul BTO, memperbaiki sinkronisasi nama event pada TV sirkuit, menerapkan proteksi RBAC menyeluruh pada endpoint mutasi backend, serta meningkatkan fitur operasional turnamen (mode offline darurat & penanganan multi-entry sheet sync).
+## Current State: v3.4 Shipped (2026-09-20)
 
-**Target features:**
-- **FIX-01**: Perbaikan `.env` & penghapusan Google Client Secret dari frontend; sinkronisasi Client ID valid untuk GIS SDK.
-- **FIX-02**: Perbaikan memory leak dan request berulang pada `BtoManager.jsx` (unmount socket cleanup & langsung konsumsi state btoLeaderboard).
-- **FIX-03**: Perbaikan display nama event di TV sirkuit (`activeEvent.nama` bukan `name`) pada `RealtimeTV.jsx`.
-- **FIX-04**: Penambahan test suite Google Sheet Sync (`google-sheet-sync.test.js`) ke script `"test"` di `package.json`.
-- **SEC-01**: Pengamanan rute publik `/bracket` (mode read-only untuk spektator publik: sembunyikan tombol `MENANG` dan tab pendaftaran pemenang).
-- **SEC-02**: Proteksi RBAC pada backend API mutasi (`/api/participants`, `/api/events`, `/api/bto`, `/api/winners`, `/api/bracket`) dengan role-based check.
-- **SEC-03**: Otomatisasi penyertaan token Bearer pada frontend API helper (`fetchWithAuth`) untuk seluruh request mutasi.
-- **SEC-04**: Role-based view filtering pada navigasi frontend (hanya tampilkan menu yang sesuai dengan peran user).
-- **ENH-01**: Isolasi `tournament_settings` per event atau reset setting saat pergantian event aktif untuk mencegah kebocoran status kunci antar event.
-- **ENH-02**: Penguncian putaran dinamis (`RaceManager.advanceBracketWinner` & `resetBracketMatch` memvalidasi status kunci untuk semua babak >= 2, bukan hanya Babak 2).
-- **ENH-03**: Mode Login Darurat Offline di `LoginScreen.jsx` untuk venue turnamen tanpa akses internet.
-- **ENH-04**: Opsi multi-entry pembalap pada Google Sheet Sync modal.
-
-## Current State: v3.3 Shipped (2026-09-18)
-
-Sistem telah dilengkapi dengan integrasi langsung ke Google Spreadsheet untuk sinkronisasi pembalap secara otomatis:
-1. **Google Sheets Live Sync**: Normalisasi URL spreadsheet instan dan download CSV live langsung dari Google Sheets.
-2. **Idempotence & Anti-Duplikasi**: Deteksi pembalap yang sudah terdaftar di event aktif agar tidak ada nomor ganda atau duplikasi data saat sync berulang kali.
-3. **Penomoran Berurutan Atomik**: Pembalap baru otomatis mendapatkan nomor urut berikutnya (`MAX(participant_number) + 1`).
-4. **Tombol Kasir & Admin**: Dasbor Kasir (`/cashier`) dan Panel Admin (`/admin`) dilengkapi tombol "SYNC GOOGLE SHEET" dan modal interaktif dengan ringkasan status real-time.
-5. **Real-time Live Sync**: Notifikasi Socket.IO `participants_imported` yang memperbarui daftar peserta dan TV sirkuit seketika.
-3. **Dasbor Manajemen Pengguna (`/admin`)**: Super Admin dapat melihat antrean pending, menyetujui akun dengan memilih role operasional (`cashier`, `race_director`, `scrutineer`, `admin`, `viewer`), mengubah role, atau menangguhkan akun (suspend) secara real-time.
-4. **Public Route Exemption**: Layar TV Sirkuit (`/tv`) dan Bagan Turnamen (`/bracket`) tetap bebas diakses tanpa login untuk kemudahan display sirkuit.
+Sistem telah dilengkapi dengan pengamanan menyeluruh, RBAC backend & frontend, mode darurat offline, dan sinkronisasi lanjutan:
+1. **Keamanan & Perbaikan Kritis**: Sanitasi kredensial OAuth, perbaikan memory leak Socket.IO pada BTO Manager, perbaikan tampilan nama event sirkuit TV, dan proteksi read-only pada rute publik `/bracket`.
+2. **RBAC Menyeluruh & Auto-Bearer**: Seluruh endpoint mutasi backend dilindungi middleware otorisasi berbasis peran, dan client menyertakan token Bearer secara otomatis pada seluruh request mutasi.
+3. **Penguncian Ronde Dinamis & Isolasi Event**: Penguncian putaran digeneralisasi untuk seluruh ronde eliminasi (Babak 2, 3, dst.), dan setting operasional turnamen otomatis direset saat berganti event aktif.
+4. **Resiliensi Operasional Lapangan**: Mode Login Darurat Offline untuk mengantisipasi gangguan koneksi internet di venue turnamen, serta dukungan multi-entry pada sinkronisasi Google Sheets.
+5. **Multi-Round Bracket & Babak 3**: Pembatasan Babak 3 maksimal 21 heat (63 slot), auto-advance multi-entry, repacking slot berurutan setelah deklarasi NO RACE, dan proteksi hasil in-app dari sinkronisasi Google Sheets.
 
 ### Out of Scope
 
@@ -136,6 +119,7 @@ Sistem telah dilengkapi dengan integrasi langsung ke Google Spreadsheet untuk si
 
 ## Shipped Milestones
 
+- **v3.4**: System Hardening, Security & Operational Reliability (Shipped 2026-09-20) — [Archive](milestones/v3.4-ROADMAP.md)
 - **v3.3**: Google Sheets Racer Sync & Admin Integration (Shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
 - **v3.2**: Google OAuth Authentication & Admin Approval System (Shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
 - **v3.1**: Race Director Elimination Command Center (Shipped 2026-09-18) — [Archive](milestones/v3.1-ROADMAP.md)
@@ -163,4 +147,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-18 for Milestone v3.4*
+*Last updated: 2026-09-20 after v3.4 milestone*

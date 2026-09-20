@@ -1,6 +1,18 @@
 # Project Milestones
 
+## v3.4 System Hardening, Security & Operational Reliability (Shipped: 2026-09-20)
+
+**Phases completed:** 3 phases, 3 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Completed
+- Completed
+
+---
+
 ## v3.4: System Hardening, Security & Operational Reliability
+
 - **Shipped:** 2026-09-18
 - **Phases:** 3 (Phases 26-28)
 - **Plans:** 3
@@ -21,6 +33,7 @@
 ---
 
 ## v3.3: Google Sheets Racer Sync & Admin Integration
+
 - **Shipped:** 2026-09-18
 - **Phases:** 2 (Phases 24-25)
 - **Plans:** 2
@@ -40,6 +53,7 @@
 ---
 
 ## v3.2: Google OAuth Authentication & Admin Approval System
+
 - **Shipped:** 2026-09-18
 - **Phases:** 4 (Phases 20-23)
 - **Plans:** 4
@@ -60,6 +74,7 @@
 ---
 
 ## v3.1: Race Director Elimination Command Center
+
 - **Shipped:** 2026-09-18
 - **Phases:** 2 (Phases 18-19)
 - **Plans:** 2
@@ -77,6 +92,7 @@
 ---
 
 ## v3.0: Alur Balap Fisik Tanpa Scan Kupon
+
 - **Shipped:** 2026-09-17
 - **Phases:** 7 (Phases 11-17)
 - **Plans:** 10
@@ -93,6 +109,7 @@
 ---
 
 ## v2.0: Physical Coupon & Marshal-Driven Tournament System
+
 - **Shipped:** 2026-09-04
 - **Phases:** 4 (Phases 07-10)
 - **Plans:** 8
