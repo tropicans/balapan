@@ -13,6 +13,11 @@ services:
       - PORT=3000
       - DB_DRIVER=${DB_DRIVER:-sqlite}
       - DB_PATH=/app/data/tamiya.sqlite
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres123}
+      - POSTGRES_DB=${POSTGRES_DB:-dgdash}
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - POSTGRES_URL=${POSTGRES_URL:-postgresql://postgres:postgres123@postgres:5432/dgdash}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - ALLOW_DESTRUCTIVE_MIGRATION=false
