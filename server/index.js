@@ -38,6 +38,8 @@ import {
   setAppUserStatus
 } from './services/authService.js';
 import { requireAuth, requireApproved, requireRole } from './middleware/authMiddleware.js';
+import { authRateLimiter, apiRateLimiter } from './middleware/rateLimiter.js';
+import { setupRedisSocketAdapter } from './redisAdapter.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +54,9 @@ const io = new SocketIOServer(server, {
   }
 });
 
+// Setup Redis Socket Adapter (Auto-fallback to in-memory)
+await setupRedisSocketAdapter(io);
+
 // Production Security & Proxy Settings
 app.disable('x-powered-by');
 if (process.env.NODE_ENV === 'production') {
@@ -61,6 +66,12 @@ if (process.env.NODE_ENV === 'production') {
 app.use(cors());
 app.use(express.json());
 app.use(express.text({ type: ['text/plain', 'text/csv'] }));
+
+// Apply Rate Limiting Middleware
+app.use('/api/auth/', authRateLimiter);
+app.use('/api/participants/', apiRateLimiter);
+app.use('/api/winners/', apiRateLimiter);
+app.use('/api/bracket/', apiRateLimiter);
 
 // Initialize database
 await initDatabase();

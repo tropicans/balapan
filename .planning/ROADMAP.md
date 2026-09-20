@@ -2,7 +2,7 @@
 
 ## Milestones
 
-- 🔄 **v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Standalone Decoupled)** — Phases 29-31 (In Progress)
+- ✅ **v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Standalone Decoupled)** — Phases 29-31 (shipped 2026-09-20) — [Archive](milestones/v4.0-ROADMAP.md)
 - ✅ **v3.4 System Hardening, Security & Operational Reliability** — Phases 26-28 (shipped 2026-09-20) — [Archive](milestones/v3.4-ROADMAP.md)
 - ✅ **v3.3 Google Sheets Racer Sync & Admin Integration** — Phases 24-25 (shipped 2026-09-18) — [Archive](milestones/v3.3-ROADMAP.md)
 - ✅ **v3.2 Google OAuth Authentication & Admin Approval System** — Phases 20-23 (shipped 2026-09-18) — [Archive](milestones/v3.2-ROADMAP.md)
@@ -17,15 +17,15 @@
 
 ### v4.0 Postgres DB Driver + Redis Socket Adapter & API Rate Limiting (Phases 29-31)
 
-- [ ] **Phase 29: Standalone Decoupled System & Local CSV Import/Export**
+- [x] **Phase 29: Standalone Decoupled System & Local CSV Import/Export** (1/1 plan) — completed 2026-09-20
   - Goal: Melepaskan dependensi dari Google Sheets dengan modul manajemen data peserta mandiri & import/export CSV/JSON lokal di Kasir (`/cashier`) dan Admin (`/admin`), sembari mempertahankan Google OAuth & Offline Login.
   - Requirements: STANDALONE-01, STANDALONE-02, STANDALONE-03, STANDALONE-04
 
-- [ ] **Phase 30: PostgreSQL DB Driver & Dual-Database Abstraction Layer**
+- [x] **Phase 30: PostgreSQL DB Driver & Dual-Database Abstraction Layer** (1/1 plan) — completed 2026-09-20
   - Goal: Mengembangkan abstraksi database driver switchable (`DB_DRIVER=postgres|sqlite`), skema PostgreSQL lengkap dengan migrasi & seeder, transaksi ACID, dan SQLite WASM fallback.
   - Requirements: PG-01, PG-02, PG-03, PG-04
 
-- [ ] **Phase 31: Redis Socket Adapter & API Rate Limiting Infrastructure**
+- [x] **Phase 31: Redis Socket Adapter & API Rate Limiting Infrastructure** (1/1 plan) — completed 2026-09-20
   - Goal: Mengintegrasikan `@socket.io/redis-adapter` untuk scaling horizontal real-time WebSocket pub/sub serta mengimplementasikan API Rate Limiting middleware (Redis & in-memory backed).
   - Requirements: REDIS-01, REDIS-02, REDIS-03, RATELIM-01, RATELIM-02, RATELIM-03
 
@@ -47,9 +47,9 @@ Phases execute in numeric order: 29 → 30 → 31
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 29. Standalone Decoupled System & Local CSV Import/Export | v4.0 | 0/1 | Not started | — |
-| 30. PostgreSQL DB Driver & Dual-Database Abstraction Layer | v4.0 | 0/1 | Not started | — |
-| 31. Redis Socket Adapter & API Rate Limiting Infrastructure | v4.0 | 0/1 | Not started | — |
+| 29. Standalone Decoupled System & Local CSV Import/Export | v4.0 | 1/1 | Completed | 2026-09-20 |
+| 30. PostgreSQL DB Driver & Dual-Database Abstraction Layer | v4.0 | 1/1 | Completed | 2026-09-20 |
+| 31. Redis Socket Adapter & API Rate Limiting Infrastructure | v4.0 | 1/1 | Completed | 2026-09-20 |
 
 ---
 *Roadmap updated: 2026-09-20 for Milestone v4.0 initialization*
