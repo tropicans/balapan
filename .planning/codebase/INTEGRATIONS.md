@@ -1,19 +1,36 @@
 ---
-last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
+last_mapped_commit: 21efbc37dda385cbc40d8a4c3005807cc187705f
 ---
 
 # External Integrations
 
-**Analysis Date:** 2026-09-03
+**Analysis Date:** 2026-09-20
 
 ## APIs & External Services
 
+**Google Sheets Synchronization Engine:**
+- Service: Google Sheets CSV Export API & Public Web Endpoints
+  - Implementation: `server/services/googleSheetService.js`, `server/services/sheetSyncScheduler.js`
+  - URL Normalization: Automatically converts standard edit URLs (`https://docs.google.com/spreadsheets/d/{ID}/edit?gid={GID}`) into direct export endpoints (`https://docs.google.com/spreadsheets/d/{ID}/export?format=csv&gid={GID}`).
+  - Synchronized Worksheets:
+    - Participant Roster Sheet: Imports racers, participant numbers (`#001`), team names, phone numbers, and coupon balances.
+    - Elimination Bracket Sheet: Synchronizes Round 2 (Elimination) and Babak 3 (Quarter/Semi/Final) 3-lane match heats with in-app result protections.
+  - Background Cron Scheduler: Automated background interval runner executing sync jobs every 60 seconds (configurable, minimum 10s).
+  - Telemetry & Status API: `/api/participants/sync-sheet/status` provides live sync state, timestamps, error reporting, and last result summaries.
+
+**Google Identity Services (OAuth 2.0):**
+- Service: Google Sign-In & ID Token Verification
+  - Implementation: `server/services/authService.js`, `server/middleware/authMiddleware.js`
+  - Client SDK: Google Identity Services web client loaded in `client/index.html` / `client/src/components/auth/GoogleLoginButton.jsx`.
+  - Backend Verifier: `google-auth-library` (`OAuth2Client.verifyIdToken`) validating token audience against `GOOGLE_CLIENT_ID`.
+  - Offline Test Mode: Supports `mock-google-token:*` exclusively in test/dev environments.
+
 **Browser Audio Synthesis & Indonesian Voice Engine:**
-- Web Audio API (`AudioContext` / `OscillatorNode` / `GainNode`):
-  - File: `client/src/utils/audio.js`
+- Web Audio API (`AudioContext`, `OscillatorNode`, `GainNode`):
+  - File: `client/src/utils/audio.js`, `client/src/utils/audioChime.js`
   - Purpose: Generates synthetic audio tones (cyberpunk hydraulic lock clicks, ready chimes, race start buzzers, and multi-frequency BTO siren sound).
-  - Auth: None (Client-side native browser API).
-- Web Speech API (`SpeechSynthesis` / `SpeechSynthesisUtterance`):
+  - Auth: Native browser client-side API.
+- Web Speech API (`SpeechSynthesis`, `SpeechSynthesisUtterance`):
   - File: `client/src/utils/audio.js`
   - Purpose: Pronounces Indonesian numbers during the Round 2 elimination countdown (*"Sepuluh... Sembilan... Delapan... Satu!"*).
   - Language: `id-ID` locale.
@@ -26,10 +43,10 @@ last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
   - Auth: Native browser permission model.
 
 **Mobile Optical Scanner & QR Code Rendering:**
-- `html5-qrcode` Library:
-  - File: `client/src/screens/ParticipantDashboard.jsx`
+- Camera QR Scanner:
+  - File: `client/src/utils/qrScannerHelper.js`, `client/src/screens/ParticipantDashboard.jsx`
   - Purpose: Accesses mobile device camera feed (`navigator.mediaDevices.getUserMedia`) to scan track start-line stencils (`LINE A`, `LINE B`, `LINE C`).
-- `qrcode.react` SVG Generator:
+- QR Code Generator:
   - File: `client/src/screens/DeskQRCodes.jsx`
   - Purpose: Renders high-resolution printable SVG QR codes for physical race track pit tables.
 
@@ -37,45 +54,49 @@ last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
 
 **Databases:**
 - SQLite (WASM via `sql.js`):
-  - File: `server/db.js`
+  - File: `server/db.js`, `server/migrations.js`
   - Connection / Path: File-backed buffer initialized from `process.env.DB_PATH` or `data/tamiya.sqlite`.
   - Persistence Mechanism: Custom `SqliteWrapper` class exporting WASM memory buffer to disk synchronously on write operations (`this.rawDb.export()` -> `fs.writeFileSync`).
-  - Tables:
-    - `users`: User profiles, racer tags, roles (`admin`, `scrutineer`, `participant`), virtual user flags.
-    - `coupons`: Balance tracking for qualifying heats with relational cascade.
+  - Automated Backup Engine: `server/backup.js` creates timestamped backups in `data/backups/tamiya-YYYYMMDD-HHmmss.sqlite`.
+  - Key Tables:
+    - `users`: User profiles, racer tags, roles (`super_admin`, `admin`, `director`, `cashier`, `marshal`, `scrutineer`, `participant`), approval statuses (`pending`, `approved`, `suspended`).
+    - `events`: Multi-tournament event scope, active event selection, and archive tracking.
+    - `coupons`: Balance tracking for qualifying heats with relational transactions.
     - `races`: Heat records, status (`draft`, `pre-start`, `locked`, `completed`), winner references.
     - `race_registrations`: Lane assignments (`A`, `B`, `C`), status (`pending`, `ready`), finish times, scrutineer verdict (`pending`, `pass`, `disqualified`).
-    - `bracket_matches`: Single-elimination tournament tree with binary match hierarchy (`parent_match_id`).
+    - `bracket_matches`: Multi-round tournament tree (Round 1, Round 2, Babak 3 with 21 heats cap, Semifinal, Grand Final), supporting 3 lanes (`user_id_1`, `user_id_2`, `user_id_3`), finish times, winners, and `is_no_race` markers.
+    - `bto_records`: Fast-access Best Time Overall entries linked to events and racers.
+    - `tournament_settings`: Key-value storage for round locks, sheet URLs, auto-sync intervals, and tournament toggles.
 
 **File Storage:**
 - Local filesystem disk storage in `data/` directory.
 - Containerized persistence using Docker named volume `tamiya_data` mounted to `/app/data`.
 
 **Caching:**
-- In-memory SQLite state managed by `sql.js` WASM heap.
-- Browser `localStorage` caching active user session: `tamiya_user` (`client/src/context/RaceContext.jsx`).
+- In-memory SQLite state managed in WASM heap by `sql.js`.
+- Browser `localStorage` caching active user session and bearer auth token (`tamiya_auth_token`, `tamiya_user`).
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- Dual-Track Hybrid Identity System:
-  - Implementation: `server/index.js` (`/api/users/login`, `/api/users/guest`).
-  - Registered / Google Users: Accepts `name`, `email`, `googleSubId`, and `teamName`. Maps to real participant record.
-  - Virtual Accounts (Assisted Track): Cashier creates virtual guest accounts (`guest101@tamiya.local`) with custom racer tag and initial coupon balance for kids or guests without mobile phones.
-  - Token / Session Management: Client persists active user object in `localStorage`. In-memory context allows quick user switching for testing and multi-role operations.
-
-**Role-Based Access:**
-- Roles supported in schema: `admin` (Race Director), `scrutineer` (Juri Meja Fisik), `participant` (Pembalap).
-- Navigation switching facilitated via top Cyberpunk navigation bar (`client/src/components/ui/Navbar.jsx`).
+- Multi-Role RBAC with Google Identity & Assisted Virtual Accounts:
+  - Implementation: `server/services/authService.js`, `server/middleware/authMiddleware.js`.
+  - Super Admin: Automatically assigned to `SUPER_ADMIN_EMAIL` (default `tropicans@gmail.com`).
+  - Role Hierarchy: `super_admin` > `admin` > `director` / `cashier` / `marshal` / `scrutineer` > `participant`.
+  - User Approval Workflow: New Google logins enter `pending` state; must be approved by Super Admin before accessing mutating actions.
+  - Virtual Guest Accounts: Cashier creates instant guest racers (`guest101@tamiya.local`) with custom racer tag and initial coupon balance.
+  - Bearer Token Sessions: Tokens issued upon login with 7-day TTL, validated on all protected API routes.
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- Server-side error logging via `console.error` and structured JSON error responses (`{ success: false, error: err.message }`).
-- Client-side visual alert banners (`feedback` states) and haptic warning pulses.
+- Server-side structured error logging via `console.error` and standardized JSON responses (`{ success: false, code: '...', error: err.message }`).
+- Client-side cyber error banners and vibration alerts.
 
-**Logs:**
-- Standard output (`stdout` / `stderr`) captured by Docker daemon (`docker compose logs -f`).
+**Telemetry & Health:**
+- REST Health Check: `GET /api/health` reports system uptime, environment, timestamp, and database status.
+- Sync Telemetry: `GET /api/participants/sync-sheet/status` provides live scheduler metrics.
+- Logs captured via standard streams (`stdout` / `stderr`) and Docker Compose daemon (`docker compose logs -f`).
 
 ## CI/CD & Deployment
 
@@ -88,21 +109,22 @@ last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
 
 **Build Pipeline:**
 - Multi-stage Docker build:
-  - Stage 1 (`client-builder`): Copies `client/`, executes `npm install` and `npm run build` producing production bundle in `client/dist`.
-  - Stage 2 (`runner`): Copies root `package.json`, installs production dependencies with `--omit=dev`, copies `server/`, pulls built static assets from Stage 1 into `client/dist`, and starts `server/index.js`.
+  - Stage 1 (`client-builder`): Installs client dependencies and compiles Vite production bundle into `client/dist`.
+  - Stage 2 (`runner`): Installs production server dependencies, mounts built static assets from Stage 1 into `client/dist`, and executes `server/index.js`.
 
 ## Environment Configuration
 
 **Development:**
-- Port: `3000`
+- Port: `3000` (proxy routed from Vite dev server on port `5173`).
 - Concurrently runs Node backend and Vite dev server.
-- Optional custom SQLite path via `DB_PATH`.
 
 **Production:**
 - `NODE_ENV=production`
 - `PORT=3000`
 - `DB_PATH=/app/data/tamiya.sqlite`
-- Express serves both REST APIs, WebSocket connections, and production static assets from `client/dist/`.
+- `GOOGLE_CLIENT_ID=<configured_id>`
+- `SUPER_ADMIN_EMAIL=tropicans@gmail.com`
+- Express serves REST APIs, WebSocket streams, and compiled SPA assets from `client/dist/`.
 
 ## Webhooks & Real-Time Event Engine
 
@@ -112,7 +134,7 @@ last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
 - `GET_STATE` - Requests immediate full tournament state snapshot.
 
 **Server to Client Broadcasts:**
-- `STATE_UPDATE` - Emitted whenever tournament state changes (registration, ready, lock, times, scrutineer result, top-up). Carries full state payload: active race, BTO leaderboard, upcoming queue, scrutineer queue, bracket matches.
+- `STATE_UPDATE` - Emitted whenever tournament state changes (registration, ready, lock, times, scrutineer result, top-up, bracket update). Carries full state payload: active race, BTO leaderboard, upcoming queue, scrutineer queue, bracket matches, sync status.
 - `RACE_LOCKED` - Emitted when RD locks the heat. Triggers hydraulic lock audio, haptic vibration on phones, and changes TV banner to `READY - LINTASAN SIAP!`.
 - `RACE_STARTED` - Emitted when physical race begins. Updates TV to `BALAPAN BERLANGSUNG`.
 - `RACE_FINISHED_PENDING_SCRUTINEER` - Emitted when finish times are submitted. Sends winner to Scrutineering desk and updates TV status to `VERIFIKASI MEJA SCRUTINEER`.
@@ -121,8 +143,9 @@ last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
 - `COUNTDOWN_TICK` - Emitted every second with number name, triggering Indonesian speech and haptic ticks.
 - `COUNTDOWN_COMPLETE` - Emitted at zero, triggering `GO! LEPAS MOBIL!` signal.
 - `COUNTDOWN_STOPPED` - Emitted when RD aborts countdown early with "SIAP / STOP", immediately playing start tone and flashing `RACE READY - LEPAS!`.
+- `BRACKET_AUTO_SWITCH` - Emitted when all heats of a round complete, notifying client dashboards to advance view to next round.
 
 ---
 
-*Integration audit: 2026-09-03*
+*Integration audit: 2026-09-20*
 *Update when adding/removing external services*

@@ -1,123 +1,114 @@
 ---
-last_mapped_commit: 4a0ecd0fb9bf40dcd255e5b0c93e66d817bc1289
+last_mapped_commit: 21efbc37dda385cbc40d8a4c3005807cc187705f
 ---
 
 # Testing Patterns
 
-**Analysis Date:** 2026-09-03
+**Analysis Date:** 2026-09-20
 
 ## Test Framework
 
 **Runner:**
-- Node.js native script runner (ES Modules) via `node server/tests/race-flow.test.js`.
-- Root npm script alias: `npm test`.
-- Zero external testing dependencies (no Jest or Vitest required).
+- Node.js native script runner and `node --test` test runner (ES Modules).
+- Root npm script alias: `npm test` runs all 31 automated test suites sequentially.
+- Zero heavyweight external test framework dependencies (no Jest or Mocha installation required).
 
 **Assertion Library:**
 - Node.js built-in `node:assert`:
   - `assert.ok(value, [message])`
   - `assert.strictEqual(actual, expected, [message])`
+  - `assert.deepStrictEqual(actual, expected, [message])`
+  - `assert.throws(fn, [error], [message])`
 
 **Run Commands:**
 ```bash
-# Run full tournament regression test suite
+# Run entire test suite (all 31 test suites)
 npm test
 
-# Direct node execution
-node server/tests/race-flow.test.js
+# Run a single standalone test file
+node server/tests/babak3-21heats-cap.test.js
+
+# Run tests using Node.js native test runner
+node --test server/tests/no-race-sequential-advance.test.js
+node --test server/tests/phase-28-enhancements.test.js
 ```
 
 ## Test File Organization
 
 **Location:**
-- Dedicated tests directory inside backend: `server/tests/`.
+- Dedicated tests directory: `server/tests/`.
 
-**Naming:**
-- Integration & Flow Tests: `*.test.js` (e.g., `server/tests/race-flow.test.js`).
-
-**Structure:**
-```
-balapan/
-├── server/
-│   ├── raceManager.js
-│   ├── db.js
-│   └── tests/
-│       └── race-flow.test.js    # Comprehensive tournament state machine test
-```
+**Test Files (31 Suites):**
+- `server/tests/race-flow.test.js`: Core tournament state machine & qualifying lifecycle.
+- `server/tests/babak3-21heats-cap.test.js`: Babak 3 21 heats max limit enforcement.
+- `server/tests/no-race-sequential-advance.test.js`: Slot repacking (Lane C filling) after NO RACE heats.
+- `server/tests/in-app-results-protection.test.js`: Preserving in-app winners during background sheet syncs.
+- `server/tests/multi-entry-auto-advance.test.js`: Multi-entry advancement across elimination rounds.
+- `server/tests/google-sheet-sync.test.js`: Participant roster sync and reconciliation.
+- `server/tests/google-sheet-bracket-sync.test.js`: Elimination bracket sync and scheduler intervals.
+- `server/tests/phase-27-mutation-rbac.test.js`: REST API role authorization guards.
+- `server/tests/admin-approval-rbac.test.js`: Super Admin approval workflow.
+- `server/tests/auth-service.test.js`: Google token verification and session issuance.
+- `server/tests/bto-service.test.js`: BTO lap time recording and leaderboard ranking.
+- `server/tests/winner-registration.test.js`: Winner registration desk and eligibility checking.
+- `server/tests/ticket-engine-flow.test.js`: Ticket package purchasing and coupon ledgering.
+- `server/tests/migration-foundation.test.js`: Schema migrations and table evolution.
+- `server/tests/bracket-reset-heat.test.js`: RESET HEAT state rollback.
+- `server/tests/bracket-no-race.test.js`: NO RACE match closure.
+- `server/tests/camera-scanner.test.js`: Optical scanner helper validation.
+- `server/tests/reproduce-participant-search.test.js`: Omni-search isolation and token matching.
+- `server/tests/reproduce-navbar-overflow.test.js`: Responsive navigation bar overflow protection.
 
 ## Test Structure & Patterns
 
 **Test Isolation & Database Sandboxing:**
-- Tests run against an isolated SQLite database file generated dynamically per run using timestamps:
+- Tests operate against a sandboxed SQLite database file created dynamically per test run using unique timestamps:
   ```javascript
-  const uniqueTestDb = path.join(__dirname, `../../data/test_${Date.now()}.sqlite`);
+  const uniqueTestDb = path.join(__dirname, `../../data/test_${Date.now()}_${Math.random().toString(36).substring(2)}.sqlite`);
   process.env.DB_PATH = uniqueTestDb;
   ```
-- After all assertions pass, the test teardown cleanly deletes the sandbox SQLite database:
+- Tests initialize the schema via `await initDatabase()` or fresh table creation.
+- At test teardown, the sandbox database is cleanly unlinked:
   ```javascript
   if (fs.existsSync(uniqueTestDb)) {
     try { fs.unlinkSync(uniqueTestDb); } catch(e) {}
   }
   ```
 
-**Step-by-Step Flow Execution Pattern:**
-The integration test executes a 9-stage sequential flow matching the physical racetrack operations:
-```javascript
-async function runTests() {
-  // [1/9] Database initialization & seeding
-  await initDatabase();
+**Mocking Patterns:**
 
-  // [2/9] Initial state query
-  const state = RaceManager.getFullState();
-  assert.strictEqual(state.activeRace.race_number, 1);
+**1. Fast Offline Google OAuth Token Mocking:**
+- The backend `verifyGoogleToken` supports deterministic mock tokens formatted as `mock-google-token:<email>:<name>:<subId>`:
+  ```javascript
+  const token = 'mock-google-token:superadmin@gmail.com:Super Admin:google-sub-superadmin';
+  const profile = await verifyGoogleToken(token);
+  ```
+- Strictly forbidden in `NODE_ENV=production`.
 
-  // [3/9] Participant QR lane registration
-  const regC = RaceManager.registerLane(chandra.id, 'C');
-  assert.strictEqual(regC.success, true);
+**2. Bearer Session Token Mocking:**
+- Auth middleware (`authMiddleware.js`) supports fast mock tokens for test execution:
+  - `mock-super-admin-token` injects super_admin session.
+  - `mock-token:<role>:<status>:<email>` injects arbitrary role and approval states.
 
-  // [4/9] Concurrency handling (Lane taken -> push to next race)
-  const regDoni = RaceManager.registerLane(doni.id, 'A');
-  assert.strictEqual(regDoni.pushedToNext, true);
-  assert.strictEqual(regDoni.raceNumber, 2);
+**3. Google Sheet CSV Mocking:**
+- Bracket and participant sync functions accept raw CSV strings directly, allowing comprehensive unit tests without requiring real Google Sheet network connectivity:
+  ```javascript
+  const sampleCsv = `NO,NAMA,TEAM,KUPON\n1,Om Sandi,Team Alpha,10\n2,Superzen,Team Beta,5`;
+  await syncParticipantsFromSheet(sampleCsv);
+  ```
 
-  // [5/9] Set ready on all lanes
-  assert.strictEqual(RaceManager.setReady(andi.id).success, true);
+## Coverage & Verification
 
-  // [6/9] Lock race & verify atomic coupon deduction
-  const before = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(andi.id).balance;
-  RaceManager.lockRace(state.activeRace.id);
-  const after = db.prepare('SELECT balance FROM coupons WHERE user_id = ?').get(andi.id).balance;
-  assert.strictEqual(after, before - 1);
-
-  // [7/9] Submit finish times & verify lowest time wins
-  const finishRes = RaceManager.submitFinishTimes(state.activeRace.id, { A: 11.230, B: 11.890, C: 12.450 });
-  assert.strictEqual(finishRes.winner.userId, andi.id);
-
-  // [8/9] Scrutineering inspection pass -> BTO update & Round 2 bracket auto-placement
-  const activeWinnerReg = db.prepare("SELECT id FROM race_registrations WHERE user_id = ?").get(andi.id);
-  const scrutRes = RaceManager.handleScrutineerAction(activeWinnerReg.id, 'pass');
-  assert.strictEqual(scrutRes.isNewBTO, true);
-  const bracket = db.prepare("SELECT * FROM bracket_matches WHERE user_id_1 = ? OR user_id_2 = ?").get(andi.id, andi.id);
-  assert.ok(bracket, 'Auto-placed into bracket');
-
-  // [9/9] Cashier coupon top-up & guest registration
-  const topUp = RaceManager.topUpCoupons(andi.id, 50);
-  assert.strictEqual(topUp.newBalance, after + 50);
-}
-```
-
-## Mocking
-
-- **Database Mocking:** None. Uses real SQLite in-memory/disk instance with zero external dependencies to ensure 100% fidelity with production database behavior.
-- **Hardware Mocking:** Web Audio API, Camera QR, and Navigator Haptic feedback are verified client-side; backend tests focus purely on the deterministic state engine.
-
-## Coverage Gaps & Recommended Expansions
-
-- **Client Component Unit Tests:** Currently, no frontend component test suite (such as Vitest + React Testing Library) is configured in `client/`.
-- **WebSocket Event Unit Tests:** Integration tests call `RaceManager` methods directly rather than connecting real Socket.IO client instances over TCP.
-- **Disqualification / Edge Flow Tests:** Testing what happens when Scrutineer disqualifies (`action = 'disqualified'`) and verifying winner nullification in `races` table.
+- 100% passing automated test suite with 31 individual test files.
+- Critical tournament guarantees verified:
+  - Atomic coupon deduction during race lock.
+  - Multi-round bracket single-elimination progression.
+  - Sequential slot packing preventing lane gaps.
+  - Hard cap at 21 heats for Babak 3.
+  - Protection against Google Sheet sync overwriting completed matches.
+  - RBAC protection on all state-mutating endpoints.
 
 ---
 
-*Testing analysis: 2026-09-03*
-*Update when adding test frameworks or testing strategies*
+*Testing analysis: 2026-09-20*
+*Update when test patterns change*
