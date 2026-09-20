@@ -1377,6 +1377,36 @@ app.get('/api/participants', (req, res) => {
   }
 });
 
+// 20b2. Export participants (CSV or JSON)
+app.get('/api/participants/export', (req, res) => {
+  try {
+    const { event_id, format = 'csv' } = req.query;
+    const result = getParticipants({ event_id, limit: 10000 });
+    const list = result.participants || [];
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="participants.json"');
+      return res.json(list);
+    }
+
+    const csvRows = ['participant_number,name,team_name,event_id,created_at'];
+    for (const p of list) {
+      const pNum = p.participant_number || '';
+      const name = `"${String(p.name || '').replace(/"/g, '""')}"`;
+      const team = `"${String(p.team_name || '').replace(/"/g, '""')}"`;
+      const evId = p.event_id || '';
+      const created = p.created_at || '';
+      csvRows.push(`${pNum},${name},${team},${evId},${created}`);
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="participants.csv"');
+    res.send(csvRows.join('\n'));
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 20c. Update participant typo (name / team only) (D-12)
 app.put('/api/participants/:id', requireRole('cashier', 'admin', 'super_admin'), (req, res) => {
   try {
@@ -1626,6 +1656,77 @@ app.delete('/api/bto/:id', requireRole('scrutineer', 'race_director', 'admin', '
   }
 });
 
+// 21d. Export BTO Leaderboard (CSV or JSON)
+app.get('/api/bto/export', (req, res) => {
+  try {
+    const { event_id, format = 'csv' } = req.query;
+    const leaderboard = getBtoLeaderboard({ event_id, limit: 10000 });
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="bto_leaderboard.json"');
+      return res.json(leaderboard);
+    }
+
+    const csvRows = ['rank,participant_number,user_name,team_name,finish_time,recorded_by,created_at'];
+    for (const b of leaderboard) {
+      const rank = b.rank;
+      const pNum = b.participant_number || '';
+      const name = `"${String(b.user_name || '').replace(/"/g, '""')}"`;
+      const team = `"${String(b.team_name || '').replace(/"/g, '""')}"`;
+      const time = b.finish_time;
+      const rec = `"${String(b.recorded_by || '').replace(/"/g, '""')}"`;
+      const created = b.created_at || '';
+      csvRows.push(`${rank},${pNum},${name},${team},${time},${rec},${created}`);
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="bto_leaderboard.csv"');
+    res.send(csvRows.join('\n'));
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 21e. Batch Import BTO Records
+app.post('/api/bto/import', requireRole('scrutineer', 'race_director', 'admin', 'super_admin'), (req, res) => {
+  try {
+    const { records, csv, event_id } = req.body || {};
+    let list = records;
+    if ((!list || !list.length) && csv) {
+      const lines = csv.split('\n').filter(l => l.trim());
+      list = [];
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        if (parts.length >= 2) {
+          list.push({ participant_number: parts[0] || parts[1], finish_time: parts[2] || parts[1] });
+        }
+      }
+    }
+    if (!Array.isArray(list) || list.length === 0) {
+      return res.status(400).json({ success: false, error: 'Tidak ada data BTO yang valid untuk di-import' });
+    }
+    const imported = [];
+    for (const item of list) {
+      try {
+        const r = recordBtoTime({
+          participant_number: item.participant_number,
+          user_id: item.user_id,
+          finish_time: item.finish_time,
+          recorded_by: item.recorded_by || 'import',
+          event_id
+        });
+        if (r.updated) imported.push(r.record);
+      } catch (e) {
+        // Skip invalid rows
+      }
+    }
+    broadcastFullState();
+    res.status(201).json({ success: true, count: imported.length, data: imported });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // ====================================================
 // Phase 14: Winner Registration & Bracket Execution (WREG-01 to WREG-06, BRKT-01 to BRKT-03)
 // ====================================================
@@ -1666,6 +1767,37 @@ app.get('/api/winners', (req, res) => {
     const { round, event_id } = req.query;
     const winners = getRegisteredWinners({ round, event_id });
     res.json({ success: true, data: winners });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 22c1. Export Winners (CSV or JSON)
+app.get('/api/winners/export', (req, res) => {
+  try {
+    const { round, event_id, format = 'csv' } = req.query;
+    const winners = getRegisteredWinners({ round, event_id });
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', 'attachment; filename="winners.json"');
+      return res.json(winners);
+    }
+
+    const csvRows = ['id,participant_number,name,team_name,round,event_id,created_at'];
+    for (const w of winners) {
+      const id = w.id || '';
+      const pNum = w.participant_number || '';
+      const name = `"${String(w.name || '').replace(/"/g, '""')}"`;
+      const team = `"${String(w.team_name || '').replace(/"/g, '""')}"`;
+      const rnd = w.round || '';
+      const evId = w.event_id || '';
+      const created = w.created_at || '';
+      csvRows.push(`${id},${pNum},${name},${team},${rnd},${evId},${created}`);
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="winners.csv"');
+    res.send(csvRows.join('\n'));
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
