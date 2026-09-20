@@ -88,6 +88,7 @@ app.get('/api/health', (req, res) => {
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     database: db.rawDb ? 'connected' : 'disconnected',
+    db_driver: db.driverName || 'sqlite',
     environment: process.env.NODE_ENV || 'development'
   });
 });

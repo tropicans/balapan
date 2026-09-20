@@ -15,6 +15,7 @@ if (!fs.existsSync(dbDir)) {
 
 class SqliteWrapper {
   constructor() {
+    this.driverName = 'sqlite';
     this.rawDb = null;
     this.saveTimeout = null;
     this.currentPath = null;
@@ -134,7 +135,77 @@ class SqliteWrapper {
   }
 }
 
-const db = new SqliteWrapper();
+class PostgresWrapper {
+  constructor() {
+    this.driverName = 'postgres';
+    this.pool = null;
+    this.rawDb = null;
+    this._txDepth = 0;
+    this.fallbackSqlite = null;
+  }
+
+  async init(customPath = null) {
+    try {
+      const pgModule = await import('pg');
+      const Pool = pgModule.default?.Pool || pgModule.Pool;
+      this.pool = new Pool({
+        connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/dgdash'
+      });
+      this.rawDb = this.pool;
+    } catch (e) {
+      console.warn('PostgreSQL client init failed, falling back to SQLite driver:', e?.message || e);
+      this.driverName = 'sqlite';
+      this.fallbackSqlite = new SqliteWrapper();
+      await this.fallbackSqlite.init(customPath);
+      this.rawDb = this.fallbackSqlite.rawDb;
+    }
+  }
+
+  exec(sql) {
+    if (this.fallbackSqlite) return this.fallbackSqlite.exec(sql);
+    if (this.pool) return this.pool.query(sql);
+  }
+
+  prepare(sql) {
+    if (this.fallbackSqlite) return this.fallbackSqlite.prepare(sql);
+    const self = this;
+    let paramIndex = 1;
+    const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+    return {
+      all(...params) {
+        return self.pool.query(pgSql, params).then(res => res.rows);
+      },
+      get(...params) {
+        return self.pool.query(pgSql, params).then(res => res.rows[0] || null);
+      },
+      run(...params) {
+        return self.pool.query(pgSql, params).then(res => ({ changes: res.rowCount }));
+      }
+    };
+  }
+
+  transaction(fn) {
+    if (this.fallbackSqlite) return this.fallbackSqlite.transaction(fn);
+    const self = this;
+    return async (...args) => {
+      const client = await self.pool.connect();
+      try {
+        await client.query('BEGIN');
+        const res = await fn(...args);
+        await client.query('COMMIT');
+        return res;
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    };
+  }
+}
+
+const driverChoice = (process.env.DB_DRIVER || 'sqlite').toLowerCase();
+const db = driverChoice === 'postgres' ? new PostgresWrapper() : new SqliteWrapper();
 
 export async function initDatabase() {
   await db.init();
